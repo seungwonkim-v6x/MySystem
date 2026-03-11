@@ -1,0 +1,11 @@
+# Track only personal config and skills
+# Ignore everything first, then whitelist
+
+*
+
+# Whitelist
+!.gitignore
+!CLAUDE.md
+!settings.json
+!skills/
+!skills/**
