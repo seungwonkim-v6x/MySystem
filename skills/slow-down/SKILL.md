@@ -1,125 +1,128 @@
 ---
 name: slow-down
-description: "AI와 코드 작업 전 구체화 단계를 강제한다. 요구사항 명확화, 범위 정의, 리스크 사전 점검을 거친 후에만 구현에 들어간다. 사용자가 구현을 요청하거나 코드 작업을 시작하려 할 때 자동으로 트리거된다."
+description: "Enforce a concretization step before any code work. Clarify requirements, define scope, run a pre-mortem, and align on approach before implementation begins. Auto-triggers when the user requests coding work."
 ---
 
-# Slow Down — 구체화 먼저, 코드는 나중에
+# Slow Down — Concretize First, Code Later
 
 > "AI didn't make the slow phases less important — it made them more important."
-> "Anything that defines the gestalt of your system, write it by hand."
+> — The Engineering Manager
+>
+> "Anything that defines the gestalt of your system — architecture, API — write it by hand."
+> — Mario Zechner
 
-코드를 작성하기 전에 **반드시** 이 구체화 프로세스를 거친다.
-이 스킬은 사용자가 구현/코딩 작업을 요청할 때 자동으로 실행된다.
+This skill enforces a mandatory concretization process before writing any code.
+It runs automatically when the user requests implementation/coding work.
 
-## 언제 트리거되는가
+## When to Trigger
 
-다음 상황에서 코드 작성 **전에** 이 프로세스를 실행한다:
-- 사용자가 기능 구현, 버그 수정, 리팩토링을 요청할 때
-- 사용자가 "만들어줘", "구현해줘", "수정해줘", "작업해줘" 등을 말할 때
-- Jira 티켓 기반 구현 작업을 시작할 때
+Run this process **before writing code** in these situations:
+- User requests a feature implementation, bug fix, or refactoring
+- User says "build", "implement", "fix", "create", "refactor", etc.
+- Starting implementation work on a Jira ticket or task
 
-## 예외 (스킵 가능)
+## Exceptions (Skip When)
 
-다음의 경우 이 프로세스를 건너뛴다:
-- 사용자가 명시적으로 "바로 해줘", "skip slow-down", "구체화 건너뛰기" 등을 말한 경우
-- 한 줄 수정, 오타 수정 등 자명한 작업
-- 이미 상세 설계가 완료된 티켓 (`/plan-ticket` 완료 후 `/implement-ticket`)
-- 단순 질문, 코드 설명, 리서치 요청
+Skip this process when:
+- User explicitly says "just do it", "skip slow-down", "skip concretization"
+- The change is trivially obvious (typo fix, one-liner, simple rename)
+- A detailed design already exists in the ticket (e.g., after `/plan-ticket`)
+- The request is a question, explanation, or research task
 
-## 구체화 프로세스 (5단계)
+## Concretization Process (5 Steps)
 
-### 1단계: 문제 정의 — "무엇을 왜?"
+### Step 1: Problem Definition — "What and Why?"
 
-사용자의 요청을 다음 형식으로 정리하여 **사용자에게 확인받는다**:
-
-```
-## 문제 정의
-- **문제**: [해결하려는 문제가 무엇인가?]
-- **이유**: [왜 이것을 지금 해야 하는가?]
-- **사용자/상황**: [누가, 어떤 상황에서 이 문제를 겪는가?]
-```
-
-정보가 부족하면 추측하지 말고 질문한다.
-
-### 2단계: 완료 조건 — "Done이 뭔가?"
-
-구현이 완료된 상태를 구체적으로 정의한다:
+Summarize the user's request in this format and **get user confirmation**:
 
 ```
-## 완료 조건
-- [ ] [구체적인 동작/결과 1]
-- [ ] [구체적인 동작/결과 2]
-- [ ] [테스트/검증 방법]
+## Problem Definition
+- **Problem**: [What problem are we solving?]
+- **Why now**: [Why does this need to be done now?]
+- **Who/When**: [Who experiences this problem, in what context?]
 ```
 
-**핵심 질문**: "이 작업의 결과물을 어떻게 검증할 수 있는가?"
+If information is insufficient, **ask — don't assume**.
 
-### 3단계: 범위 정의 — "무엇을 안 하는가?"
+### Step 2: Done Criteria — "What does done look like?"
 
-범위를 명확히 한다. 특히 **하지 않을 것**을 정의하는 것이 중요하다:
-
-```
-## 범위
-- **포함**: [이번에 하는 것]
-- **제외**: [이번에 하지 않는 것 — 향후 과제]
-- **영향 범위**: [변경이 영향을 미치는 파일/모듈]
-```
-
-### 4단계: 리스크 점검 — "뭐가 잘못될 수 있는가?"
-
-Pre-mortem을 수행한다. 다음을 점검:
+Define the concrete end state of a successful implementation:
 
 ```
-## 리스크 점검
-- **엣지 케이스**: [빈 값, null, 경계 조건 등]
-- **부작용**: [다른 기능에 미치는 영향]
-- **되돌리기**: [문제 발생 시 롤백 가능한가?]
+## Done Criteria
+- [ ] [Specific behavior/outcome 1]
+- [ ] [Specific behavior/outcome 2]
+- [ ] [How to verify/test]
 ```
 
-추가로 **문제를 뒤집어 본다**: "이 작업을 실패하게 만들려면 어떻게 해야 할까?"
+**Key question**: "How can we verify the result of this work?"
 
-### 5단계: 접근 방식 합의
+### Step 3: Scope — "What are we NOT doing?"
 
-구현 방향을 간결하게 제시하고 사용자 승인을 받는다:
+Define the boundary clearly. Defining what's **excluded** is more important than what's included:
 
 ```
-## 접근 방식
-- **방법**: [어떻게 구현할 것인가 — 1~3문장]
-- **대안**: [고려했으나 선택하지 않은 방법과 이유]
-- **AI 작업 범위**: [AI가 할 부분 vs 사용자가 판단할 부분]
+## Scope
+- **In scope**: [What we're doing this time]
+- **Out of scope**: [What we're NOT doing — future work]
+- **Blast radius**: [Files/modules affected by the change]
 ```
 
-## 출력 형식
+### Step 4: Pre-Mortem — "What could go wrong?"
 
-위 5단계를 하나의 정리된 블록으로 제시한다. 사용자가 **승인하면** 구현을 시작한다.
+Run a pre-mortem. Check for:
+
+```
+## Pre-Mortem
+- **Edge cases**: [Empty values, null, boundary conditions]
+- **Side effects**: [Impact on other features]
+- **Reversibility**: [Can we roll back if something goes wrong?]
+```
+
+Additionally, **invert the problem**: "What would make this project fail?"
+
+### Step 5: Approach Alignment
+
+Present the implementation direction concisely and get user approval:
+
+```
+## Approach
+- **Method**: [How to implement — 1-3 sentences]
+- **Alternatives**: [Approaches considered but not chosen, and why]
+- **AI scope**: [What AI handles vs what requires user judgment]
+```
+
+## Output Format
+
+Present all 5 steps as a single structured block. Proceed to implementation only after **user approval**.
 
 ```markdown
 ---
-# Slow Down 구체화
+# Slow Down — Concretization
 
-## 1. 문제 정의
+## 1. Problem Definition
 ...
 
-## 2. 완료 조건
+## 2. Done Criteria
 ...
 
-## 3. 범위
+## 3. Scope
 ...
 
-## 4. 리스크 점검
+## 4. Pre-Mortem
 ...
 
-## 5. 접근 방식
+## 5. Approach
 ...
 
 ---
-위 내용이 맞으면 구현을 시작하겠습니다. 수정할 부분이 있으면 알려주세요.
+If this looks correct, I'll start implementation. Let me know if anything needs adjustment.
 ```
 
-## 원칙
+## Principles
 
-1. **추측하지 말고 질문하라** — 모호한 요구사항에 가정을 세우지 않는다
-2. **가장 단순한 방법부터** — 복잡한 솔루션은 단순한 것이 안 될 때만
-3. **범위를 좁혀라** — AI가 리뷰 가능한 크기로 작업을 나눈다
-4. **아키텍처 결정은 사용자와 함께** — AI가 혼자 큰 설계를 결정하지 않는다
-5. **승인 없이 코드 없다** — 구체화 결과를 사용자가 확인한 후에만 진행한다
+1. **Ask, don't assume** — Never fill gaps in requirements with guesses
+2. **Simplest approach first** — Complex solutions only when simple ones won't work
+3. **Keep scope narrow** — Break work into chunks that fit within AI review capacity
+4. **Architecture decisions together** — AI doesn't make big design calls alone
+5. **No code without approval** — Implementation starts only after user confirms the plan
