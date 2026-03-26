@@ -1,15 +1,63 @@
-# MySystem — Personal Workflow Gates
+# MySystem — Personal Workflow
 
-This file defines **mandatory gates** that apply to all projects.
-Project-specific workflows integrate these gates in their own CLAUDE.md.
+This file defines the **complete workflow** that applies to all projects.
+Every skill listed here MUST be used at its designated step.
+Project-specific workflows in each project's CLAUDE.md add project-specific details (lint commands, test commands, Jira integration, etc.) but do NOT skip any step defined here.
 
 ---
 
-## Gate 1: Slow Down — Pre-Coding Concretization
+## Complete Workflow
 
-**Trigger**: User requests code implementation, bug fix, or refactoring
-**Action**: Run `/slow-down` skill (5-step concretization)
-**Done when**: User approves the concretization output
+### Feature / Bug Fix / Refactoring
+
+```
+1. /office-hours         ← validate the idea or problem (when problem is ambiguous or new)
+       ↓
+2. /slow-down            ← concretize: problem, done criteria, scope, pre-mortem, approach (MANDATORY)
+       ↓
+3. /autoplan             ← full plan review (when non-trivial: 3+ files, new module, API/DB change)
+   ├─ /plan-ceo-review      scope, ambition, strategy
+   ├─ /plan-design-review   UI/UX scoring 0-10
+   └─ /plan-eng-review      architecture, edge cases, performance
+       ↓
+4. Implementation        ← write code (project-specific: lint, test, etc.)
+       ↓
+5. /review               ← PR code review: security, SQL safety, structure (BEFORE commit)
+       ↓
+6. /bugbot               ← fresh-eye bug review of the diff (MANDATORY, BEFORE commit)
+       ↓
+7. /ship                 ← commit, push, create PR
+```
+
+### Debugging
+
+```
+1. /investigate          ← root cause analysis (no guessing, no fixing without cause)
+       ↓
+2. /slow-down            ← concretize the fix (if non-trivial)
+       ↓
+3. Implementation → /review → /bugbot → /ship
+```
+
+### Weekly Retrospective
+
+```
+/retro                   ← commit history analysis, team contributions, trends
+```
+
+---
+
+## Step Details
+
+### Step 1: `/office-hours` — Idea Validation
+
+```
+IF the problem is ambiguous, or it's a new feature idea, or the user is unsure what to build
+THEN run /office-hours to validate demand, specificity, and approach
+ELSE skip to step 2
+```
+
+### Step 2: `/slow-down` — Pre-Coding Concretization (MANDATORY)
 
 ```
 IF user requests code work
@@ -18,84 +66,71 @@ AND none of these exceptions apply:
   - Trivially obvious change (typo, one-liner, simple rename)
   - Ticket already has detailed design (Description contains implementation plan)
   - Request is a question, explanation, or research task
-THEN run /slow-down → proceed only after user approval
+THEN run /slow-down → 5-step concretization → proceed only after user approval
 ```
 
-## Gate 2: Plan Review — Design Verification for Non-Trivial Work
-
-**Trigger**: Slow-down output shows blast radius of 3+ files, or includes architecture changes
-**Action**: Enter Plan Mode, run `/autoplan` or individual reviews
-**Done when**: User approves the plan
+### Step 3: `/autoplan` — Plan Review (Non-Trivial Work)
 
 ```
 IF work is non-trivial (3+ files affected, new module, API change, DB schema change)
-THEN EnterPlanMode → /autoplan (or /plan-ceo-review, /plan-eng-review, /plan-design-review individually)
+THEN EnterPlanMode → /autoplan
+     /autoplan runs sequentially: /plan-ceo-review → /plan-design-review → /plan-eng-review
      → proceed only after user approval
-ELSE proceed directly to implementation
+ELSE skip to step 4
 ```
 
-## Gate 3: Bugbot — Pre-Commit Bug Review
+Individual reviews can be invoked directly when only one perspective is needed:
+- `/plan-ceo-review` — challenge scope and ambition
+- `/plan-design-review` — rate UI/UX dimensions 0-10
+- `/plan-eng-review` — lock architecture, edge cases, test coverage
 
-**Trigger**: About to run git commit or push
-**Action**: Run `/bugbot`
-**Done when**: Clean = commit proceeds. Critical found = fix first, re-run.
+### Step 4: Implementation
+
+Write code. Project-specific CLAUDE.md defines lint, test, and other checks here.
+
+### Step 5: `/review` — PR Code Review
+
+```
+IF code changes are ready for commit
+THEN run /review to analyze the diff for:
+     - SQL safety issues
+     - LLM trust boundary violations
+     - Conditional side effects
+     - Structural problems
+```
+
+### Step 6: `/bugbot` — Pre-Commit Bug Review (MANDATORY)
 
 ```
 IF about to git commit or push
 AND none of these exceptions apply:
   - "skip bugbot", "just commit"
-THEN run /bugbot → clean = commit, critical = fix first
+THEN run /bugbot → fresh-eye subagent review
+     Clean → proceed to commit
+     Critical found → fix first, re-run /bugbot
 ```
 
----
-
-## Workflow Summary
-
-All code work follows this sequence. Each project's CLAUDE.md adds project-specific steps.
+### Step 7: `/ship` — Commit and PR
 
 ```
-Request received
-  ↓
-[Gate 1] /slow-down        ← concretize (mandatory)
-  ↓
-[Gate 2] /autoplan         ← design review (non-trivial work only)
-  ↓
-Implementation + tests     ← project-specific (lint, test, etc.)
-  ↓
-[Gate 3] /bugbot           ← pre-commit review (mandatory)
-  ↓
-Commit / PR / Deploy       ← /ship or project-specific workflow
+THEN run /ship to: commit, push, create PR
+OR use project-specific shipping workflow
 ```
 
-### Debugging
+### `/investigate` — Debugging
+
 ```
-Bug report / error → /investigate (root cause required, no guessing)
+IF user reports a bug, error, or unexpected behavior
+THEN run /investigate
+     Iron Law: no fixes without root cause
+     4 phases: investigate → analyze → hypothesize → implement
 ```
 
-### Weekly Retrospective
+### `/retro` — Weekly Retrospective
+
 ```
-End of week/sprint → /retro (commit analysis, team contributions)
+IF end of week or sprint
+THEN run /retro
+     Analyzes commit history, work patterns, code quality metrics
+     Team-aware: per-person breakdowns with praise and growth areas
 ```
-
----
-
-## Skill Inventory
-
-### Owned (MySystem)
-| Skill | Role |
-|---|---|
-| slow-down | Gate 1: Pre-coding concretization |
-| bugbot | Gate 3: Pre-commit bug review |
-
-### Dependent (gstack — auto-updated)
-| Skill | Role |
-|---|---|
-| office-hours | Idea validation (optional, before Gate 1) |
-| autoplan | Gate 2: CEO + Design + Eng review pipeline |
-| plan-ceo-review | Gate 2 individual: scope/ambition check |
-| plan-eng-review | Gate 2 individual: architecture/edge cases |
-| plan-design-review | Gate 2 individual: UI/UX scoring |
-| review | PR code review (security/structure) |
-| investigate | Debugging: root cause analysis |
-| retro | Weekly retrospective |
-| ship | Commit → PR workflow |
