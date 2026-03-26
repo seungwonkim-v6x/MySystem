@@ -1,99 +1,101 @@
-# MySystem — Personal Workflow Rules
+# MySystem — Personal Workflow Gates
 
-이 파일은 모든 프로젝트에 적용되는 개인 워크플로우 규칙이다.
-도메인/프로젝트 특화 규칙은 각 프로젝트의 CLAUDE.md에 작성한다.
-
----
-
-## 핵심 원칙
-
-> "AI didn't make the slow phases less important — it made them more important."
-
-1. **구체화 먼저, 코드는 나중에** — 무엇을/왜를 명확히 한 후에만 구현
-2. **승인 없이 코드 없다** — 계획을 사용자가 확인한 후 진행
-3. **커밋 전 리뷰 필수** — 모든 커밋은 버그 리뷰를 통과해야 함
+이 파일은 모든 프로젝트에 적용되는 **의무 게이트**를 정의한다.
+프로젝트별 워크플로우는 각 프로젝트 CLAUDE.md에서 이 게이트를 통합하여 사용한다.
 
 ---
 
-## 의무 규칙 (MANDATORY)
+## Gate 1: Slow Down — 코드 작업 전 구체화
 
-### 1. Slow Down — 코드 작업 전 구체화 (`/slow-down`)
-
-코드 구현을 시작하기 **전에** 반드시 실행한다.
-
-- 5단계: 문제 정의 → 완료 조건 → 범위 → 리스크 점검 → 접근 방식 합의
-- 사용자 승인 후에만 코드 작성 시작
-- **스킵 가능**: "바로 해줘", "skip slow-down" / 오타 수정 등 자명한 작업 / 이미 설계된 티켓
-
-### 2. Bugbot — 커밋 전 버그 리뷰 (`/bugbot`)
-
-git commit 또는 push **전에** 반드시 실행한다.
-
-- 별도 Agent(서브에이전트)로 fresh-eyes 리뷰
-- Critical 버그 발견 시 수정 후 진행, Clean이면 바로 커밋
-- **스킵 가능**: "skip bugbot", "just commit"
-
----
-
-## 워크플로우: 아이디어 → 배포
-
-아래 스킬들은 gstack에서 제공되며, 상황에 맞게 활용한다.
+**트리거**: 사용자가 코드 구현/수정/리팩토링을 요청할 때
+**동작**: `/slow-down` 스킬을 실행하여 5단계 구체화 수행
+**완료 조건**: 사용자가 구체화 결과를 승인
 
 ```
-아이디어/문제 발견
-    ↓
-/office-hours          ← 아이디어 검증, 문제 정의 (선택)
-    ↓
-/slow-down             ← 구체화 (의무)
-    ↓
-Plan Mode 진입
-    ↓
-/autoplan              ← CEO + Design + Eng 리뷰 자동 파이프라인
-  또는 개별 실행:
-  ├─ /plan-ceo-review    범위/야망/전략 점검
-  ├─ /plan-design-review UI/UX 디자인 점수 매기기
-  └─ /plan-eng-review    아키텍처/엣지케이스/성능 점검
-    ↓
-구현
-    ↓
-/review                ← PR 코드 리뷰 (보안/구조)
-    ↓
-/bugbot                ← 커밋 전 버그 리뷰 (의무)
-    ↓
-/ship                  ← 커밋 → PR → 머지
+IF 사용자가 코드 작업을 요청
+AND 다음 예외에 해당하지 않음:
+  - "바로 해줘", "skip slow-down", "구체화 건너뛰기"
+  - 오타/한줄 수정 등 자명한 작업
+  - 이미 설계가 완료된 티켓 (Description에 구현 설계 존재)
+  - 질문, 설명, 리서치 요청
+THEN /slow-down 실행 → 승인 후 다음 단계 진행
+```
+
+## Gate 2: Plan Review — 비자명한 작업의 설계 검증
+
+**트리거**: slow-down 결과 영향 범위가 3개 파일 이상이거나, 아키텍처 변경이 포함될 때
+**동작**: Plan Mode 진입 후 `/autoplan` 또는 개별 리뷰 실행
+**완료 조건**: 사용자가 플랜을 승인
+
+```
+IF 작업이 비자명 (영향 파일 3+, 새 모듈, API 변경, DB 스키마 변경)
+THEN EnterPlanMode → /autoplan (또는 /plan-ceo-review, /plan-eng-review, /plan-design-review 개별)
+     → 승인 후 구현 시작
+ELSE 바로 구현 진행
+```
+
+## Gate 3: Bugbot — 커밋 전 버그 리뷰
+
+**트리거**: git commit 또는 push를 수행하기 직전
+**동작**: `/bugbot` 실행
+**완료 조건**: Clean이면 커밋 진행, Critical 발견 시 수정 후 재실행
+
+```
+IF git commit 또는 push 수행 직전
+AND 다음 예외에 해당하지 않음:
+  - "skip bugbot", "just commit"
+THEN /bugbot 실행 → Clean이면 커밋, Critical이면 수정
+```
+
+---
+
+## 워크플로우 요약
+
+모든 코드 작업은 이 순서를 따른다. 각 프로젝트 CLAUDE.md에서 프로젝트 고유 단계를 추가한다.
+
+```
+요청 접수
+  ↓
+[Gate 1] /slow-down        ← 구체화 (의무)
+  ↓
+[Gate 2] /autoplan         ← 설계 리뷰 (비자명 작업만)
+  ↓
+구현 + 테스트              ← 프로젝트별 상세 (lint, test 등)
+  ↓
+[Gate 3] /bugbot           ← 커밋 전 리뷰 (의무)
+  ↓
+커밋/PR/배포               ← /ship 또는 프로젝트별 워크플로우
 ```
 
 ### 디버깅 시
-
 ```
-/investigate           ← 체계적 디버깅 (근본원인 필수, 추측 금지)
+버그 리포트/에러 발견 → /investigate (근본원인 필수, 추측 금지)
 ```
 
 ### 주간 회고
-
 ```
-/retro                 ← 커밋 이력 분석, 팀별 기여도, 개선점
+주말/스프린트 끝 → /retro (커밋 분석, 팀 기여도)
 ```
 
 ---
 
 ## 스킬 구성
 
-### 개인 소유 (MySystem 관리)
-| 스킬 | 위치 | 역할 |
-|---|---|---|
-| slow-down | `skills/slow-down/` | 코드 전 구체화 |
-| bugbot | `skills/bugbot/` | 커밋 전 버그 리뷰 |
+### 개인 소유 (MySystem)
+| 스킬 | 역할 |
+|---|---|
+| slow-down | Gate 1: 코드 전 구체화 |
+| bugbot | Gate 3: 커밋 전 버그 리뷰 |
 
 ### gstack 의존 (자동 업데이트)
 | 스킬 | 역할 |
 |---|---|
-| office-hours | 아이디어 검증/문제 정의 |
-| plan-ceo-review | CEO 시점 플랜 리뷰 |
-| plan-eng-review | 엔지니어링 플랜 리뷰 |
-| plan-design-review | 디자인 플랜 리뷰 |
-| autoplan | 리뷰 자동 파이프라인 |
-| review | PR 코드 리뷰 |
-| investigate | 체계적 디버깅 |
+| office-hours | 아이디어 검증 (Gate 1 이전, 선택) |
+| autoplan | Gate 2: CEO+Design+Eng 리뷰 파이프라인 |
+| plan-ceo-review | Gate 2 개별: 범위/야망 점검 |
+| plan-eng-review | Gate 2 개별: 아키텍처/엣지케이스 |
+| plan-design-review | Gate 2 개별: UI/UX 점수 |
+| review | PR 코드 리뷰 (보안/구조) |
+| investigate | 디버깅: 근본원인 분석 |
 | retro | 주간 회고 |
 | ship | 커밋→PR 워크플로우 |
