@@ -134,3 +134,15 @@ THEN run /retro
      Analyzes commit history, work patterns, code quality metrics
      Team-aware: per-person breakdowns with praise and growth areas
 ```
+
+---
+
+## Repo Self-Management Rules
+
+When modifying this repository (MySystem), the agent MUST:
+
+1. **Bump VERSION** — follow semver (major: breaking workflow change, minor: new skill/step, patch: fix/tweak)
+2. **Update CHANGELOG.md** — add entry under new version with date and description
+3. **Git tag** — create `vX.Y.Z` tag matching the VERSION file
+4. **Sync ~/.claude/CLAUDE.md** — copy the updated CLAUDE.md to `~/.claude/CLAUDE.md` so it takes effect globally
+5. **Sync skill files** — copy updated skills to `~/.claude/skills/` so they take effect globally
