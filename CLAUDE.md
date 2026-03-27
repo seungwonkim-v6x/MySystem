@@ -1,8 +1,11 @@
 # MySystem — Personal Workflow
 
 This file defines the **complete workflow** that applies to all projects.
-Every skill listed here MUST be used at its designated step.
-Project-specific workflows in each project's CLAUDE.md add project-specific details (lint commands, test commands, Jira integration, etc.) but do NOT skip any step defined here.
+
+**CRITICAL RULE: The agent has ZERO discretion to skip steps.**
+Every step below is MANDATORY and runs in order. The agent NEVER decides on its own
+that a step "isn't needed" or "can be skipped for this case."
+Only the USER can skip a step — by explicitly saying "skip [step]".
 
 ---
 
@@ -10,21 +13,20 @@ Project-specific workflows in each project's CLAUDE.md add project-specific deta
 
 ### Feature / Bug Fix / Refactoring
 
+Every code task goes through ALL 7 steps, in order:
+
 ```
-1. /office-hours         ← validate the idea or problem (when problem is ambiguous or new)
+1. /office-hours         ← validate the idea or problem
        ↓
-2. /slow-down            ← concretize: problem, done criteria, scope, pre-mortem, approach (MANDATORY)
+2. /slow-down            ← concretize: problem, done criteria, scope, pre-mortem, approach
        ↓
-3. /autoplan             ← full plan review (when non-trivial: 3+ files, new module, API/DB change)
-   ├─ /plan-ceo-review      scope, ambition, strategy
-   ├─ /plan-design-review   UI/UX scoring 0-10
-   └─ /plan-eng-review      architecture, edge cases, performance
+3. /autoplan             ← full plan review: CEO + Design + Eng
        ↓
 4. Implementation        ← write code (project-specific: lint, test, etc.)
        ↓
-5. /review               ← PR code review: security, SQL safety, structure (BEFORE commit)
+5. /review               ← PR code review: security, SQL safety, structure
        ↓
-6. /bugbot               ← fresh-eye bug review of the diff (MANDATORY, BEFORE commit)
+6. /bugbot               ← fresh-eye bug review of the diff
        ↓
 7. /ship                 ← commit, push, create PR
 ```
@@ -34,9 +36,11 @@ Project-specific workflows in each project's CLAUDE.md add project-specific deta
 ```
 1. /investigate          ← root cause analysis (no guessing, no fixing without cause)
        ↓
-2. /slow-down            ← concretize the fix (if non-trivial)
+2. /slow-down            ← concretize the fix
        ↓
-3. Implementation → /review → /bugbot → /ship
+3. /autoplan             ← plan the fix
+       ↓
+4. Implementation → /review → /bugbot → /ship
 ```
 
 ### Weekly Retrospective
@@ -49,91 +53,56 @@ Project-specific workflows in each project's CLAUDE.md add project-specific deta
 
 ## Step Details
 
-### Step 1: `/office-hours` — Idea Validation
+### Step 1: `/office-hours`
 
-```
-IF the problem is ambiguous, or it's a new feature idea, or the user is unsure what to build
-THEN run /office-hours to validate demand, specificity, and approach
-ELSE skip to step 2
-```
+Run /office-hours. Present the output to the user. Wait for approval before proceeding.
+User may say "skip office-hours" to skip.
 
-### Step 2: `/slow-down` — Pre-Coding Concretization (MANDATORY)
+### Step 2: `/slow-down`
 
-```
-IF user requests code work
-AND none of these exceptions apply:
-  - "just do it", "skip slow-down", "skip concretization"
-  - Trivially obvious change (typo, one-liner, simple rename)
-  - Ticket already has detailed design (Description contains implementation plan)
-  - Request is a question, explanation, or research task
-THEN run /slow-down → 5-step concretization → proceed only after user approval
-```
+Run /slow-down. Present the 5-step concretization to the user. Wait for approval before proceeding.
+User may say "skip slow-down" to skip.
 
-### Step 3: `/autoplan` — Plan Review (Non-Trivial Work)
+### Step 3: `/autoplan`
 
-```
-IF work is non-trivial (3+ files affected, new module, API change, DB schema change)
-THEN EnterPlanMode → /autoplan
-     /autoplan runs sequentially: /plan-ceo-review → /plan-design-review → /plan-eng-review
-     → proceed only after user approval
-ELSE skip to step 4
-```
+Enter Plan Mode. Run /autoplan which executes sequentially:
+1. /plan-ceo-review — scope, ambition, strategy
+2. /plan-design-review — UI/UX scoring 0-10
+3. /plan-eng-review — architecture, edge cases, performance
 
-Individual reviews can be invoked directly when only one perspective is needed:
-- `/plan-ceo-review` — challenge scope and ambition
-- `/plan-design-review` — rate UI/UX dimensions 0-10
-- `/plan-eng-review` — lock architecture, edge cases, test coverage
+Present the plan to the user. Wait for approval before proceeding.
+User may say "skip autoplan" or "skip plan" to skip.
 
 ### Step 4: Implementation
 
 Write code. Project-specific CLAUDE.md defines lint, test, and other checks here.
 
-### Step 5: `/review` — PR Code Review
+### Step 5: `/review`
 
-```
-IF code changes are ready for commit
-THEN run /review to analyze the diff for:
-     - SQL safety issues
-     - LLM trust boundary violations
-     - Conditional side effects
-     - Structural problems
-```
+Run /review to analyze the diff for security, SQL safety, trust boundary violations, structural problems.
+Present findings to the user before proceeding.
 
-### Step 6: `/bugbot` — Pre-Commit Bug Review (MANDATORY)
+### Step 6: `/bugbot`
 
-```
-IF about to git commit or push
-AND none of these exceptions apply:
-  - "skip bugbot", "just commit"
-THEN run /bugbot → fresh-eye subagent review
-     Clean → proceed to commit
-     Critical found → fix first, re-run /bugbot
-```
+Run /bugbot — fresh-eye subagent review of the diff.
+Clean → proceed. Critical found → fix first, re-run.
+User may say "skip bugbot" to skip.
 
-### Step 7: `/ship` — Commit and PR
+### Step 7: `/ship`
 
-```
-THEN run /ship to: commit, push, create PR
-OR use project-specific shipping workflow
-```
+Run /ship to commit, push, create PR.
+Or use project-specific shipping workflow.
 
-### `/investigate` — Debugging
+### `/investigate`
 
-```
-IF user reports a bug, error, or unexpected behavior
-THEN run /investigate
-     Iron Law: no fixes without root cause
-     4 phases: investigate → analyze → hypothesize → implement
-```
+Run /investigate when the user reports a bug, error, or unexpected behavior.
+Iron Law: no fixes without root cause.
+4 phases: investigate → analyze → hypothesize → implement.
 
-### `/retro` — Weekly Retrospective
+### `/retro`
 
-```
-IF end of week or sprint
-THEN run /retro
-     Analyzes commit history, work patterns, code quality metrics
-     Team-aware: per-person breakdowns with praise and growth areas
-```
+Run /retro for weekly retrospective.
+Analyzes commit history, work patterns, code quality metrics.
 
 ---
 

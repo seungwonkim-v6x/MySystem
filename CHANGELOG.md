@@ -3,6 +3,14 @@
 All notable changes to MySystem are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.3.0] - 2026-03-27
+
+### Changed
+- **Breaking**: ALL workflow steps are now MANDATORY — agent has ZERO discretion to skip
+- Removed all IF/THEN conditional logic that allowed agent to judge whether a step applies
+- Only the user can skip a step by explicitly saying "skip [step]"
+- Debugging flow also requires /slow-down and /autoplan (no shortcuts)
+
 ## [2.2.0] - 2026-03-27
 
 ### Added
