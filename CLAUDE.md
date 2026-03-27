@@ -69,12 +69,16 @@ User may say "skip slow-down" to skip.
 
 ### Step 3: `/autoplan`
 
-Enter Plan Mode. Run /autoplan which executes sequentially:
+After /slow-down is approved, IMMEDIATELY run /autoplan. Do not ask. Do not skip.
+Even if the user already accepted a plan via ExitPlanMode, /autoplan still runs.
+Plan acceptance ≠ plan review. They are separate steps.
+
+Run /autoplan which executes sequentially:
 1. /plan-ceo-review — scope, ambition, strategy
 2. /plan-design-review — UI/UX scoring 0-10
 3. /plan-eng-review — architecture, edge cases, performance
 
-Present the plan to the user. Wait for approval before proceeding.
+Present the review results to the user. Wait for approval before proceeding.
 User may say "skip autoplan" or "skip plan" to skip.
 
 ### Step 4: Implementation

@@ -3,6 +3,13 @@
 All notable changes to MySystem are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.3.3] - 2026-03-27
+
+### Fixed
+- Clarified that /autoplan runs IMMEDIATELY after /slow-down approval, no asking
+- "Plan acceptance ≠ plan review" — ExitPlanMode does not replace /autoplan
+- Agent was skipping /autoplan entirely after user accepted a plan
+
 ## [2.3.2] - 2026-03-27
 
 ### Fixed
