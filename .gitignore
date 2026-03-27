@@ -6,6 +6,8 @@
 # Whitelist
 !.gitignore
 !CLAUDE.md
+!CHANGELOG.md
+!VERSION
 !settings.json
 !skills/
 !skills/**
