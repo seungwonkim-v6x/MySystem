@@ -2,9 +2,11 @@
 
 This file defines the **complete workflow** that applies to all projects.
 
-**CRITICAL RULE: The agent has ZERO discretion to skip steps.**
+**CRITICAL RULE: The agent has ZERO discretion to skip or reorder steps.**
 Every step below is MANDATORY and runs in order.
 - NEVER skip a step on your own.
+- NEVER reorder steps. Step N must complete before step N+1 begins.
+- NEVER write code before /slow-down and /autoplan are done. NOT EVEN ONE LINE.
 - NEVER ask the user "should we skip?" or "do you want to run the full workflow?"
 - NEVER suggest skipping. Just run the next step immediately.
 - If the user wants to skip, THEY will interrupt you. That's their job, not yours.

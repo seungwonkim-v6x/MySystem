@@ -3,6 +3,12 @@
 All notable changes to MySystem are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.3.2] - 2026-03-27
+
+### Fixed
+- Added "NEVER reorder steps" and "NEVER write code before /slow-down and /autoplan are done"
+- Agent was running /investigate then jumping straight to implementation, skipping /slow-down and /autoplan entirely
+
 ## [2.3.1] - 2026-03-27
 
 ### Fixed
