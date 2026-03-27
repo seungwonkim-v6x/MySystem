@@ -3,6 +3,12 @@
 All notable changes to MySystem are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.3.1] - 2026-03-27
+
+### Fixed
+- Clarified that agent must NEVER ask "should we skip?" or suggest skipping
+- User interrupts if they want to skip — agent just runs the next step
+
 ## [2.3.0] - 2026-03-27
 
 ### Changed

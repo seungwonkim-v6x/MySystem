@@ -3,9 +3,11 @@
 This file defines the **complete workflow** that applies to all projects.
 
 **CRITICAL RULE: The agent has ZERO discretion to skip steps.**
-Every step below is MANDATORY and runs in order. The agent NEVER decides on its own
-that a step "isn't needed" or "can be skipped for this case."
-Only the USER can skip a step — by explicitly saying "skip [step]".
+Every step below is MANDATORY and runs in order.
+- NEVER skip a step on your own.
+- NEVER ask the user "should we skip?" or "do you want to run the full workflow?"
+- NEVER suggest skipping. Just run the next step immediately.
+- If the user wants to skip, THEY will interrupt you. That's their job, not yours.
 
 ---
 
