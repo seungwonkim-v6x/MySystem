@@ -3,6 +3,22 @@
 All notable changes to MySystem are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [3.0.0] - 2026-04-05
+
+### Added
+- **Ensemble Execution Rule**: Every workflow step spawns 3-10 identical subagents in parallel, synthesizes results into one report. Core leverage of the system.
+- **Step 3: /research**: New mandatory step — search docs, codebase, existing solutions before planning. Uses search-first + documentation-lookup skills.
+- **Step 6: /verify-test**: New mandatory step — generate throwaway code-based tests, run them, delete after. Tests never committed.
+- **search-first skill**: Copied from affaan-m/everything-claude-code. Research existing tools/libraries before writing code.
+- **documentation-lookup skill**: Copied from affaan-m/everything-claude-code. Fetch live docs via Context7 MCP.
+- **verify-test skill**: Custom. Generate, run, and discard code-based verification tests.
+- **Subagent Permission Rules**: Read-only by default (Read, Grep, Glob, Bash). Only coordinator can write files or use git.
+
+### Changed
+- **Breaking**: Workflow expanded from 7 steps to 9 steps (added /research and /verify-test)
+- **Breaking**: Debugging flow expanded (added /research step)
+- Ensemble rule applies to ALL steps (not just review/bugbot)
+
 ## [2.3.3] - 2026-03-27
 
 ### Fixed

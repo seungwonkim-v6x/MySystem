@@ -13,44 +13,70 @@ Every step below is MANDATORY and runs in order.
 
 ---
 
+## Ensemble Execution Rule
+
+**Every workflow step** (except Implementation and /ship) MUST be executed as an ensemble:
+
+1. Spawn 3-10 identical subagents with the **same prompt**, each running independently
+2. Each subagent has fresh context — no shared state between them
+3. After all complete, the coordinator synthesizes:
+   - Deduplicate overlapping findings
+   - Merge unique findings from each agent
+   - Rank by severity/importance
+4. Present **one unified report** to the user
+
+The underlying skill (gstack or custom) is a black box.
+MySystem controls **how many times** it runs, not how it runs internally.
+
+Why: LLM non-determinism means each run finds different things. Running N times
+gives broader coverage than running once. This is the core leverage of the system.
+
+---
+
 ## Complete Workflow
 
 ### Feature / Bug Fix / Refactoring
 
-Every code task goes through ALL 7 steps, in order:
+Every code task goes through ALL 9 steps, in order:
 
 ```
-1. /office-hours         ← validate the idea or problem
+1. /office-hours         ← validate the idea or problem (ensemble)
        ↓
-2. /slow-down            ← concretize: problem, done criteria, scope, pre-mortem, approach
+2. /slow-down            ← concretize: problem, done criteria, scope, pre-mortem, approach (ensemble)
        ↓
-3. /autoplan             ← full plan review: CEO + Design + Eng
+3. /research             ← search docs, codebase, existing solutions (ensemble)
        ↓
-4. Implementation        ← write code (project-specific: lint, test, etc.)
+4. /autoplan             ← full plan review: CEO + Design + Eng (ensemble)
        ↓
-5. /review               ← PR code review: security, SQL safety, structure
+5. Implementation        ← write code (project-specific: lint, test, etc.)
        ↓
-6. /bugbot               ← fresh-eye bug review of the diff
+6. /verify-test          ← generate throwaway tests, run, delete (ensemble)
        ↓
-7. /ship                 ← commit, push, create PR
+7. /review               ← PR code review: security, SQL safety, structure (ensemble)
+       ↓
+8. /bugbot               ← fresh-eye bug review of the diff (ensemble)
+       ↓
+9. /ship                 ← commit, push, create PR
 ```
 
 ### Debugging
 
 ```
-1. /investigate          ← root cause analysis (no guessing, no fixing without cause)
+1. /investigate          ← root cause analysis (ensemble)
        ↓
-2. /slow-down            ← concretize the fix
+2. /slow-down            ← concretize the fix (ensemble)
        ↓
-3. /autoplan             ← plan the fix
+3. /research             ← search docs, similar issues, existing patterns (ensemble)
        ↓
-4. Implementation → /review → /bugbot → /ship
+4. /autoplan             ← plan the fix (ensemble)
+       ↓
+5. Implementation → /verify-test → /review → /bugbot → /ship
 ```
 
 ### Weekly Retrospective
 
 ```
-/retro                   ← commit history analysis, team contributions, trends
+/retro                   ← commit history analysis, team contributions, trends (ensemble)
 ```
 
 ---
@@ -67,9 +93,19 @@ User may say "skip office-hours" to skip.
 Run /slow-down. Present the 5-step concretization to the user. Wait for approval before proceeding.
 User may say "skip slow-down" to skip.
 
-### Step 3: `/autoplan`
+### Step 3: `/research`
 
-After /slow-down is approved, IMMEDIATELY run /autoplan. Do not ask. Do not skip.
+Run /search-first and /documentation-lookup to gather context before planning:
+- Search for existing solutions (npm, PyPI, MCP, GitHub)
+- Fetch up-to-date documentation for relevant libraries via Context7
+- Analyze the codebase for existing patterns that solve the problem
+
+Present findings to the user. Wait for approval before proceeding.
+User may say "skip research" to skip.
+
+### Step 4: `/autoplan`
+
+After research is complete, IMMEDIATELY run /autoplan. Do not ask. Do not skip.
 Even if the user already accepted a plan via ExitPlanMode, /autoplan still runs.
 Plan acceptance ≠ plan review. They are separate steps.
 
@@ -81,22 +117,33 @@ Run /autoplan which executes sequentially:
 Present the review results to the user. Wait for approval before proceeding.
 User may say "skip autoplan" or "skip plan" to skip.
 
-### Step 4: Implementation
+### Step 5: Implementation
 
 Write code. Project-specific CLAUDE.md defines lint, test, and other checks here.
 
-### Step 5: `/review`
+### Step 6: `/verify-test`
+
+Run /verify-test to generate throwaway code-based tests:
+- Analyze the diff to determine what was changed
+- Generate test files in /tmp (never in the project)
+- Run tests using the project's framework
+- Report results
+- Delete all test files
+
+If tests fail, fix the implementation and re-run. Do not fix the tests.
+
+### Step 7: `/review`
 
 Run /review to analyze the diff for security, SQL safety, trust boundary violations, structural problems.
 Present findings to the user before proceeding.
 
-### Step 6: `/bugbot`
+### Step 8: `/bugbot`
 
 Run /bugbot — fresh-eye subagent review of the diff.
 Clean → proceed. Critical found → fix first, re-run.
 User may say "skip bugbot" to skip.
 
-### Step 7: `/ship`
+### Step 9: `/ship`
 
 Run /ship to commit, push, create PR.
 Or use project-specific shipping workflow.
@@ -111,6 +158,29 @@ Iron Law: no fixes without root cause.
 
 Run /retro for weekly retrospective.
 Analyzes commit history, work patterns, code quality metrics.
+
+---
+
+## Subagent Permission Rules
+
+Subagents spawned by ensemble execution use read-only permissions by default:
+
+```yaml
+tools: Read, Grep, Glob, Bash
+permissionMode: dontAsk
+```
+
+Only the **main coordinator agent** may:
+- Edit or Write files
+- Run git commit, push, reset, or any git write operations
+- Create PRs or interact with external services
+
+Subagents for /verify-test get extended permissions (Write to /tmp only):
+```yaml
+tools: Read, Grep, Glob, Bash, Write
+permissionMode: dontAsk
+# Write restricted to /tmp/ via PreToolUse hook
+```
 
 ---
 
