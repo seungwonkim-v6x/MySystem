@@ -17,7 +17,7 @@ Every step below is MANDATORY and runs in order.
 
 **Every workflow step** (except Implementation and /ship) MUST be executed as an ensemble:
 
-1. Spawn **5-10** subagents, each with a **paraphrased variation** of the same task
+1. Spawn **3-5** subagents, each with a **paraphrased variation** of the same task
    - Same goal and context, but vary the phrasing, emphasis, or angle
    - e.g., one asks "find bugs", another "what could break in production", another "trace edge cases"
    - Variation increases diversity of findings beyond LLM non-determinism alone
