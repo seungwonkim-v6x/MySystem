@@ -34,6 +34,9 @@ MySystem controls **how many times** it runs, not how it runs internally.
 Why: LLM non-determinism means each run finds different things. Running N times
 gives broader coverage than running once. This is the core leverage of the system.
 
+Why: LLM non-determinism means each run finds different things. Running N times
+gives broader coverage than running once. This is the core leverage of the system.
+
 ---
 
 ## Complete Workflow
