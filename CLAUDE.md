@@ -11,30 +11,27 @@ Every step below is MANDATORY and runs in order.
 - NEVER suggest skipping. Just run the next step immediately.
 - If the user wants to skip, THEY will interrupt you. That's their job, not yours.
 
-**CRITICAL RULE: Ensemble execution is NOT optional.**
-Every workflow step (except Implementation and /ship) MUST spawn 3-5 subagents.
-- NEVER run a step with just 1 agent. That violates the ensemble rule.
-- NEVER rationalize "this is simple enough for 1 agent" or "context is limited."
-- If you catch yourself about to run a skill directly instead of spawning subagents, STOP.
-  Spawn the subagents first.
-
 ---
 
 ## Ensemble Execution Rule
 
 **Every workflow step** (except Implementation and /ship) MUST be executed as an ensemble:
 
-1. Spawn **3-5** subagents (model: **sonnet**), each with a **paraphrased variation** of the same task
+1. Spawn **3-5** Claude subagents (model: **sonnet**), each with a **paraphrased variation** of the same task
    - Same goal and context, but vary the phrasing, emphasis, or angle
    - e.g., one asks "find bugs", another "what could break in production", another "trace edge cases"
    - Variation increases diversity of findings beyond LLM non-determinism alone
    - Use `model: "sonnet"` when spawning via Agent tool — saves cost, Opus stays as coordinator only
-2. Each subagent has fresh context — no shared state between them
-3. After all complete, the coordinator synthesizes:
-   - Deduplicate overlapping findings
-   - Merge unique findings from each agent
+2. Run **Codex** in parallel as a cross-model voice:
+   - For review/analysis steps: `codex review --base <base-branch>` or `codex exec "<task>" --read-only`
+   - For implementation: `codex exec "<task>" --write` (produces version B alongside Claude's version A)
+   - Codex findings are included in the unified report as a separate "Cross-Model" section
+3. Each subagent has fresh context — no shared state between them
+4. After all complete, the coordinator synthesizes:
+   - Deduplicate overlapping findings from Claude ensemble
+   - Merge Codex findings — flag cross-model disagreements prominently
    - Rank by severity/importance
-4. Present **one unified report** to the user
+5. Present **one unified report** to the user
 
 The underlying skill (gstack or custom) is a black box.
 MySystem controls **how many times** it runs, not how it runs internally.
@@ -97,12 +94,10 @@ Every code task goes through ALL 9 steps, in order:
 ### Step 1: `/office-hours`
 
 Run /office-hours. Present the output to the user. Wait for approval before proceeding.
-User may say "skip office-hours" to skip.
 
 ### Step 2: `/slow-down`
 
 Run /slow-down. Present the 5-step concretization to the user. Wait for approval before proceeding.
-User may say "skip slow-down" to skip.
 
 ### Step 3: `/research`
 
@@ -112,7 +107,6 @@ Run /search-first and /documentation-lookup to gather context before planning:
 - Analyze the codebase for existing patterns that solve the problem
 
 Present findings to the user. Wait for approval before proceeding.
-User may say "skip research" to skip.
 
 ### Step 4: `/autoplan`
 
@@ -126,16 +120,11 @@ Run /autoplan which executes sequentially:
 3. /plan-eng-review — architecture, edge cases, performance
 
 Present the review results to the user. Wait for approval before proceeding.
-User may say "skip autoplan" or "skip plan" to skip.
 
 ### Step 5: Implementation
 
 Write code. Project-specific CLAUDE.md defines lint, test, and other checks here.
-
-**Codex dual-implementation (MANDATORY):**
-1. Claude (Opus) implements version A
-2. Run `codex exec "<task description>" -C "$(git rev-parse --show-toplevel)" --write` for version B in background
-3. Compare both approaches — user picks the better one or merges the best parts
+Codex runs in parallel per the Ensemble Execution Rule (produces version B).
 
 ### Step 6: `/verify-test`
 
@@ -151,23 +140,14 @@ If tests fail, fix the implementation and re-run. Do not fix the tests.
 ### Step 7: `/review`
 
 Run /review to analyze the diff for security, SQL safety, trust boundary violations, structural problems.
-
-**Codex cross-model review (MANDATORY):**
-Run `codex review --base <base-branch>` in parallel with the Claude ensemble.
-Include Codex findings in the unified report. Flag cross-model disagreements.
-
+Codex runs in parallel per the Ensemble Execution Rule.
 Present findings to the user before proceeding.
 
 ### Step 8: `/bugbot`
 
 Run /bugbot — fresh-eye subagent review of the diff.
-
-**Codex adversarial review (MANDATORY):**
-Run `codex review --base <base-branch>` with adversarial framing in parallel with the Claude ensemble.
-Codex challenges design choices, probes failure modes, and questions tradeoffs.
-
+Codex runs in parallel per the Ensemble Execution Rule.
 Clean → proceed. Critical found → fix first, re-run.
-User may say "skip bugbot" to skip.
 
 ### Step 9: `/ship`
 
