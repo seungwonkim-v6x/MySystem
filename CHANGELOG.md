@@ -3,6 +3,16 @@
 All notable changes to MySystem are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [4.1.0] - 2026-04-08
+
+### Changed
+- **Step Details rewritten**: every step now explicitly reads the relevant skill's SKILL.md, extracts the methodology, and inlines it into the /scion-ensemble task prompt. Prevents agents from ignoring ensemble and running solo.
+- **Methodology extraction pattern**: Gemini/Codex can now follow gstack skill methodologies (investigate 4-phase, review criteria, etc.) even though they can't read SKILL.md files directly — the methodology is embedded in the task prompt.
+- **No diff/non-diff distinction**: all steps use /scion-ensemble uniformly. Same prompt for all 4 agents.
+
+### Fixed
+- Agent was ignoring Ensemble Execution Rule and running skills directly (solo) because Step Details said "Run /investigate" without mentioning /scion-ensemble.
+
 ## [4.0.0] - 2026-04-08
 
 ### Added

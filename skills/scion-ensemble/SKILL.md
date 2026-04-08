@@ -56,11 +56,38 @@ If any agents matching the current step prefix exist (e.g., `review-claude-*`, `
 scion delete <stale-agent-name> -y
 ```
 
-### 1d. Prepare task prompt
+### 1d. Build task prompt with embedded methodology
 
-Take the user's task description as-is. Scion agents have access to the full codebase via their git worktree — they can read files, grep, and explore independently. Do not try to pre-digest context for them.
+The coordinator MUST read the relevant gstack skill file and extract its methodology into the task prompt. Scion agents (Gemini, Codex) cannot access gstack skills — the methodology must be inlined.
 
-For review/bugbot steps, optionally append `git diff main...HEAD` (truncated to 50KB) to help agents focus on the changed files. For all other steps, just pass the task.
+**Process:**
+1. Identify which skill this step maps to (e.g., /investigate, /review, /bugbot, /office-hours, /slow-down, etc.)
+2. Read the skill's SKILL.md from `~/.claude/skills/<skill-name>/SKILL.md`
+3. Extract the key methodology sections (phases, steps, evaluation criteria, output format)
+4. Build a self-contained prompt that includes:
+   - The user's task description
+   - The extracted methodology as instructions ("Follow these phases: ...")
+   - The structured output format from the skill
+   - For review/bugbot: append `git diff main...HEAD` (truncated to 50KB)
+
+**Example for /investigate:**
+```
+Investigate the root cause of this bug: <user's bug description>
+
+Follow this methodology:
+Phase 1 — Investigate: Gather evidence. Read error logs, trace code paths, identify the exact point of failure.
+Phase 2 — Analyze: Map the control flow. What triggers the bug? What are the preconditions?
+Phase 3 — Hypothesize: Form 2-3 hypotheses. Rank by likelihood. Identify what evidence would confirm/deny each.
+Phase 4 — Root Cause: State the root cause with evidence. No fixes without root cause.
+
+Output format:
+  ROOT_CAUSE: <one sentence>
+  EVIDENCE: <what you found that proves it>
+  LOCATION: file/path:line_number
+  FIX: <recommended fix>
+```
+
+The local Claude agent also gets this same prompt — consistency across all 4 agents makes synthesis easier. The local agent additionally has conversation context and gstack skills, giving it an edge.
 
 ### 1e. Generate run ID
 
@@ -72,21 +99,7 @@ All Scion agent names use this timestamp suffix to prevent collisions: `review-c
 
 ## Step 2: Spawn (4 agents in parallel)
 
-Build the task prompt from the user's task description. Then spawn all 4 agents simultaneously.
-
-### Task prompt
-
-Pass the same task to all 4 agents. Scion agents have full codebase access via their worktree. The local Claude agent has the current session context. No need to differentiate prompts — each agent approaches the task in its own way.
-
-For structured output, append to the task:
-
-```
-For each finding, output in this format:
-  SEVERITY: Critical | High | Medium | Low
-  LOCATION: file/path:line_number
-  DESCRIPTION: What is wrong / what you found
-  FIX: How to fix it / recommendation
-```
+Use the prompt built in Step 1d. All 4 agents get the same prompt (methodology + task + output format). Then spawn simultaneously.
 
 ### Spawn all 4
 

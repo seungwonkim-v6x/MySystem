@@ -87,74 +87,66 @@ Every code task goes through ALL 9 steps, in order:
 
 ## Step Details
 
+### How every step works (except /ship)
+
+**MANDATORY for EVERY step below:**
+1. Read the relevant gstack skill file from `~/.claude/skills/<skill-name>/SKILL.md`
+2. Extract the key methodology (phases, evaluation criteria, output format)
+3. Invoke /scion-ensemble with a prompt that includes: user's task + extracted methodology + structured output format
+4. All 4 agents (1 local + 3 Scion) get the SAME prompt with the methodology inlined
+5. Collect results, synthesize, present unified report
+6. Wait for user approval before proceeding to the next step
+
+DO NOT run the skill directly. DO NOT skip the ensemble. The skill file is a methodology source, not something you invoke — you extract its methodology and feed it to /scion-ensemble.
+
 ### Step 1: `/office-hours`
 
-Run /office-hours. Present the output to the user. Wait for approval before proceeding.
+Read `~/.claude/skills/office-hours/SKILL.md`. Extract the methodology.
+Invoke /scion-ensemble with the methodology + user's idea/problem. Present unified report. Wait for approval.
 
 ### Step 2: `/slow-down`
 
-Run /slow-down. Present the 5-step concretization to the user. Wait for approval before proceeding.
+Read `~/.claude/skills/slow-down/SKILL.md`. Extract the 5-step concretization process.
+Invoke /scion-ensemble. Present unified report. Wait for approval.
 
 ### Step 3: `/research`
 
-Run /search-first and /documentation-lookup to gather context before planning:
-- Search for existing solutions (npm, PyPI, MCP, GitHub)
-- Fetch up-to-date documentation for relevant libraries via Context7
-- Analyze the codebase for existing patterns that solve the problem
-
-Present findings to the user. Wait for approval before proceeding.
+Read `~/.claude/skills/search-first/SKILL.md` and `~/.claude/skills/documentation-lookup/SKILL.md`.
+Invoke /scion-ensemble with research methodology. Present unified report. Wait for approval.
 
 ### Step 4: `/autoplan`
 
-After research is complete, IMMEDIATELY run /autoplan. Do not ask. Do not skip.
-Even if the user already accepted a plan via ExitPlanMode, /autoplan still runs.
-Plan acceptance ≠ plan review. They are separate steps.
-
-Run /autoplan which executes sequentially:
-1. /plan-ceo-review — scope, ambition, strategy
-2. /plan-design-review — UI/UX scoring 0-10
-3. /plan-eng-review — architecture, edge cases, performance
-
-Present the review results to the user. Wait for approval before proceeding.
+Read `~/.claude/skills/autoplan/SKILL.md`. Extract the CEO + Design + Eng review methodology.
+Invoke /scion-ensemble. Present unified report. Wait for approval.
 
 ### Step 5: Implementation
 
-Write code. Project-specific CLAUDE.md defines lint, test, and other checks here.
-Runs via /scion-ensemble per the Ensemble Execution Rule (4-agent multi-model ensemble).
+Invoke /scion-ensemble with implementation task. Coordinator synthesizes the best approach and writes code.
+Project-specific CLAUDE.md defines lint, test, and other checks.
 
 ### Step 6: `/verify-test`
 
-Run /verify-test to generate throwaway code-based tests:
-- Analyze the diff to determine what was changed
-- Generate test files in /tmp (never in the project)
-- Run tests using the project's framework
-- Report results
-- Delete all test files
-
-If tests fail, fix the implementation and re-run. Do not fix the tests.
+Read `~/.claude/skills/verify-test/SKILL.md`. Extract the test generation methodology.
+Invoke /scion-ensemble. If tests fail, fix and re-run.
 
 ### Step 7: `/review`
 
-Run /review to analyze the diff for security, SQL safety, trust boundary violations, structural problems.
-Runs via /scion-ensemble per the Ensemble Execution Rule (4-agent multi-model ensemble).
-Present findings to the user before proceeding.
+Read `~/.claude/skills/review/SKILL.md`. Extract review criteria.
+Invoke /scion-ensemble with diff + review methodology. Present findings. Wait for approval.
 
 ### Step 8: `/bugbot`
 
-Run /bugbot — fresh-eye subagent review of the diff.
-Runs via /scion-ensemble per the Ensemble Execution Rule (4-agent multi-model ensemble).
-Clean → proceed. Critical found → fix first, re-run.
+Read `~/.claude/skills/bugbot/SKILL.md`. Extract fresh-eye bug review methodology.
+Invoke /scion-ensemble with diff + methodology. Clean → proceed. Critical → fix first.
 
 ### Step 9: `/ship`
 
-Run /ship to commit, push, create PR.
-Or use project-specific shipping workflow.
+Run /ship directly. This is the ONLY step that does NOT use /scion-ensemble.
 
 ### `/investigate`
 
-Run /investigate when the user reports a bug, error, or unexpected behavior.
-Iron Law: no fixes without root cause.
-4 phases: investigate → analyze → hypothesize → implement.
+Read `~/.claude/skills/investigate/SKILL.md`. Extract 4-phase methodology.
+Invoke /scion-ensemble with bug description + methodology. Iron Law: no fixes without root cause.
 
 ### `/retro`
 
