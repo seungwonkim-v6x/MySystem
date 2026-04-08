@@ -15,29 +15,25 @@ Every step below is MANDATORY and runs in order.
 
 ## Ensemble Execution Rule
 
-**Every workflow step** (except Implementation and /ship) MUST be executed as an ensemble:
+**Every workflow step** (except /ship) MUST be executed via the `/scion-ensemble` skill.
+No exceptions. No "I'll just do it myself." Invoke the skill FIRST, THEN act on the results.
 
-1. Spawn **3-5** Claude subagents (model: **sonnet**), each with a **paraphrased variation** of the same task
-   - Same goal and context, but vary the phrasing, emphasis, or angle
-   - e.g., one asks "find bugs", another "what could break in production", another "trace edge cases"
-   - Variation increases diversity of findings beyond LLM non-determinism alone
-   - Use `model: "sonnet"` when spawning via Agent tool — saves cost, Opus stays as coordinator only
-2. Run **Codex** in parallel as a cross-model voice:
-   - For review/analysis steps: `codex review --base <base-branch>` or `codex exec "<task>" --read-only`
-   - For implementation: `codex exec "<task>" --write` (produces version B alongside Claude's version A)
-   - Codex findings are included in the unified report as a separate "Cross-Model" section
-3. Each subagent has fresh context — no shared state between them
-4. After all complete, the coordinator synthesizes:
-   - Deduplicate overlapping findings from Claude ensemble
-   - Merge Codex findings — flag cross-model disagreements prominently
-   - Rank by severity/importance
-5. Present **one unified report** to the user
+1. Invoke `/scion-ensemble` with the step name and task description
+2. The skill spawns a **4-agent ensemble** in parallel:
+   - 1 local Claude (Agent tool, sonnet) — has full project context, gstack skills, uncommitted changes
+   - 3 Scion containers: Claude Opus + Gemini 2.5 Pro + Codex — isolated, fresh perspective, own git worktrees
+3. Each agent independently executes the task
+4. Results are collected, deduplicated, and categorized:
+   - **Consensus**: findings 2+ agents agree on (high confidence)
+   - **Unique catches**: findings only 1 agent caught (tagged by model)
+   - **Disagreements**: agents contradict each other (user decides)
+5. Present unified report to the user
 
-The underlying skill (gstack or custom) is a black box.
-MySystem controls **how many times** it runs, not how it runs internally.
+**Fallback**: If Scion is unavailable (Docker not running, no credentials), the skill
+degrades to local-only Agent tool ensemble (3 sonnet subagents) and warns the user.
 
-Why: LLM non-determinism means each run finds different things. Running N times
-gives broader coverage than running once. This is the core leverage of the system.
+Why: Different models catch different failure modes. 4 agents across 3 vendors
+gives genuine epistemic diversity, not just LLM non-determinism within one model.
 
 ---
 
@@ -124,7 +120,7 @@ Present the review results to the user. Wait for approval before proceeding.
 ### Step 5: Implementation
 
 Write code. Project-specific CLAUDE.md defines lint, test, and other checks here.
-Codex runs in parallel per the Ensemble Execution Rule (produces version B).
+Runs via /scion-ensemble per the Ensemble Execution Rule (4-agent multi-model ensemble).
 
 ### Step 6: `/verify-test`
 
@@ -140,13 +136,13 @@ If tests fail, fix the implementation and re-run. Do not fix the tests.
 ### Step 7: `/review`
 
 Run /review to analyze the diff for security, SQL safety, trust boundary violations, structural problems.
-Codex runs in parallel per the Ensemble Execution Rule.
+Runs via /scion-ensemble per the Ensemble Execution Rule (4-agent multi-model ensemble).
 Present findings to the user before proceeding.
 
 ### Step 8: `/bugbot`
 
 Run /bugbot — fresh-eye subagent review of the diff.
-Codex runs in parallel per the Ensemble Execution Rule.
+Runs via /scion-ensemble per the Ensemble Execution Rule (4-agent multi-model ensemble).
 Clean → proceed. Critical found → fix first, re-run.
 
 ### Step 9: `/ship`
