@@ -35,9 +35,6 @@ MySystem controls **how many times** it runs, not how it runs internally.
 Why: LLM non-determinism means each run finds different things. Running N times
 gives broader coverage than running once. This is the core leverage of the system.
 
-Why: LLM non-determinism means each run finds different things. Running N times
-gives broader coverage than running once. This is the core leverage of the system.
-
 ---
 
 ## Complete Workflow
@@ -128,6 +125,11 @@ User may say "skip autoplan" or "skip plan" to skip.
 
 Write code. Project-specific CLAUDE.md defines lint, test, and other checks here.
 
+**Codex dual-implementation (MANDATORY):**
+1. Claude (Opus) implements version A
+2. Run `codex exec "<task description>" -C "$(git rev-parse --show-toplevel)" --write` for version B in background
+3. Compare both approaches — user picks the better one or merges the best parts
+
 ### Step 6: `/verify-test`
 
 Run /verify-test to generate throwaway code-based tests:
@@ -142,11 +144,21 @@ If tests fail, fix the implementation and re-run. Do not fix the tests.
 ### Step 7: `/review`
 
 Run /review to analyze the diff for security, SQL safety, trust boundary violations, structural problems.
+
+**Codex cross-model review (MANDATORY):**
+Run `codex review --base <base-branch>` in parallel with the Claude ensemble.
+Include Codex findings in the unified report. Flag cross-model disagreements.
+
 Present findings to the user before proceeding.
 
 ### Step 8: `/bugbot`
 
 Run /bugbot — fresh-eye subagent review of the diff.
+
+**Codex adversarial review (MANDATORY):**
+Run `codex review --base <base-branch>` with adversarial framing in parallel with the Claude ensemble.
+Codex challenges design choices, probes failure modes, and questions tradeoffs.
+
 Clean → proceed. Critical found → fix first, re-run.
 User may say "skip bugbot" to skip.
 
