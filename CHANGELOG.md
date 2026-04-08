@@ -3,6 +3,17 @@
 All notable changes to MySystem are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [4.2.0] - 2026-04-08
+
+### Changed
+- **Complete CLAUDE.md rewrite**: reduced from 190 lines to 70 lines. One rule at the top: "your first tool call is /scion-ensemble". Everything else supports that one rule.
+- **"THE ONE RULE" pattern**: instead of 10+ CRITICAL/NEVER/MANDATORY directives that agents ignore, one clear behavioral instruction that's impossible to misinterpret.
+- **Table-based step details**: replaced verbose per-step prose with a compact table mapping step → skill file → what to extract.
+- **Removed redundant rules**: "ZERO discretion", "NEVER skip", "NEVER reorder" etc. all consolidated into workflow ordering + "user interrupts if they want to skip".
+
+### Fixed
+- Agent was reasoning "this is overkill" and skipping ensemble because the old CLAUDE.md had too many rules competing for attention. New version has one rule.
+
 ## [4.1.0] - 2026-04-08
 
 ### Changed
