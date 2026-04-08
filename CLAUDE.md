@@ -11,6 +11,13 @@ Every step below is MANDATORY and runs in order.
 - NEVER suggest skipping. Just run the next step immediately.
 - If the user wants to skip, THEY will interrupt you. That's their job, not yours.
 
+**CRITICAL RULE: Ensemble execution is NOT optional.**
+Every workflow step (except Implementation and /ship) MUST spawn 3-5 subagents.
+- NEVER run a step with just 1 agent. That violates the ensemble rule.
+- NEVER rationalize "this is simple enough for 1 agent" or "context is limited."
+- If you catch yourself about to run a skill directly instead of spawning subagents, STOP.
+  Spawn the subagents first.
+
 ---
 
 ## Ensemble Execution Rule
