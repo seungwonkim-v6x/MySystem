@@ -135,16 +135,25 @@ Each step: coordinator spawns custom subagents (defined in `~/.claude/agents/`) 
 | /bugbot | 3x `bug-hunter` (varied angles) | Fresh-eye bug review |
 | /ship | Run directly — without ensemble | |
 
-### /autoplan — Role-Based Ensemble
+### /autoplan — Two-Phase: Plan First, Then Review
 
-/autoplan is the ONE exception to the standard ensemble pattern. Instead of 3 agents running the same skill with varied angles, each agent runs a **different** custom subagent:
+/autoplan has TWO phases. The coordinator MUST NOT skip phase 1.
 
-| Subagent file | Role |
+**Phase 1: Write the plan and get user approval**
+1. Coordinator uses `EnterPlanMode` to explore the codebase and write a detailed implementation plan
+2. Coordinator presents the plan to the user via `ExitPlanMode`
+3. **User must approve the plan before phase 2 begins**
+4. The coordinator does NOT write its own inline summary to pass to reviewers — the approved plan IS the input
+
+**Phase 2: Review the approved plan with 3 role-based subagents**
+
+| subagent_type | Role |
 |---------------|------|
-| `~/.claude/agents/ceo-reviewer.md` | CEO/founder-mode: scope, ambition, strategy |
-| `~/.claude/agents/design-reviewer.md` | Designer's eye: UI/UX scoring 0-10 |
-| `~/.claude/agents/eng-reviewer.md` | Eng manager: architecture, edge cases, performance |
+| `ceo-reviewer` | CEO/founder-mode: scope, ambition, strategy |
+| `design-reviewer` | Designer's eye: UI/UX scoring 0-10 |
+| `eng-reviewer` | Eng manager: architecture, edge cases, performance |
 
+Each subagent's `prompt` MUST include the **full approved plan text** (not a summary, not an inline rewrite).
 All 3 spawn in parallel (single message). Coordinator waits for ALL 3, synthesizes, presents, waits for user approval.
 
 ### Implementation — Coordinator Direct
