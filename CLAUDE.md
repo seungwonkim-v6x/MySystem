@@ -73,14 +73,17 @@ The `prompt` string is the **ONLY channel** from coordinator to subagent. The su
 | subagent_type | Preloaded skills | Used in |
 |---------------|-----------------|---------|
 | `investigator` | investigate | /investigate |
+| `office-hours` | office-hours | /office-hours |
+| `slow-downer` | slow-down | /slow-down |
 | `researcher` | search-first, documentation-lookup | /research |
 | `ceo-reviewer` | plan-ceo-review | /autoplan |
 | `design-reviewer` | plan-design-review | /autoplan |
 | `eng-reviewer` | plan-eng-review | /autoplan |
+| `test-verifier` | verify-test | /verify-test |
 | `code-reviewer` | review | /review |
 | `bug-hunter` | bugbot | /bugbot |
 
-Steps without a dedicated subagent (/office-hours, /slow-down, /verify-test) use `Agent(model: "opus")` with inline prompt referencing the skill file.
+Every ensemble step has a dedicated subagent. No generic Agent calls allowed.
 
 ---
 
@@ -134,17 +137,17 @@ Every code task goes through ALL 9 steps, in order:
 
 ## Step Details
 
-Each step: coordinator spawns custom subagents (defined in `~/.claude/agents/`) → each subagent reads its SKILL.md and runs the full methodology internally → coordinator waits for ALL → synthesizes → presents → waits for user approval.
+Each step: coordinator spawns custom subagents (defined in `~/.claude/agents/`) → each subagent has its skill preloaded via `skills:` frontmatter → coordinator waits for ALL → synthesizes → presents → waits for user approval.
 
 | Step | Subagent(s) to use | Notes |
 |------|--------------------|-------|
 | /investigate | 3x `investigator` (varied angles) | 4-phase root cause methodology |
-| /office-hours | 3x generic (varied angles) | Skill: `~/.claude/skills/office-hours/SKILL.md` |
-| /slow-down | 3x generic (varied angles) | Skill: `~/.claude/skills/slow-down/SKILL.md` |
+| /office-hours | 3x `office-hours` (varied angles) | Idea validation methodology |
+| /slow-down | 3x `slow-downer` (varied angles) | 5-step concretization process |
 | /research | 3x `researcher` (varied angles) | Research-before-coding workflow |
 | /autoplan | `ceo-reviewer` + `design-reviewer` + `eng-reviewer` | Role-based (see below) |
 | Implementation | Coordinator runs directly (no ensemble) | Project-specific lint, test, etc. |
-| /verify-test | 3x generic (varied angles) | Skill: `~/.claude/skills/verify-test/SKILL.md` |
+| /verify-test | 3x `test-verifier` (varied angles) | Throwaway test generation |
 | /review | 3x `code-reviewer` (varied angles) | Security, SQL safety, structure |
 | /bugbot | 3x `bug-hunter` (varied angles) | Fresh-eye bug review |
 | /ship | Run directly — without ensemble | |

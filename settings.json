@@ -3,7 +3,11 @@
     "allow": [
       "Read(//Users/seungwonkim/.claude/**)",
       "WebFetch(domain:claude.com)",
-      "WebSearch"
+      "WebSearch",
+      "mcp__notion__notion-fetch",
+      "Bash(python3 -c ':*)",
+      "Read(//Users/seungwonkim/Documents/vprop/**)",
+      "Bash(~/.claude/skills/gstack/bin/gstack-review-read)"
     ],
     "additionalDirectories": [
       "/Users/seungwonkim/.claude"
@@ -27,5 +31,18 @@
     "coderabbit@claude-plugins-official": true,
     "skill-creator@claude-plugins-official": true
   },
-  "effortLevel": "high"
+  "effortLevel": "high",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/require-subagent-type.sh"
+          }
+        ]
+      }
+    ]
+  }
 }

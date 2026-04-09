@@ -3,6 +3,16 @@
 All notable changes to MySystem are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [5.5.0] - 2026-04-09
+
+### Added
+- **3 new custom subagents**: `office-hours`, `slow-downer`, `test-verifier` — every ensemble step now has a dedicated subagent with preloaded skills
+- **PreToolUse hook** (`require-subagent-type.sh`): Blocks Agent calls without `subagent_type`. Hard enforcement — coordinator cannot bypass by using generic Agent(model: "opus")
+
+### Changed
+- Step Details table: all steps now reference named subagents, no more "generic" entries
+- All 10 subagents have `skills:` frontmatter for automatic SKILL.md preloading
+
 ## [5.4.2] - 2026-04-09
 
 ### Fixed
