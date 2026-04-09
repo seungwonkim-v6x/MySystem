@@ -1,3 +1,31 @@
 {
-  "model": "opus[1m]"
+  "permissions": {
+    "allow": [
+      "Read(//Users/seungwonkim/.claude/**)",
+      "WebFetch(domain:claude.com)",
+      "WebSearch"
+    ],
+    "additionalDirectories": [
+      "/Users/seungwonkim/.claude"
+    ]
+  },
+  "model": "opus[1m]",
+  "enabledPlugins": {
+    "frontend-design@claude-plugins-official": true,
+    "superpowers@claude-plugins-official": false,
+    "context7@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true,
+    "code-simplifier@claude-plugins-official": true,
+    "github@claude-plugins-official": true,
+    "feature-dev@claude-plugins-official": false,
+    "playwright@claude-plugins-official": true,
+    "ralph-loop@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true,
+    "figma@claude-plugins-official": true,
+    "supabase@claude-plugins-official": true,
+    "stripe@claude-plugins-official": true,
+    "coderabbit@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true
+  },
+  "effortLevel": "high"
 }
