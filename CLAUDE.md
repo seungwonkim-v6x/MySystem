@@ -90,9 +90,9 @@ Every code task goes through ALL 9 steps, in order:
        ↓  (wait for user approval)
 3. /research             ← search docs, codebase, existing solutions (ensemble)
        ↓  (wait for user approval)
-4. /autoplan             ← full plan review: CEO + Design + Eng (ensemble)
+4. /autoplan             ← plan review: 3 subagents = CEO + Design + Eng (role-based ensemble)
        ↓  (wait for user approval)
-5. Implementation        ← write code (project-specific: lint, test, etc.)
+5. Implementation        ← write code — coordinator directly (no ensemble)
        ↓  (wait for user approval)
 6. /verify-test          ← generate throwaway tests, run, delete (ensemble)
        ↓  (wait for user approval)
@@ -112,9 +112,9 @@ Every code task goes through ALL 9 steps, in order:
        ↓  (wait for user approval)
 3. /research             ← search docs, similar issues, existing patterns (ensemble)
        ↓  (wait for user approval)
-4. /autoplan             ← plan the fix (ensemble)
+4. /autoplan             ← plan the fix: 3 subagents = CEO + Design + Eng (role-based ensemble)
        ↓  (wait for user approval)
-5. Implementation → /verify-test → /review → /bugbot → /ship
+5. Implementation (coordinator direct) → /verify-test → /review → /bugbot → /ship
 ```
 
 ### Weekly Retrospective
@@ -135,12 +135,28 @@ Each step: coordinator spawns subagents → subagents read SKILL.md and run full
 | /office-hours | `~/.claude/skills/office-hours/SKILL.md` | Idea validation methodology |
 | /slow-down | `~/.claude/skills/slow-down/SKILL.md` | 5-step concretization process |
 | /research | `~/.claude/skills/search-first/SKILL.md` | Research-before-coding workflow |
-| /autoplan | `~/.claude/skills/autoplan/SKILL.md` | CEO + Design + Eng review |
-| Implementation | (no skill file) | Implementation task description |
+| /autoplan | **Role-based ensemble** (see below) | CEO + Design + Eng review |
+| Implementation | Coordinator runs directly (no ensemble) | Project-specific lint, test, etc. |
 | /verify-test | `~/.claude/skills/verify-test/SKILL.md` | Throwaway test generation |
 | /review | `~/.claude/skills/review/SKILL.md` | Code review criteria |
 | /bugbot | `~/.claude/skills/bugbot/SKILL.md` | Fresh-eye bug review |
 | /ship | Run directly — without ensemble | |
+
+### /autoplan — Role-Based Ensemble
+
+/autoplan is the ONE exception to the standard ensemble pattern. Instead of 3 agents running the same skill with varied angles, each agent runs a **different** skill:
+
+| Subagent | Skill file to read | Role |
+|----------|--------------------|------|
+| Agent 1 | `~/.claude/skills/plan-ceo-review/SKILL.md` | CEO/founder-mode: scope, ambition, strategy |
+| Agent 2 | `~/.claude/skills/plan-design-review/SKILL.md` | Designer's eye: UI/UX scoring 0-10 |
+| Agent 3 | `~/.claude/skills/plan-eng-review/SKILL.md` | Eng manager: architecture, edge cases, performance |
+
+All 3 spawn in parallel (single message). Coordinator waits for ALL 3, synthesizes, presents, waits for user approval.
+
+### Implementation — Coordinator Direct
+
+The coordinator runs Implementation directly (no subagents). Only the coordinator has file write permissions. Project-specific CLAUDE.md defines lint, test, and other checks.
 
 ---
 

@@ -3,6 +3,12 @@
 All notable changes to MySystem are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [5.2.0] - 2026-04-09
+
+### Changed
+- **/autoplan**: 동일 스킬 3회 반복 → 역할별 서브에이전트 (Agent 1=CEO, Agent 2=Design, Agent 3=Eng). 각 서브에이전트가 해당 역할의 SKILL.md를 직접 읽고 실행.
+- **Implementation**: 앙상블에서 제외, 코디네이터가 직접 실행 (파일 쓰기 권한 필요)
+
 ## [5.1.0] - 2026-04-09
 
 ### Changed
