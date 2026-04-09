@@ -3,6 +3,28 @@
 All notable changes to MySystem are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [5.0.0] - 2026-04-09
+
+### Changed
+- **Base reverted to v3.3.0**: Scion 기반 v4.x 아키텍처 롤백. Step-detail 테이블(v4.2.0)은 유지.
+- **Ensemble fixed at 5 perspectives**: 3 Claude sonnet subagents + Codex CLI + Gemini CLI. "3-5" 가변 범위 제거.
+- **Codex CLI 플래그 현행화**: `--read-only` → `-s read-only`, `--write` → `-s workspace-write` (Codex v0.118.0)
+- **Repo Self-Management**: skill sync를 copy에서 symlink으로 변경
+
+### Added
+- **Gemini CLI v0.36.0**: Codex와 함께 cross-model voice로 추가 (`gemini -p "<prompt>" --approval-mode plan -o text`)
+- **Graceful degradation**: Codex/Gemini CLI 실패 시 Claude 앙상블만으로 진행
+- **Long diff 처리**: tmp 파일 + stdin 파이프 패턴 명시
+
+### Removed
+- **Scion CLI 의존성**: "THE ONE RULE" (scion-ensemble 강제 호출) 제거
+- **Docker/Scion container 기반 앙상블**: 4-agent Scion 아키텍처 전면 제거
+- **Per-step 산문 설명**: step-detail 테이블로 대체
+
+### Fixed
+- v4.x 워크플로우가 Scion 미설치로 매 세션 실패하던 문제 해결
+- Codex CLI v0.118.0과의 플래그 호환성 수정
+
 ## [4.2.0] - 2026-04-08
 
 ### Changed
