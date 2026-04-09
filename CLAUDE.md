@@ -23,31 +23,26 @@ The user must explicitly say "ok", "approved", "next", "go" or similar before yo
 
 ### Subagent Execution Model
 
-Subagents are NOT summarizers. Each subagent **reads the skill file itself and runs the full methodology internally**.
+Subagents are defined in `~/.claude/agents/` as markdown files with frontmatter. Each subagent has its own model, tools, permissions, and **preloaded skills** (via `skills:` frontmatter — the skill methodology is loaded into the subagent's context at startup, so it does NOT need to read SKILL.md files).
 
-The coordinator's job is to:
-1. Tell each subagent what task to perform and which skill to follow
-2. Provide full task context (never truncated, never summarized to 300 chars)
-3. Wait for ALL to complete
-4. Synthesize the combined results
+The coordinator invokes subagents via the **Agent tool** with `subagent_type` parameter:
+```
+Agent(subagent_type: "code-reviewer", prompt: "<full task context>")
+```
 
-The coordinator does NOT:
-- Extract methodology from SKILL.md and paste it into a short prompt
-- Summarize or truncate the task description
-- Move on after only 1-2 agents respond
+The `prompt` string is the **ONLY channel** from coordinator to subagent. The subagent does NOT receive the coordinator's conversation history. All task context must be in the prompt.
 
 ### Execution Steps
 
-1. **Spawn 3 Claude subagents** (model: **opus**) in a **single message** (all 3 as parallel Agent tool calls)
-   - Each subagent prompt MUST include:
-     - The full task description with all relevant context
-     - The instruction: "Read `~/.claude/skills/<skill>/SKILL.md` and follow its methodology completely"
-     - A varied angle/perspective to increase diversity of findings
-   - Subagent prompts must be detailed and complete — never fewer than several sentences
+1. **Spawn 3 subagents** in a **single message** (all 3 as parallel Agent tool calls)
+   - Use `subagent_type` to invoke the correct custom agent (e.g., `"investigator"`, `"code-reviewer"`)
+   - The `prompt` MUST include the full task description with all relevant context
+   - For standard ensemble: same subagent_type x3 with varied angles in prompt
+   - For /autoplan: different subagent_type per agent (ceo-reviewer, design-reviewer, eng-reviewer)
 
 2. **WAIT FOR ALL** — NEVER synthesize or present results until every subagent has returned
    - Do NOT proceed after 1 or 2 agents return. Wait for ALL 3 subagents.
-   - All 3 Claude subagents are non-negotiable. No partial results.
+   - All 3 subagents are non-negotiable. No partial results.
 
 3. **Synthesize** — after ALL 3 agents return:
    - Deduplicate overlapping findings
@@ -57,23 +52,21 @@ The coordinator does NOT:
 
 4. **STOP** — present the report and **wait for explicit user approval** before the next workflow step.
 
-**Total: 3 perspectives** — 3 Claude opus subagents, each running the full skill methodology independently.
+**Total: 3 perspectives** — 3 custom subagents, each with preloaded skill methodology.
 
-### Subagent Prompt Template
+### Available Custom Subagents
 
-Each subagent prompt should follow this pattern:
+| subagent_type | Preloaded skills | Used in |
+|---------------|-----------------|---------|
+| `investigator` | investigate | /investigate |
+| `researcher` | search-first, documentation-lookup | /research |
+| `ceo-reviewer` | plan-ceo-review | /autoplan |
+| `design-reviewer` | plan-design-review | /autoplan |
+| `eng-reviewer` | plan-eng-review | /autoplan |
+| `code-reviewer` | review | /review |
+| `bug-hunter` | bugbot | /bugbot |
 
-```
-You are performing /<skill-name> for this task.
-
-TASK: <full task description — all context the coordinator has>
-
-INSTRUCTIONS:
-- Read the skill file at ~/.claude/skills/<skill>/SKILL.md
-- Follow its methodology completely
-- Provide your full analysis — do not summarize or truncate
-- <varied angle: e.g., "Focus on edge cases" or "Focus on security implications" or "Challenge assumptions">
-```
+Steps without a dedicated subagent (/office-hours, /slow-down, /verify-test) use `Agent(model: "opus")` with inline prompt referencing the skill file.
 
 ---
 

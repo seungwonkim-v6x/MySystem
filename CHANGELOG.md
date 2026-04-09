@@ -3,62 +3,74 @@
 All notable changes to MySystem are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [5.4.0] - 2026-04-09
+
+### Changed
+- **Correct subagent invocation**: Rewrite CLAUDE.md to use `Agent(subagent_type: "name")` pattern
+- **Skills preloading**: Add `skills:` frontmatter to agent files — SKILL.md content is preloaded at session start, no runtime file reads needed
+- **Agent frontmatter hardened**: Add `permissionMode: dontAsk`, `effort: high` to all agent definitions
+- **Execution Steps / Step Details consistency**: Both now unified around `subagent_type` invocation
+
+### Fixed
+- Disconnect between Execution Steps (inline prompts) and Step Details (custom agent names) resolved
+- Subagents no longer need to read SKILL.md at runtime — replaced with skills preloading
+
 ## [5.3.0] - 2026-04-09
 
 ### Added
-- **Custom Subagents** (`~/.claude/agents/`): 7개 전용 서브에이전트 파일 생성
-  - `ceo-reviewer.md`, `design-reviewer.md`, `eng-reviewer.md` (autoplan 역할별)
-  - `code-reviewer.md`, `bug-hunter.md` (review/bugbot 전용)
-  - `investigator.md`, `researcher.md` (investigate/research 전용)
-- 각 에이전트가 model, tools, instructions를 자체 내장 — 매번 프롬프트 전달 불필요
+- **Custom Subagents** (`~/.claude/agents/`): 7 dedicated subagent definitions created
+  - `ceo-reviewer.md`, `design-reviewer.md`, `eng-reviewer.md` (role-based for /autoplan)
+  - `code-reviewer.md`, `bug-hunter.md` (dedicated for /review and /bugbot)
+  - `investigator.md`, `researcher.md` (dedicated for /investigate and /research)
+- Each agent embeds its own model, tools, and instructions — no more passing long prompts at runtime
 
 ### Changed
-- Step Details 테이블: skill file 참조 → custom subagent 참조로 전환
-- 서브에이전트 호출 방식: Agent tool + 긴 프롬프트 → 사전 정의된 `.claude/agents/` 파일 사용
+- Step Details table: skill file references replaced with custom subagent references
+- Subagent invocation: Agent tool + inline prompts replaced with pre-defined `.claude/agents/` files
 
 ## [5.2.0] - 2026-04-09
 
 ### Changed
-- **/autoplan**: 동일 스킬 3회 반복 → 역할별 서브에이전트 (Agent 1=CEO, Agent 2=Design, Agent 3=Eng). 각 서브에이전트가 해당 역할의 SKILL.md를 직접 읽고 실행.
-- **Implementation**: 앙상블에서 제외, 코디네이터가 직접 실행 (파일 쓰기 권한 필요)
+- **/autoplan**: Same skill x3 replaced with role-based subagents (Agent 1=CEO, Agent 2=Design, Agent 3=Eng). Each subagent reads and executes its own role's SKILL.md.
+- **Implementation**: Excluded from ensemble, coordinator runs directly (needs file write permissions)
 
 ## [5.1.0] - 2026-04-09
 
 ### Changed
-- **Opus-only ensemble**: 서브에이전트 모델을 sonnet → opus로 변경. Codex CLI, Gemini CLI 제거 (불안정).
-- **서브에이전트가 스킬을 직접 실행**: 코디네이터가 methodology를 요약/추출하지 않음. 각 서브에이전트가 SKILL.md를 직접 읽고 full methodology 실행.
-- **3 perspectives 고정**: 3 opus subagents. 코디네이터는 합성만 담당.
+- **Opus-only ensemble**: Subagent model changed from sonnet to opus. Codex CLI and Gemini CLI removed (unstable).
+- **Subagents run skills internally**: Coordinator no longer extracts/summarizes methodology. Each subagent reads SKILL.md and runs the full methodology itself.
+- **Fixed at 3 perspectives**: 3 opus subagents. Coordinator only synthesizes.
 
 ### Fixed
-- 서브에이전트 응답 1개만 오면 나머지 기다리지 않고 정리하던 문제 → ALL 3 반드시 대기
-- 사용자 승인 없이 다음 워크플로우 단계로 넘어가던 문제 → 매 단계 후 명시적 승인 대기
-- 서브에이전트 프롬프트가 300자 수준으로 잘리던 문제 → full context + "SKILL.md를 직접 읽어라" 지시
+- Coordinator was proceeding after only 1 subagent returned — now waits for ALL 3
+- Coordinator was advancing to next workflow step without user approval — now requires explicit approval after every step
+- Subagent prompts were truncated to ~300 chars — now require full context + "read SKILL.md yourself" instruction
 
 ### Removed
-- Codex CLI 통합 (호출 불안정)
-- Gemini CLI 통합 (호출 불안정)
+- Codex CLI integration (unstable invocation)
+- Gemini CLI integration (unstable invocation)
 
 ## [5.0.0] - 2026-04-09
 
 ### Changed
-- **Base reverted to v3.3.0**: Scion 기반 v4.x 아키텍처 롤백. Step-detail 테이블(v4.2.0)은 유지.
-- **Ensemble fixed at 5 perspectives**: 3 Claude sonnet subagents + Codex CLI + Gemini CLI. "3-5" 가변 범위 제거.
-- **Codex CLI 플래그 현행화**: `--read-only` → `-s read-only`, `--write` → `-s workspace-write` (Codex v0.118.0)
-- **Repo Self-Management**: skill sync를 copy에서 symlink으로 변경
+- **Base reverted to v3.3.0**: Rolled back Scion-based v4.x architecture. Step-detail table (v4.2.0) retained.
+- **Ensemble fixed at 5 perspectives**: 3 Claude sonnet subagents + Codex CLI + Gemini CLI. Removed "3-5" variable range.
+- **Codex CLI flags updated**: `--read-only` to `-s read-only`, `--write` to `-s workspace-write` (Codex v0.118.0)
+- **Repo Self-Management**: Skill sync changed from copy to symlink
 
 ### Added
-- **Gemini CLI v0.36.0**: Codex와 함께 cross-model voice로 추가 (`gemini -p "<prompt>" --approval-mode plan -o text`)
-- **Graceful degradation**: Codex/Gemini CLI 실패 시 Claude 앙상블만으로 진행
-- **Long diff 처리**: tmp 파일 + stdin 파이프 패턴 명시
+- **Gemini CLI v0.36.0**: Added as cross-model voice alongside Codex (`gemini -p "<prompt>" --approval-mode plan -o text`)
+- **Graceful degradation**: Continue with Claude ensemble alone if Codex/Gemini CLI fails
+- **Long diff handling**: tmp file + stdin pipe pattern documented
 
 ### Removed
-- **Scion CLI 의존성**: "THE ONE RULE" (scion-ensemble 강제 호출) 제거
-- **Docker/Scion container 기반 앙상블**: 4-agent Scion 아키텍처 전면 제거
-- **Per-step 산문 설명**: step-detail 테이블로 대체
+- **Scion CLI dependency**: "THE ONE RULE" (mandatory scion-ensemble first call) removed
+- **Docker/Scion container ensemble**: 4-agent Scion architecture fully removed
+- **Per-step prose descriptions**: Replaced with step-detail table
 
 ### Fixed
-- v4.x 워크플로우가 Scion 미설치로 매 세션 실패하던 문제 해결
-- Codex CLI v0.118.0과의 플래그 호환성 수정
+- v4.x workflow failing every session due to Scion CLI not being installed
+- Codex CLI v0.118.0 flag compatibility
 
 ## [4.2.0] - 2026-04-08
 
