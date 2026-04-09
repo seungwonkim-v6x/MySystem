@@ -34,11 +34,25 @@ The `prompt` string is the **ONLY channel** from coordinator to subagent. The su
 
 ### Execution Steps
 
+**CRITICAL: You MUST use `subagent_type` to invoke custom agents. Do NOT use generic `Agent(model: "opus", prompt: "...")`.** The custom agents have preloaded skills — without `subagent_type`, those skills are NOT loaded and the subagent runs blind.
+
 1. **Spawn 3 subagents** in a **single message** (all 3 as parallel Agent tool calls)
-   - Use `subagent_type` to invoke the correct custom agent (e.g., `"investigator"`, `"code-reviewer"`)
+   - **ALWAYS** use `subagent_type` parameter — NEVER spawn a generic agent for steps that have a dedicated subagent
    - The `prompt` MUST include the full task description with all relevant context
    - For standard ensemble: same subagent_type x3 with varied angles in prompt
    - For /autoplan: different subagent_type per agent (ceo-reviewer, design-reviewer, eng-reviewer)
+
+   **Correct** (bugbot example):
+   ```
+   Agent(subagent_type: "bug-hunter", prompt: "Review changes on branch X for bugs. <full context>")
+   Agent(subagent_type: "bug-hunter", prompt: "Review changes on branch X. Focus on edge cases. <full context>")
+   Agent(subagent_type: "bug-hunter", prompt: "Review changes on branch X. Try to break it. <full context>")
+   ```
+
+   **WRONG** — never do this:
+   ```
+   Agent(model: "opus", prompt: "You are a bug hunter. Review...")
+   ```
 
 2. **WAIT FOR ALL** — NEVER synthesize or present results until every subagent has returned
    - Do NOT proceed after 1 or 2 agents return. Wait for ALL 3 subagents.

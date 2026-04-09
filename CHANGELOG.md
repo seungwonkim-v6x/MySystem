@@ -3,6 +3,11 @@
 All notable changes to MySystem are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [5.4.2] - 2026-04-09
+
+### Fixed
+- **Enforce subagent_type usage**: Added CRITICAL rule + correct/wrong examples to prevent coordinator from ignoring custom subagents and spawning generic `Agent(model: "opus")` with inline prompts instead
+
 ## [5.4.1] - 2026-04-09
 
 ### Fixed
