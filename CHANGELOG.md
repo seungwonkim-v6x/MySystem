@@ -3,6 +3,22 @@
 All notable changes to MySystem are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [5.1.0] - 2026-04-09
+
+### Changed
+- **Opus-only ensemble**: 서브에이전트 모델을 sonnet → opus로 변경. Codex CLI, Gemini CLI 제거 (불안정).
+- **서브에이전트가 스킬을 직접 실행**: 코디네이터가 methodology를 요약/추출하지 않음. 각 서브에이전트가 SKILL.md를 직접 읽고 full methodology 실행.
+- **3 perspectives 고정**: 3 opus subagents. 코디네이터는 합성만 담당.
+
+### Fixed
+- 서브에이전트 응답 1개만 오면 나머지 기다리지 않고 정리하던 문제 → ALL 3 반드시 대기
+- 사용자 승인 없이 다음 워크플로우 단계로 넘어가던 문제 → 매 단계 후 명시적 승인 대기
+- 서브에이전트 프롬프트가 300자 수준으로 잘리던 문제 → full context + "SKILL.md를 직접 읽어라" 지시
+
+### Removed
+- Codex CLI 통합 (호출 불안정)
+- Gemini CLI 통합 (호출 불안정)
+
 ## [5.0.0] - 2026-04-09
 
 ### Changed
