@@ -127,30 +127,30 @@ Every code task goes through ALL 9 steps, in order:
 
 ## Step Details
 
-Each step: coordinator spawns subagents → subagents read SKILL.md and run full methodology → coordinator waits for ALL → synthesizes → presents → waits for user approval.
+Each step: coordinator spawns custom subagents (defined in `~/.claude/agents/`) → each subagent reads its SKILL.md and runs the full methodology internally → coordinator waits for ALL → synthesizes → presents → waits for user approval.
 
-| Step | Skill file (subagents read this internally) | What to extract |
-|------|--------------------|-----------------|
-| /investigate | `~/.claude/skills/investigate/SKILL.md` | 4-phase root cause methodology |
-| /office-hours | `~/.claude/skills/office-hours/SKILL.md` | Idea validation methodology |
-| /slow-down | `~/.claude/skills/slow-down/SKILL.md` | 5-step concretization process |
-| /research | `~/.claude/skills/search-first/SKILL.md` | Research-before-coding workflow |
-| /autoplan | **Role-based ensemble** (see below) | CEO + Design + Eng review |
+| Step | Subagent(s) to use | Notes |
+|------|--------------------|-------|
+| /investigate | 3x `investigator` (varied angles) | 4-phase root cause methodology |
+| /office-hours | 3x generic (varied angles) | Skill: `~/.claude/skills/office-hours/SKILL.md` |
+| /slow-down | 3x generic (varied angles) | Skill: `~/.claude/skills/slow-down/SKILL.md` |
+| /research | 3x `researcher` (varied angles) | Research-before-coding workflow |
+| /autoplan | `ceo-reviewer` + `design-reviewer` + `eng-reviewer` | Role-based (see below) |
 | Implementation | Coordinator runs directly (no ensemble) | Project-specific lint, test, etc. |
-| /verify-test | `~/.claude/skills/verify-test/SKILL.md` | Throwaway test generation |
-| /review | `~/.claude/skills/review/SKILL.md` | Code review criteria |
-| /bugbot | `~/.claude/skills/bugbot/SKILL.md` | Fresh-eye bug review |
+| /verify-test | 3x generic (varied angles) | Skill: `~/.claude/skills/verify-test/SKILL.md` |
+| /review | 3x `code-reviewer` (varied angles) | Security, SQL safety, structure |
+| /bugbot | 3x `bug-hunter` (varied angles) | Fresh-eye bug review |
 | /ship | Run directly — without ensemble | |
 
 ### /autoplan — Role-Based Ensemble
 
-/autoplan is the ONE exception to the standard ensemble pattern. Instead of 3 agents running the same skill with varied angles, each agent runs a **different** skill:
+/autoplan is the ONE exception to the standard ensemble pattern. Instead of 3 agents running the same skill with varied angles, each agent runs a **different** custom subagent:
 
-| Subagent | Skill file to read | Role |
-|----------|--------------------|------|
-| Agent 1 | `~/.claude/skills/plan-ceo-review/SKILL.md` | CEO/founder-mode: scope, ambition, strategy |
-| Agent 2 | `~/.claude/skills/plan-design-review/SKILL.md` | Designer's eye: UI/UX scoring 0-10 |
-| Agent 3 | `~/.claude/skills/plan-eng-review/SKILL.md` | Eng manager: architecture, edge cases, performance |
+| Subagent file | Role |
+|---------------|------|
+| `~/.claude/agents/ceo-reviewer.md` | CEO/founder-mode: scope, ambition, strategy |
+| `~/.claude/agents/design-reviewer.md` | Designer's eye: UI/UX scoring 0-10 |
+| `~/.claude/agents/eng-reviewer.md` | Eng manager: architecture, edge cases, performance |
 
 All 3 spawn in parallel (single message). Coordinator waits for ALL 3, synthesizes, presents, waits for user approval.
 

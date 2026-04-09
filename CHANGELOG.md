@@ -3,6 +3,19 @@
 All notable changes to MySystem are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [5.3.0] - 2026-04-09
+
+### Added
+- **Custom Subagents** (`~/.claude/agents/`): 7개 전용 서브에이전트 파일 생성
+  - `ceo-reviewer.md`, `design-reviewer.md`, `eng-reviewer.md` (autoplan 역할별)
+  - `code-reviewer.md`, `bug-hunter.md` (review/bugbot 전용)
+  - `investigator.md`, `researcher.md` (investigate/research 전용)
+- 각 에이전트가 model, tools, instructions를 자체 내장 — 매번 프롬프트 전달 불필요
+
+### Changed
+- Step Details 테이블: skill file 참조 → custom subagent 참조로 전환
+- 서브에이전트 호출 방식: Agent tool + 긴 프롬프트 → 사전 정의된 `.claude/agents/` 파일 사용
+
 ## [5.2.0] - 2026-04-09
 
 ### Changed
