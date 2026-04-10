@@ -3,6 +3,11 @@
 All notable changes to MySystem are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [5.7.0] - 2026-04-10
+
+### Added
+- **setup.sh**: Clone-and-run bootstrap script — inits gstack submodule, restores broken skill symlinks, verifies all agent → skill mappings. Run `cd ~/.claude && ./setup.sh` on any new machine.
+
 ## [5.6.0] - 2026-04-10
 
 ### Added

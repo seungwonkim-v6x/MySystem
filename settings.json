@@ -8,7 +8,11 @@
       "Bash(python3 -c ':*)",
       "Read(//Users/seungwonkim/Documents/vprop/**)",
       "Bash(~/.claude/skills/gstack/bin/gstack-review-read)",
-      "Read(//private/tmp/**)"
+      "Read(//private/tmp/**)",
+      "mcp__claude_ai_Slack__slack_read_thread",
+      "mcp__mempalace__mempalace_search",
+      "mcp__mempalace__mempalace_kg_query",
+      "Bash(pnpm run:*)"
     ],
     "additionalDirectories": [
       "/Users/seungwonkim/.claude"
