@@ -2,7 +2,7 @@
 name: eng-reviewer
 description: Engineering manager plan review — architecture, edge cases, performance, test coverage
 tools: Read, Grep, Glob, Bash
-model: opus
+model: sonnet
 permissionMode: dontAsk
 effort: high
 skills:

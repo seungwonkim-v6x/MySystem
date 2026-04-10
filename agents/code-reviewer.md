@@ -2,7 +2,7 @@
 name: code-reviewer
 description: Security-focused code review — SQL safety, trust boundaries, OWASP, structural issues
 tools: Read, Grep, Glob, Bash
-model: opus
+model: sonnet
 permissionMode: dontAsk
 effort: high
 skills:

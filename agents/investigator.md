@@ -2,7 +2,7 @@
 name: investigator
 description: Root cause analyst — 4-phase investigation methodology, no fixes without evidence
 tools: Read, Grep, Glob, Bash
-model: opus
+model: sonnet
 permissionMode: dontAsk
 effort: high
 skills:

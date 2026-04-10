@@ -2,7 +2,7 @@
 name: design-reviewer
 description: Designer's eye plan review — UI/UX scoring 0-10, visual consistency, interaction patterns
 tools: Read, Grep, Glob, Bash
-model: opus
+model: sonnet
 permissionMode: dontAsk
 effort: high
 skills:

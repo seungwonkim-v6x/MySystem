@@ -2,7 +2,7 @@
 name: ceo-reviewer
 description: CEO/founder-mode plan review — scope, ambition, strategy, product thinking
 tools: Read, Grep, Glob, Bash
-model: opus
+model: sonnet
 permissionMode: dontAsk
 effort: high
 skills:

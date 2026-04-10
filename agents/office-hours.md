@@ -2,7 +2,7 @@
 name: office-hours
 description: YC Office Hours — idea validation, forcing questions, design thinking brainstorming
 tools: Read, Grep, Glob, Bash, WebSearch, WebFetch
-model: opus
+model: sonnet
 permissionMode: dontAsk
 effort: high
 skills:

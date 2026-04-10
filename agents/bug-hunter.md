@@ -2,7 +2,7 @@
 name: bug-hunter
 description: Fresh-eye bug review of branch changes — finds bugs the author missed
 tools: Read, Grep, Glob, Bash
-model: opus
+model: sonnet
 permissionMode: dontAsk
 effort: high
 skills:

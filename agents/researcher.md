@@ -2,7 +2,7 @@
 name: researcher
 description: Research-before-coding — search docs, codebase, existing solutions before planning
 tools: Read, Grep, Glob, Bash, WebFetch, WebSearch
-model: opus
+model: sonnet
 permissionMode: dontAsk
 effort: high
 skills:

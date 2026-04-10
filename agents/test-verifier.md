@@ -2,7 +2,7 @@
 name: test-verifier
 description: Generate throwaway tests to verify a feature works, run them, then report results
 tools: Read, Grep, Glob, Bash, Write
-model: opus
+model: sonnet
 permissionMode: dontAsk
 effort: high
 skills:

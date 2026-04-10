@@ -2,7 +2,7 @@
 name: slow-downer
 description: Concretization before coding — problem definition, done criteria, scope, pre-mortem, approach
 tools: Read, Grep, Glob, Bash
-model: opus
+model: sonnet
 permissionMode: dontAsk
 effort: high
 skills:
