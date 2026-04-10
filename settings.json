@@ -7,13 +7,47 @@
       "mcp__notion__notion-fetch",
       "Bash(python3 -c ':*)",
       "Read(//Users/seungwonkim/Documents/vprop/**)",
-      "Bash(~/.claude/skills/gstack/bin/gstack-review-read)"
+      "Bash(~/.claude/skills/gstack/bin/gstack-review-read)",
+      "Read(//private/tmp/**)"
     ],
     "additionalDirectories": [
       "/Users/seungwonkim/.claude"
     ]
   },
   "model": "opus[1m]",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/mempalace-wake-up.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/require-subagent-type.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/mempalace-auto-mine.sh"
+          }
+        ]
+      }
+    ]
+  },
   "enabledPlugins": {
     "frontend-design@claude-plugins-official": true,
     "superpowers@claude-plugins-official": false,
@@ -31,18 +65,13 @@
     "coderabbit@claude-plugins-official": true,
     "skill-creator@claude-plugins-official": true
   },
-  "effortLevel": "high",
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Agent",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/require-subagent-type.sh"
-          }
-        ]
+  "extraKnownMarketplaces": {
+    "thedotmack": {
+      "source": {
+        "source": "github",
+        "repo": "thedotmack/claude-mem"
       }
-    ]
-  }
+    }
+  },
+  "effortLevel": "high"
 }

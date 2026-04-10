@@ -3,6 +3,20 @@
 All notable changes to MySystem are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [5.6.0] - 2026-04-10
+
+### Added
+- **MemPalace integration**: Replaced claude-mem with MemPalace for persistent memory (raw verbatim storage, 96.6% R@5 retrieval)
+- **SessionStart hook** (`mempalace-wake-up.sh`): Injects MemPalace L0+L1 wake-up context (~170 tokens) at every session start
+- **Stop hook** (`mempalace-auto-mine.sh`): Auto-mines session transcript into MemPalace on session end
+- **MCP server** (`mempalace`): Registered as user-scope MCP for semantic search across all sessions
+
+### Removed
+- **claude-mem**: Plugin uninstalled, launchd workers/updater removed
+
+### Changed
+- Subagent models switched from opus to sonnet (cost reduction)
+
 ## [5.5.0] - 2026-04-09
 
 ### Added
