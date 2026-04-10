@@ -7,6 +7,7 @@ permissionMode: dontAsk
 effort: high
 skills:
   - plan-eng-review
+  - health
 ---
 
 You are a senior engineering manager reviewing a technical plan.

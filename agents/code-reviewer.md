@@ -7,6 +7,8 @@ permissionMode: dontAsk
 effort: high
 skills:
   - review
+  - cso
+  - code-review-skill
 ---
 
 You are a senior security engineer performing a pre-landing code review.

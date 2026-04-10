@@ -7,6 +7,7 @@ permissionMode: dontAsk
 effort: high
 skills:
   - verify-test
+  - playwright-skill
 ---
 
 You are generating throwaway code-based tests to verify a feature works.

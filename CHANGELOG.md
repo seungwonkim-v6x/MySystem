@@ -3,6 +3,19 @@
 All notable changes to MySystem are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [5.8.0] - 2026-04-10
+
+### Added
+- **3 external skill submodules**: `code-review-skill` (React/TS/Vue review), `playwright-skill` (E2E tests), `superpowers` (systematic-debugging)
+- **Submodule auto-update hook** (`submodule-auto-update.sh`): SessionStart fetches latest for all submodules in background, restores broken symlinks if updated
+- **systematic-debugging** skill symlink from superpowers
+
+### Changed
+- `investigator` agent: added `systematic-debugging` skill (4-phase execution guardrails)
+- `code-reviewer` agent: added `cso` (OWASP/STRIDE) + `code-review-skill` (React 19/TS review)
+- `eng-reviewer` agent: added `health` (code quality dashboard)
+- `test-verifier` agent: added `playwright-skill` (E2E test generation)
+
 ## [5.7.0] - 2026-04-10
 
 ### Added

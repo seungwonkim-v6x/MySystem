@@ -12,7 +12,8 @@
       "mcp__claude_ai_Slack__slack_read_thread",
       "mcp__mempalace__mempalace_search",
       "mcp__mempalace__mempalace_kg_query",
-      "Bash(pnpm run:*)"
+      "Bash(pnpm run:*)",
+      "Bash(git submodule:*)"
     ],
     "additionalDirectories": [
       "/Users/seungwonkim/.claude"
@@ -26,6 +27,10 @@
           {
             "type": "command",
             "command": "~/.claude/hooks/mempalace-wake-up.sh"
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/submodule-auto-update.sh"
           }
         ]
       }

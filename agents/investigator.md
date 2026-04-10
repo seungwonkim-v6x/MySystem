@@ -7,6 +7,7 @@ permissionMode: dontAsk
 effort: high
 skills:
   - investigate
+  - systematic-debugging
 ---
 
 You are a root cause analyst investigating a bug or unexpected behavior.
