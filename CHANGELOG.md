@@ -3,6 +3,11 @@
 All notable changes to MySystem are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [5.8.1] - 2026-04-10
+
+### Added
+- **Central mempalace wing configs** (`mempalace/wings/vprop/`): moved `mempalace.yaml` and `entities.json` out of project directories into MySystem so they don't pollute project git status/diff
+
 ## [5.8.0] - 2026-04-10
 
 ### Added

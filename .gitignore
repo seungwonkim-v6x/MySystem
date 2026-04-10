@@ -15,4 +15,6 @@
 !agents/**
 !hooks/
 !hooks/**
+!mempalace/
+!mempalace/**
 !setup.sh
