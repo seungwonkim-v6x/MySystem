@@ -3,20 +3,35 @@
 All notable changes to MySystem are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [6.0.0] - 2026-04-14
+
+### Changed
+- **Breaking**: Removed ensemble (3x subagent per step). Each step now calls 1x subagent directly.
+- **Breaking**: Interactive vs Ralph difference reduced to approval only. Same workflow, same agents.
+- **Breaking**: Ralph switched from screen + `claude -p` to Ralph Loop plugin (Stop Hook based).
+- Simplified subagent invocation: call via `subagent_type` directly, coordinator must not re-interpret or re-inject skill content.
+- Only /autoplan retains 3 subagents (role division: CEO + Design + Eng).
+- Updated ralph-start and ralph-report skills to Ralph Loop plugin based.
+
+### Removed
+- Ensemble Execution Rule section entirely
+- 3x parallel subagent execution pattern
+- screen + ralph-autonomous.sh based autonomous execution
+
 ## [5.9.0] - 2026-04-14
 
 ### Added
-- **Ralph Autonomous Mode**: MySystem 워크플로우를 부재 중 자율 실행하는 모드. 매 iteration = 1 태스크 × 1 워크플로우 단계. Steps 1~8 자율 실행, /ship만 항상 사람 확인.
-- **`ralph-planner` agent** (`agents/ralph-planner.md`): 자율 실행을 위한 상세 구현 계획 작성 에이전트
-- **Ralph 런타임** (`~/.claude/ralph/{project}/`): ralph-autonomous.sh (메인 루프), next-step.py (태스크/단계 선택), advance-step.py (단계 진행, atomic write), safety-autonomous.md (안전 규칙)
-- **CLAUDE.md**: Ralph Autonomous Mode 섹션 추가 (Interactive vs Autonomous 비교, 안전 장치, 파일 위치)
-- **Available Custom Subagents 테이블**: `ralph-planner` 추가
+- **Ralph Autonomous Mode**: Autonomous execution of MySystem workflow while user is away. Each iteration = 1 task x 1 workflow step. Steps 1~8 auto-execute, /ship always requires human.
+- **`ralph-planner` agent** (`agents/ralph-planner.md`): Detailed implementation plan writer for autonomous execution
+- **Ralph runtime** (`~/.claude/ralph/{project}/`): ralph-autonomous.sh (main loop), next-step.py (task/step selection), advance-step.py (step advancement, atomic write), safety-autonomous.md (safety rules)
+- **CLAUDE.md**: Added Ralph Autonomous Mode section (Interactive vs Autonomous comparison, safety measures, file locations)
+- **Available Custom Subagents table**: Added `ralph-planner`
 
 ### Design Decisions
-- 런타임 파일은 repo 밖 (`~/.claude/ralph/`)에 저장 → git status 오염 없음
-- 기존 에이전트 재활용 (`--agent` 플래그) → 방법론 프롬프트 별도 관리 불필요
-- 단일 에이전트 per step (앙상블 아님) → 토큰 1/3, 자율 실행에 적합
-- `--disallowed-tools` CLI hard block + `safety-autonomous.md` soft block 이중 안전
+- Runtime files stored outside repo (`~/.claude/ralph/`) to avoid git status pollution
+- Reuses existing agents (`--agent` flag) — no separate methodology prompts needed
+- Single agent per step (not ensemble) — 1/3 token cost, suitable for autonomous execution
+- `--disallowed-tools` CLI hard block + `safety-autonomous.md` soft block dual safety
 
 ## [5.8.1] - 2026-04-10
 

@@ -11,80 +11,44 @@ Every step below is MANDATORY and runs in order.
 - NEVER suggest skipping. Just run the next step immediately.
 - If the user wants to skip, THEY will interrupt you. That's their job, not yours.
 
-**CRITICAL RULE: NEVER proceed to the next workflow step without explicit user approval.**
-After presenting ensemble results, STOP and wait. Do not say "proceeding to next step".
+**CRITICAL RULE (Interactive mode): NEVER proceed to the next workflow step without explicit user approval.**
+After presenting step results, STOP and wait. Do not say "proceeding to next step".
 The user must explicitly say "ok", "approved", "next", "go" or similar before you move on.
 
 ---
 
-## Ensemble Execution Rule
+## Subagent Execution Model
 
-**Every workflow step** (except Implementation and /ship) MUST be executed as an ensemble:
+Subagents are defined in `~/.claude/agents/` as markdown files with frontmatter. Each subagent has its own model, tools, permissions, and **preloaded skills** (via `skills:` frontmatter).
 
-### Subagent Execution Model
-
-Subagents are defined in `~/.claude/agents/` as markdown files with frontmatter. Each subagent has its own model, tools, permissions, and **preloaded skills** (via `skills:` frontmatter — the skill methodology is loaded into the subagent's context at startup, so it does NOT need to read SKILL.md files).
-
-The coordinator invokes subagents via the **Agent tool** with `subagent_type` parameter:
+**Invocation: Always call agents directly via `subagent_type`.**
 ```
-Agent(subagent_type: "code-reviewer", prompt: "<full task context>")
+Agent(subagent_type: "code-reviewer", prompt: "<task context>")
+```
+- The coordinator must NOT read skill content and re-inject it into the prompt.
+- `subagent_type` automatically preloads the agent's defined skills.
+- The `prompt` should contain only the task description and necessary context.
+
+**WRONG — never do this:**
+```
+Agent(model: "opus", prompt: "You are a bug hunter. Review...")  # ignores agent definition
+Agent(subagent_type: "bug-hunter", prompt: "<copy-pasted skill content>")  # unnecessary re-injection
 ```
 
-The `prompt` string is the **ONLY channel** from coordinator to subagent. The subagent does NOT receive the coordinator's conversation history. All task context must be in the prompt.
+### Available Subagents
 
-### Execution Steps
-
-**CRITICAL: You MUST use `subagent_type` to invoke custom agents. Do NOT use generic `Agent(model: "opus", prompt: "...")`.** The custom agents have preloaded skills — without `subagent_type`, those skills are NOT loaded and the subagent runs blind.
-
-1. **Spawn 3 subagents** in a **single message** (all 3 as parallel Agent tool calls)
-   - **ALWAYS** use `subagent_type` parameter — NEVER spawn a generic agent for steps that have a dedicated subagent
-   - The `prompt` MUST include the full task description with all relevant context
-   - For standard ensemble: same subagent_type x3 with varied angles in prompt
-   - For /autoplan: different subagent_type per agent (ceo-reviewer, design-reviewer, eng-reviewer)
-
-   **Correct** (bugbot example):
-   ```
-   Agent(subagent_type: "bug-hunter", prompt: "Review changes on branch X for bugs. <full context>")
-   Agent(subagent_type: "bug-hunter", prompt: "Review changes on branch X. Focus on edge cases. <full context>")
-   Agent(subagent_type: "bug-hunter", prompt: "Review changes on branch X. Try to break it. <full context>")
-   ```
-
-   **WRONG** — never do this:
-   ```
-   Agent(model: "opus", prompt: "You are a bug hunter. Review...")
-   ```
-
-2. **WAIT FOR ALL** — NEVER synthesize or present results until every subagent has returned
-   - Do NOT proceed after 1 or 2 agents return. Wait for ALL 3 subagents.
-   - All 3 subagents are non-negotiable. No partial results.
-
-3. **Synthesize** — after ALL 3 agents return:
-   - Deduplicate overlapping findings
-   - Flag disagreements prominently
-   - Rank by severity/importance
-   - Present **one unified report** to the user
-
-4. **STOP** — present the report and **wait for explicit user approval** before the next workflow step.
-
-**Total: 3 perspectives** — 3 custom subagents, each with preloaded skill methodology.
-
-### Available Custom Subagents
-
-| subagent_type | Preloaded skills | Used in |
-|---------------|-----------------|---------|
-| `investigator` | investigate | /investigate |
-| `office-hours` | office-hours | /office-hours |
-| `slow-downer` | slow-down | /slow-down |
-| `researcher` | search-first, documentation-lookup | /research |
-| `ceo-reviewer` | plan-ceo-review | /autoplan |
-| `design-reviewer` | plan-design-review | /autoplan |
-| `eng-reviewer` | plan-eng-review | /autoplan |
-| `test-verifier` | verify-test | /verify-test |
-| `code-reviewer` | review | /review |
-| `bug-hunter` | bugbot | /bugbot |
-| `ralph-planner` | — | Ralph /autoplan |
-
-Every ensemble step has a dedicated subagent. No generic Agent calls allowed.
+| subagent_type | Used in step |
+|---------------|-------------|
+| `investigator` | /investigate |
+| `office-hours` | /office-hours |
+| `slow-downer` | /slow-down |
+| `researcher` | /research |
+| `ceo-reviewer` | /autoplan (phase 2) |
+| `design-reviewer` | /autoplan (phase 2) |
+| `eng-reviewer` | /autoplan (phase 2) |
+| `test-verifier` | /verify-test |
+| `code-reviewer` | /review |
+| `bug-hunter` | /bugbot |
 
 ---
 
@@ -95,116 +59,89 @@ Every ensemble step has a dedicated subagent. No generic Agent calls allowed.
 Every code task goes through ALL 9 steps, in order:
 
 ```
-1. /office-hours         ← validate the idea or problem (ensemble)
-       ↓  (wait for user approval)
-2. /slow-down            ← concretize: problem, done criteria, scope, pre-mortem, approach (ensemble)
-       ↓  (wait for user approval)
-3. /research             ← search docs, codebase, existing solutions (ensemble)
-       ↓  (wait for user approval)
-4. /autoplan             ← plan review: 3 subagents = CEO + Design + Eng (role-based ensemble)
-       ↓  (wait for user approval)
-5. Implementation        ← write code — coordinator directly (no ensemble)
-       ↓  (wait for user approval)
-6. /verify-test          ← generate throwaway tests, run, delete (ensemble)
-       ↓  (wait for user approval)
-7. /review               ← PR code review: security, SQL safety, structure (ensemble)
-       ↓  (wait for user approval)
-8. /bugbot               ← fresh-eye bug review of the diff (ensemble)
-       ↓  (wait for user approval)
-9. /ship                 ← commit, push, create PR
+1. /office-hours         ← 1x office-hours subagent
+       ↓
+2. /slow-down            ← 1x slow-downer subagent
+       ↓
+3. /research             ← 1x researcher subagent
+       ↓
+4. /autoplan             ← Phase 1: coordinator writes plan
+                           Phase 2: ceo-reviewer + design-reviewer + eng-reviewer (3 in parallel)
+       ↓
+5. Implementation        ← coordinator directly
+       ↓
+6. /verify-test          ← 1x test-verifier subagent
+       ↓
+7. /review               ← 1x code-reviewer subagent
+       ↓
+8. /bugbot               ← 1x bug-hunter subagent
+       ↓
+9. /ship                 ← coordinator directly (always human-only)
 ```
 
 ### Debugging
 
 ```
-1. /investigate          ← root cause analysis (ensemble)
-       ↓  (wait for user approval)
-2. /slow-down            ← concretize the fix (ensemble)
-       ↓  (wait for user approval)
-3. /research             ← search docs, similar issues, existing patterns (ensemble)
-       ↓  (wait for user approval)
-4. /autoplan             ← plan the fix: 3 subagents = CEO + Design + Eng (role-based ensemble)
-       ↓  (wait for user approval)
-5. Implementation (coordinator direct) → /verify-test → /review → /bugbot → /ship
+1. /investigate          ← 1x investigator subagent
+       ↓
+2. /slow-down → /research → /autoplan → Implementation → /verify-test → /review → /bugbot → /ship
 ```
-
-### Ralph Autonomous Mode (부재 중 자율 실행)
-
-사용자 부재 시 MySystem 워크플로우를 자율 실행. 동일한 9단계, /ship만 항상 사람.
-
-```
-Ralph Loop (~/.claude/ralph/{project}/ralph-autonomous.sh):
-  매 iteration = 1 태스크 × 1 워크플로우 단계
-
-  Step 1~4, 6~8:  claude -p --agent <기존 에이전트> → artifact .md 저장
-  Step 5:          claude -p (기본 Claude) → 코드 작성 + 커밋
-  Step 9 (/ship):  ❌ 절대 자율 실행 안함 → 사람만
-```
-
-**시작**: `/ralph-start` 또는 "Ralph 시작해"
-**결과 확인**: `/ralph-report` 또는 "어떻게 됐어?"
-
-**Interactive vs Autonomous**:
-
-| | Interactive (근무 중) | Autonomous (Ralph) |
-|--|----------------------|-------------------|
-| 에이전트 | 3x 앙상블 | 1x `--agent` (스킬 프리로드) |
-| 승인 | 매 단계 사람 승인 | 자동 진행 (/ship 제외) |
-| 안전 | 사람 판단 | `--disallowed-tools` + `safety-autonomous.md` |
-
-**안전 장치**:
-- `--disallowed-tools`: git push, deploy, drizzle 차단 (CLI hard block)
-- `safety-autonomous.md`: .env, stripe, auth, migration 수정 금지
-- 품질 게이트: lint/format 실패 시 step 미완료 처리
-- /ship 제외: 로컬 커밋만, push/PR은 항상 사람
-
-**파일 위치**: `~/.claude/ralph/{project}/` (repo 밖 — git status 오염 없음)
 
 ### Weekly Retrospective
 
 ```
-/retro                   ← commit history analysis, team contributions, trends (ensemble)
+/retro                   ← commit history analysis, team contributions, trends
 ```
+
+---
+
+## Interactive vs Ralph
+
+Same workflow, same agents. The only difference is approval.
+
+| | Interactive (human supervised) | Ralph (autonomous) |
+|--|-------------------------------|-------------------|
+| Workflow | Same 9 steps | Same 9 steps |
+| Agents | Same subagent calls | Same subagent calls |
+| Between steps | Human approval required | Auto-advance |
+| /ship | Human executes | NEVER autonomous — human only |
+
+### Ralph Loop (Autonomous Execution)
+
+Ralph Loop plugin intercepts session exit via Stop Hook and re-injects the same prompt for autonomous iteration.
+
+```bash
+/ralph-start                # Start (skill builds prompt + calls ralph-loop)
+/ralph-report               # Check results
+/cancel-ralph               # Cancel
+```
+
+**Required safety measures**:
+- `--max-iterations`: Always set (default 30, overnight 50)
+- `--completion-promise`: Always set ("COMPLETE")
+- /ship excluded: local commits only, push/PR always human
+- Worktree isolation recommended: `git worktree add` for separate branches
 
 ---
 
 ## Step Details
 
-Each step: coordinator spawns custom subagents (defined in `~/.claude/agents/`) → each subagent has its skill preloaded via `skills:` frontmatter → coordinator waits for ALL → synthesizes → presents → waits for user approval.
-
-| Step | Subagent(s) to use | Notes |
-|------|--------------------|-------|
-| /investigate | 3x `investigator` (varied angles) | 4-phase root cause methodology |
-| /office-hours | 3x `office-hours` (varied angles) | Idea validation methodology |
-| /slow-down | 3x `slow-downer` (varied angles) | 5-step concretization process |
-| /research | 3x `researcher` (varied angles) | Research-before-coding workflow |
-| /autoplan | `ceo-reviewer` + `design-reviewer` + `eng-reviewer` | Role-based (see below) |
-| Implementation | Coordinator runs directly (no ensemble) | Project-specific lint, test, etc. |
-| /verify-test | 3x `test-verifier` (varied angles) | Throwaway test generation |
-| /review | 3x `code-reviewer` (varied angles) | Security, SQL safety, structure |
-| /bugbot | 3x `bug-hunter` (varied angles) | Fresh-eye bug review |
-| /ship | Run directly — without ensemble | |
-
 ### /autoplan — Two-Phase: Plan First, Then Review
 
-/autoplan has TWO phases. The coordinator MUST NOT skip phase 1.
-
-**Phase 1: Write the plan and get user approval**
+**Phase 1: Write the plan**
 1. Coordinator uses `EnterPlanMode` to explore the codebase and write a detailed implementation plan
-2. Coordinator presents the plan to the user via `ExitPlanMode`
-3. **User must approve the plan before phase 2 begins**
-4. The coordinator does NOT write its own inline summary to pass to reviewers — the approved plan IS the input
+2. Coordinator presents the plan via `ExitPlanMode`
+3. Interactive: human approves before phase 2 | Ralph: auto-advance
 
-**Phase 2: Review the approved plan with 3 role-based subagents**
+**Phase 2: Review the plan with 3 role-based subagents**
 
-| subagent_type | Role |
-|---------------|------|
-| `ceo-reviewer` | CEO/founder-mode: scope, ambition, strategy |
-| `design-reviewer` | Designer's eye: UI/UX scoring 0-10 |
-| `eng-reviewer` | Eng manager: architecture, edge cases, performance |
-
-Each subagent's `prompt` MUST include the **full approved plan text** (not a summary, not an inline rewrite).
-All 3 spawn in parallel (single message). Coordinator waits for ALL 3, synthesizes, presents, waits for user approval.
+3 subagents in parallel (role division, not ensemble):
+```
+Agent(subagent_type: "ceo-reviewer", prompt: "<full plan text>")
+Agent(subagent_type: "design-reviewer", prompt: "<full plan text>")
+Agent(subagent_type: "eng-reviewer", prompt: "<full plan text>")
+```
+Wait for ALL 3, synthesize, present.
 
 ### Implementation — Coordinator Direct
 
@@ -214,23 +151,17 @@ The coordinator runs Implementation directly (no subagents). Only the coordinato
 
 ## Subagent Permission Rules
 
-Subagents spawned by ensemble execution use read-only permissions by default:
-
+Subagents use read-only permissions by default:
 ```yaml
 tools: Read, Grep, Glob, Bash
 permissionMode: dontAsk
 ```
 
-Only the **main coordinator agent** may:
-- Edit or Write files
-- Run git commit, push, reset, or any git write operations
-- Create PRs or interact with external services
+Only the **main coordinator** may: Edit/Write files, git operations, PRs, external services.
 
-Subagents for /verify-test get extended permissions (Write to /tmp only):
+Exception — `/verify-test` subagent gets Write (to /tmp only):
 ```yaml
 tools: Read, Grep, Glob, Bash, Write
-permissionMode: dontAsk
-# Write restricted to /tmp/ via PreToolUse hook
 ```
 
 ---
