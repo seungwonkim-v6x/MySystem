@@ -3,6 +3,21 @@
 All notable changes to MySystem are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [5.9.0] - 2026-04-14
+
+### Added
+- **Ralph Autonomous Mode**: MySystem 워크플로우를 부재 중 자율 실행하는 모드. 매 iteration = 1 태스크 × 1 워크플로우 단계. Steps 1~8 자율 실행, /ship만 항상 사람 확인.
+- **`ralph-planner` agent** (`agents/ralph-planner.md`): 자율 실행을 위한 상세 구현 계획 작성 에이전트
+- **Ralph 런타임** (`~/.claude/ralph/{project}/`): ralph-autonomous.sh (메인 루프), next-step.py (태스크/단계 선택), advance-step.py (단계 진행, atomic write), safety-autonomous.md (안전 규칙)
+- **CLAUDE.md**: Ralph Autonomous Mode 섹션 추가 (Interactive vs Autonomous 비교, 안전 장치, 파일 위치)
+- **Available Custom Subagents 테이블**: `ralph-planner` 추가
+
+### Design Decisions
+- 런타임 파일은 repo 밖 (`~/.claude/ralph/`)에 저장 → git status 오염 없음
+- 기존 에이전트 재활용 (`--agent` 플래그) → 방법론 프롬프트 별도 관리 불필요
+- 단일 에이전트 per step (앙상블 아님) → 토큰 1/3, 자율 실행에 적합
+- `--disallowed-tools` CLI hard block + `safety-autonomous.md` soft block 이중 안전
+
 ## [5.8.1] - 2026-04-10
 
 ### Added

@@ -82,6 +82,7 @@ The `prompt` string is the **ONLY channel** from coordinator to subagent. The su
 | `test-verifier` | verify-test | /verify-test |
 | `code-reviewer` | review | /review |
 | `bug-hunter` | bugbot | /bugbot |
+| `ralph-planner` | — | Ralph /autoplan |
 
 Every ensemble step has a dedicated subagent. No generic Agent calls allowed.
 
@@ -126,6 +127,38 @@ Every code task goes through ALL 9 steps, in order:
        ↓  (wait for user approval)
 5. Implementation (coordinator direct) → /verify-test → /review → /bugbot → /ship
 ```
+
+### Ralph Autonomous Mode (부재 중 자율 실행)
+
+사용자 부재 시 MySystem 워크플로우를 자율 실행. 동일한 9단계, /ship만 항상 사람.
+
+```
+Ralph Loop (~/.claude/ralph/{project}/ralph-autonomous.sh):
+  매 iteration = 1 태스크 × 1 워크플로우 단계
+
+  Step 1~4, 6~8:  claude -p --agent <기존 에이전트> → artifact .md 저장
+  Step 5:          claude -p (기본 Claude) → 코드 작성 + 커밋
+  Step 9 (/ship):  ❌ 절대 자율 실행 안함 → 사람만
+```
+
+**시작**: `/ralph-start` 또는 "Ralph 시작해"
+**결과 확인**: `/ralph-report` 또는 "어떻게 됐어?"
+
+**Interactive vs Autonomous**:
+
+| | Interactive (근무 중) | Autonomous (Ralph) |
+|--|----------------------|-------------------|
+| 에이전트 | 3x 앙상블 | 1x `--agent` (스킬 프리로드) |
+| 승인 | 매 단계 사람 승인 | 자동 진행 (/ship 제외) |
+| 안전 | 사람 판단 | `--disallowed-tools` + `safety-autonomous.md` |
+
+**안전 장치**:
+- `--disallowed-tools`: git push, deploy, drizzle 차단 (CLI hard block)
+- `safety-autonomous.md`: .env, stripe, auth, migration 수정 금지
+- 품질 게이트: lint/format 실패 시 step 미완료 처리
+- /ship 제외: 로컬 커밋만, push/PR은 항상 사람
+
+**파일 위치**: `~/.claude/ralph/{project}/` (repo 밖 — git status 오염 없음)
 
 ### Weekly Retrospective
 
