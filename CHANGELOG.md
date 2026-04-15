@@ -3,6 +3,13 @@
 All notable changes to MySystem are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [5.8.1] - 2026-04-15 (rollback)
+
+### Reverted
+- Rolled back from v6.0.0 to v5.8.1. Reverted CLAUDE.md and VERSION.
+- v5.9.0 (Ralph Autonomous Mode) and v6.0.0 (ensemble removal, workflow unification) changes undone.
+- `agents/ralph-planner.md` retained as it's a standalone addition.
+
 ## [6.0.0] - 2026-04-14
 
 ### Changed
