@@ -20,10 +20,28 @@
       "Skill(qa-only)",
       "Skill(qa-only:*)",
       "Bash(psql -h localhost -p 54322 -U postgres -d postgres -c ':*)",
-      "Bash(npx supabase:*)"
+      "Bash(npx supabase:*)",
+      "mcp__claude_ai_Slack__slack_search_public_and_private",
+      "mcp__notion__notion-search",
+      "Bash(psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -c ':*)",
+      "WebFetch(domain:claudefa.st)",
+      "mcp__Playwright__browser_run_code",
+      "mcp__Playwright__browser_handle_dialog",
+      "Read(//Users/seungwonkim/Documents/cc-guard/**)",
+      "Bash(bun test:*)",
+      "Bash(bun build:*)",
+      "Bash(/Users/seungwonkim/Library/Python/3.9/bin/mempalace repair:*)",
+      "Read(//Users/seungwonkim/.mempalace/palace/**)",
+      "Bash(sqlite3 ~/.mempalace/palace/chroma.sqlite3 \"VACUUM;\")"
     ],
     "additionalDirectories": [
-      "/Users/seungwonkim/.claude"
+      "/Users/seungwonkim/.claude",
+      "/tmp/verify-test-1776238005",
+      "/private/tmp/verify-test-1776238005",
+      "/Users/seungwonkim/.gstack/projects/v6x-vprop",
+      "/Users/seungwonkim/Documents/cc-guard/src",
+      "/private/tmp/claude-501",
+      "/Users/seungwonkim/.mempalace/palace"
     ]
   },
   "model": "opus[1m]",
@@ -48,6 +66,17 @@
           {
             "type": "command",
             "command": "~/.claude/hooks/mempalace-auto-mine.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cc-guard check"
           }
         ]
       }

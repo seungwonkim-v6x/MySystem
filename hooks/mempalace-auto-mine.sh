@@ -19,7 +19,7 @@ if [ -n "$PROJECT_DIR" ]; then
     if [ -f "$TRANSCRIPT_FILE" ]; then
       # Mine just this session's transcript
       WING=$(basename "$PROJECT_DIR")
-      mempalace mine "$TRANSCRIPT_DIR" --mode convos --wing "$WING" --agent seungwon-v6x --limit 1 >> "$HOME/.mempalace/auto-mine.log" 2>&1 &
+      mempalace mine "$TRANSCRIPT_DIR" --mode convos --wing "$WING" --agent seungwon-v6x --limit 1 --extract general >> "$HOME/.mempalace/auto-mine.log" 2>&1 &
     fi
   fi
 fi

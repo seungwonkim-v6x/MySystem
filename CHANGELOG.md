@@ -3,6 +3,12 @@
 All notable changes to MySystem are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [7.0.1] - 2026-04-15
+
+### Changed
+- mempalace-auto-mine.sh: `--extract general` for structured memory extraction (decision/problem/milestone instead of raw exchange snippets).
+- settings.json: added permissions (Slack search, Notion search, Playwright, cc-guard hook, mempalace), additional directories, PreToolUse cc-guard hook.
+
 ## [7.0.0] - 2026-04-15
 
 ### Changed
