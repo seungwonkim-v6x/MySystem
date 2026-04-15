@@ -3,6 +3,27 @@
 All notable changes to MySystem are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [6.0.0] - 2026-04-15
+
+### Changed
+- **Breaking**: Removed custom ensemble system entirely. Coordinator now invokes gstack skills directly.
+- **Breaking**: CLAUDE.md rewritten (213→113 lines). Gstack-native execution model.
+- Workflow step 6 (Verification) now presents 4 options: both, verify-test only, qa-only only, or skip.
+- settings.json: removed PreToolUse Agent hook, removed disabled plugins, cleaned permissions.
+- settings.local.json: wildcard permission consolidation (96→41 entries).
+
+### Added
+- Context Management section in CLAUDE.md (/compact at 50%, /rewind, /clear).
+- `<important if>` conditional tag for Repo Self-Management.
+- submodule-auto-update.sh: error reporting via additionalContext on SessionStart.
+- `cc-update` alias in ~/.zshrc for daily Claude Code updates.
+
+### Removed
+- 10 custom agent definitions (kept only ralph-planner.md).
+- `require-subagent-type.sh` hook (ensemble enforcement no longer needed).
+- Ensemble Execution Rule, Subagent Permission Rules sections from CLAUDE.md.
+- `superpowers` and `feature-dev` disabled plugin entries from settings.json.
+
 ## [5.8.1] - 2026-04-15 (rollback)
 
 ### Reverted

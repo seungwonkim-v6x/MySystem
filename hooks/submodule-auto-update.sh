@@ -29,4 +29,17 @@ LOG="$MYSYSTEM/.submodule-update.log"
   fi
 ) &
 
+# Report failures from last run (if any)
+if [ -f "$LOG" ]; then
+  ERRORS=$(grep -i "error\|fatal\|fail" "$LOG" 2>/dev/null | tail -3)
+  if [ -n "$ERRORS" ]; then
+    jq -n --arg err "$ERRORS" '{
+      hookSpecificOutput: {
+        hookEventName: "SessionStart",
+        additionalContext: ("⚠ Submodule update had errors:\n" + $err)
+      }
+    }'
+  fi
+fi
+
 exit 0

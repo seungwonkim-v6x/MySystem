@@ -1,19 +1,26 @@
 {
   "permissions": {
     "allow": [
-      "Read(//Users/seungwonkim/.claude/**)",
       "WebFetch(domain:claude.com)",
+      "WebFetch(domain:github.com)",
       "WebSearch",
-      "mcp__notion__notion-fetch",
-      "Bash(python3 -c ':*)",
-      "Read(//Users/seungwonkim/Documents/vprop/**)",
-      "Bash(~/.claude/skills/gstack/bin/gstack-review-read)",
       "Read(//private/tmp/**)",
+      "Bash(pnpm run:*)",
+      "Bash(git submodule:*)",
+      "Bash(python3 -c ':*)",
+      "Bash(~/.claude/skills/gstack/bin/gstack-review-read)",
+      "mcp__notion__notion-fetch",
       "mcp__claude_ai_Slack__slack_read_thread",
       "mcp__mempalace__mempalace_search",
       "mcp__mempalace__mempalace_kg_query",
-      "Bash(pnpm run:*)",
-      "Bash(git submodule:*)"
+      "Bash(npx oxlint:*)",
+      "Bash(echo '')",
+      "Bash(echo '# Claude Code daily update')",
+      "Bash(echo 'alias cc-update=\"claude update && claude changelog\"')",
+      "Skill(qa-only)",
+      "Skill(qa-only:*)",
+      "Bash(psql -h localhost -p 54322 -U postgres -d postgres -c ':*)",
+      "Bash(npx supabase:*)"
     ],
     "additionalDirectories": [
       "/Users/seungwonkim/.claude"
@@ -35,17 +42,6 @@
         ]
       }
     ],
-    "PreToolUse": [
-      {
-        "matcher": "Agent",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/require-subagent-type.sh"
-          }
-        ]
-      }
-    ],
     "Stop": [
       {
         "hooks": [
@@ -59,12 +55,10 @@
   },
   "enabledPlugins": {
     "frontend-design@claude-plugins-official": true,
-    "superpowers@claude-plugins-official": false,
     "context7@claude-plugins-official": true,
     "code-review@claude-plugins-official": true,
     "code-simplifier@claude-plugins-official": true,
     "github@claude-plugins-official": true,
-    "feature-dev@claude-plugins-official": false,
     "playwright@claude-plugins-official": true,
     "ralph-loop@claude-plugins-official": true,
     "claude-md-management@claude-plugins-official": true,
