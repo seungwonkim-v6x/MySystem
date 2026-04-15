@@ -3,7 +3,7 @@
 All notable changes to MySystem are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
-## [6.0.0] - 2026-04-15
+## [7.0.0] - 2026-04-15
 
 ### Changed
 - **Breaking**: Removed custom ensemble system entirely. Coordinator now invokes gstack skills directly.
