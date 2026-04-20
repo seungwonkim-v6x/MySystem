@@ -3,6 +3,13 @@
 All notable changes to MySystem are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [7.1.0] - 2026-04-20
+
+### Changed
+- Context Management: replaced "Compact at 50%" manual rule with auto-compaction via `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=25`. Opus 4.7 (1M context) triggers auto-compaction at ~250K tokens, much earlier than the 83% default — Opus 4.7 burns tokens too fast for the default threshold.
+- settings.json: added `env.CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=25`, `effortLevel: xhigh` (Opus 4.7 default), permissions (Skills for office-hours/autoplan/review/ship, editJiraIssue, vprop libs/src/image, stripe list_subscriptions), additionalDirectories (cc-guard subdirs, verify-test tmp dirs).
+- hooks: added `SessionEnd` cc-guard learn; `PreToolUse` Bash uses absolute path to `cc-guard check`.
+
 ## [7.0.1] - 2026-04-15
 
 ### Changed

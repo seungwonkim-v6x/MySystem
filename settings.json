@@ -32,7 +32,18 @@
       "Bash(bun build:*)",
       "Bash(/Users/seungwonkim/Library/Python/3.9/bin/mempalace repair:*)",
       "Read(//Users/seungwonkim/.mempalace/palace/**)",
-      "Bash(sqlite3 ~/.mempalace/palace/chroma.sqlite3 \"VACUUM;\")"
+      "Bash(sqlite3 ~/.mempalace/palace/chroma.sqlite3 \"VACUUM;\")",
+      "Skill(office-hours)",
+      "Skill(office-hours:*)",
+      "Skill(autoplan)",
+      "Skill(autoplan:*)",
+      "Skill(review)",
+      "Skill(review:*)",
+      "Skill(ship)",
+      "Skill(ship:*)",
+      "mcp__atlassian__editJiraIssue",
+      "Read(//Users/seungwonkim/Documents/vprop/libs/src/image/**)",
+      "mcp__plugin_stripe_stripe__list_subscriptions"
     ],
     "additionalDirectories": [
       "/Users/seungwonkim/.claude",
@@ -41,7 +52,18 @@
       "/Users/seungwonkim/.gstack/projects/v6x-vprop",
       "/Users/seungwonkim/Documents/cc-guard/src",
       "/private/tmp/claude-501",
-      "/Users/seungwonkim/.mempalace/palace"
+      "/Users/seungwonkim/.mempalace/palace",
+      "/Users/seungwonkim/Documents/cc-guard/.github/workflows",
+      "/Users/seungwonkim/Documents/cc-guard/.github/ISSUE_TEMPLATE",
+      "/Users/seungwonkim/Documents/cc-guard/.github",
+      "/Users/seungwonkim/Documents/cc-guard",
+      "/Users/seungwonkim/.gstack/projects/goosull-cc-guard",
+      "/tmp/verify-test-1776322996",
+      "/private/tmp/verify-test-1776322996",
+      "/tmp/verify-test-20260416-182500",
+      "/private/tmp/verify-test-20260416-182500",
+      "/tmp/verify-test-20260416-185546",
+      "/private/tmp/verify-test-20260416-185546"
     ]
   },
   "model": "opus[1m]",
@@ -76,11 +98,24 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cc-guard check"
+            "command": "/Users/seungwonkim/Documents/cc-guard/dist/cc-guard check"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cc-guard learn --auto"
           }
         ]
       }
     ]
+  },
+  "env": {
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "25"
   },
   "enabledPlugins": {
     "frontend-design@claude-plugins-official": true,
@@ -105,5 +140,5 @@
       }
     }
   },
-  "effortLevel": "high"
+  "effortLevel": "xhigh"
 }

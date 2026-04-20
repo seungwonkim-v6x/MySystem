@@ -97,7 +97,6 @@ Invoke the `/autoplan` skill directly. It handles the full pipeline:
 
 ## Context Management
 
-- **Compact at 50%**: Run `/compact` when context usage reaches ~50%. Don't wait for automatic compaction.
 - **Rewind when off-track**: Use Esc Esc (`/rewind`) instead of trying to fix a derailed conversation.
 - **Clear for fresh start**: Use `/clear` when the context is too polluted to recover.
 
