@@ -3,6 +3,18 @@
 All notable changes to MySystem are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [7.2.0] - 2026-04-21
+
+### Added
+- **Boil the Lake (Completeness Principle)** section in CLAUDE.md — recommend the complete implementation over shortcuts; AI makes the last 10% cost near-zero. Flag "oceans" (rewrites of systems you don't control) as out of scope.
+- **Repo Mode (Solo vs Collaborative)** in CLAUDE.md — agent behavior adapts to who owns issues. Solo repos (cc-guard, MySystem): proactive fixes for noticed issues. Collaborative repos (vProp): flag-only, default to asking. "See Something, Say Something" rule — never let a noticed issue silently pass.
+- **Step 6 Verification** — added `/design-review` option. Options expanded to A(전부)/B(verify-test)/C(qa-only)/D(design-review)/E(기능 둘 다)/F(skip). UI 변경 없는 작업에는 design-review 자동 제외.
+
+### Rationale
+- gstack `/review`가 이미 Codex adversarial을 자동 실행(50+ line 기준)하므로 별도 `/codex` 스텝은 중복 — 추가하지 않음.
+- `/land-and-deploy`, `/canary`는 vProp처럼 팀 리뷰/머지 흐름이 있고 Vercel+Sentry로 관측되는 환경엔 과함 — 기본 플로우에서 제외.
+- 위 두 원칙(Boil the Lake, Repo Mode)은 gstack 철학 중 플로우 변경 없이 판단 기준으로 흡수할 가치가 가장 높음.
+
 ## [7.1.0] - 2026-04-20
 
 ### Changed
