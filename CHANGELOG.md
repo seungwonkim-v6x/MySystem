@@ -3,6 +3,22 @@
 All notable changes to MySystem are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [7.3.0] - 2026-04-21
+
+### Removed
+- **mempalace system fully removed.** 30-day usage analysis showed ~5 queries/day average and zero writes in the last 5 days; ROI did not justify the ~3,000 tokens injected per session. gstack's local storage (`~/.gstack/projects/`) plus per-project `.claude/memory/` cover the same needs with less overhead.
+  - `~/.claude.json`: removed `mempalace` MCP server
+  - `settings.json`: removed SessionStart wake-up hook, Stop auto-mine hook, and mempalace-related permissions/directories
+  - `hooks/mempalace-wake-up.sh`, `hooks/mempalace-auto-mine.sh`: deleted
+  - `~/.mempalace/palace/` data preserved (recoverable if needed)
+- **Unused plugins removed**: `context7`, `playwright`, `figma`, `frontend-design` (all `claude-plugins-official`). Duplicates of global MCPs or unused.
+- **Unused MCP servers removed** (`~/.claude.json`): `pencil`, `Framelink Figma MCP`, `chrome_devtools` (overlaps with Playwright).
+- **Unused skills removed (20)**: benchmark, benchmark-models, canary, cso, design-consultation, design-html, design-shotgun, devex-review, plan-devex-review, plan-tune, make-pdf, pair-agent, connect-chrome, context-restore, context-save, health, learn, open-gstack-browser, playwright-skill, code-review-skill.
+
+### Rationale
+- Token savings: roughly 6,000–7,000 tokens per session start.
+- gstack local storage already integrates with the team-shared `.claude/memory/` + `MEMORY.md` auto-load flow. The mempalace KG/drawer/tunnel abstractions were over-engineered for the actual usage pattern.
+
 ## [7.2.0] - 2026-04-21
 
 ### Added

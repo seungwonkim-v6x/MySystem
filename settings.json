@@ -1,4 +1,11 @@
 {
+  "env": {
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "25"
+  },
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
   "permissions": {
     "allow": [
       "WebFetch(domain:claude.com)",
@@ -11,8 +18,6 @@
       "Bash(~/.claude/skills/gstack/bin/gstack-review-read)",
       "mcp__notion__notion-fetch",
       "mcp__claude_ai_Slack__slack_read_thread",
-      "mcp__mempalace__mempalace_search",
-      "mcp__mempalace__mempalace_kg_query",
       "Bash(npx oxlint:*)",
       "Bash(echo '')",
       "Bash(echo '# Claude Code daily update')",
@@ -30,9 +35,6 @@
       "Read(//Users/seungwonkim/Documents/cc-guard/**)",
       "Bash(bun test:*)",
       "Bash(bun build:*)",
-      "Bash(/Users/seungwonkim/Library/Python/3.9/bin/mempalace repair:*)",
-      "Read(//Users/seungwonkim/.mempalace/palace/**)",
-      "Bash(sqlite3 ~/.mempalace/palace/chroma.sqlite3 \"VACUUM;\")",
       "Skill(office-hours)",
       "Skill(office-hours:*)",
       "Skill(autoplan)",
@@ -43,7 +45,28 @@
       "Skill(ship:*)",
       "mcp__atlassian__editJiraIssue",
       "Read(//Users/seungwonkim/Documents/vprop/libs/src/image/**)",
-      "mcp__plugin_stripe_stripe__list_subscriptions"
+      "mcp__plugin_stripe_stripe__list_subscriptions",
+      "mcp__plugin_context7_context7__resolve-library-id",
+      "mcp__plugin_context7_context7__query-docs",
+      "mcp__Playwright__browser_navigate",
+      "mcp__Playwright__browser_snapshot",
+      "mcp__Playwright__browser_click",
+      "mcp__Playwright__browser_wait_for",
+      "mcp__Playwright__browser_console_messages",
+      "mcp__trigger__list_runs",
+      "mcp__trigger__get_run_details",
+      "mcp__Playwright__browser_type",
+      "mcp__trigger__wait_for_run_to_complete",
+      "mcp__Playwright__browser_press_key",
+      "Read(//Users/seungwonkim/.codex/**)",
+      "mcp__atlassian__createJiraIssue",
+      "mcp__Playwright__browser_evaluate",
+      "mcp__Playwright__browser_take_screenshot",
+      "mcp__atlassian__addCommentToJiraIssue",
+      "Read(//tmp/**)",
+      "mcp__claude_ai_Slack__slack_read_channel",
+      "Read(//Users/seungwonkim/Documents/vprop-beatsync/**)",
+      "mcp__Playwright__browser_network_requests"
     ],
     "additionalDirectories": [
       "/Users/seungwonkim/.claude",
@@ -52,7 +75,6 @@
       "/Users/seungwonkim/.gstack/projects/v6x-vprop",
       "/Users/seungwonkim/Documents/cc-guard/src",
       "/private/tmp/claude-501",
-      "/Users/seungwonkim/.mempalace/palace",
       "/Users/seungwonkim/Documents/cc-guard/.github/workflows",
       "/Users/seungwonkim/Documents/cc-guard/.github/ISSUE_TEMPLATE",
       "/Users/seungwonkim/Documents/cc-guard/.github",
@@ -63,7 +85,12 @@
       "/tmp/verify-test-20260416-182500",
       "/private/tmp/verify-test-20260416-182500",
       "/tmp/verify-test-20260416-185546",
-      "/private/tmp/verify-test-20260416-185546"
+      "/private/tmp/verify-test-20260416-185546",
+      "/Users/seungwonkim/Documents/vprop-beatsync/web/app/dashboard/[team_id]/create-video/components",
+      "/Users/seungwonkim/Documents/vprop-beatsync/web/app/dashboard/[team_id]/create-video/types",
+      "/Users/seungwonkim/Documents/vprop-beatsync/web",
+      "/tmp/verify-test-vp486",
+      "/private/tmp/verify-test-vp486"
     ]
   },
   "model": "opus[1m]",
@@ -73,21 +100,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/mempalace-wake-up.sh"
-          },
-          {
-            "type": "command",
             "command": "~/.claude/hooks/submodule-auto-update.sh"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/mempalace-auto-mine.sh"
           }
         ]
       }
@@ -114,19 +127,12 @@
       }
     ]
   },
-  "env": {
-    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "25"
-  },
   "enabledPlugins": {
-    "frontend-design@claude-plugins-official": true,
-    "context7@claude-plugins-official": true,
     "code-review@claude-plugins-official": true,
     "code-simplifier@claude-plugins-official": true,
     "github@claude-plugins-official": true,
-    "playwright@claude-plugins-official": true,
     "ralph-loop@claude-plugins-official": true,
     "claude-md-management@claude-plugins-official": true,
-    "figma@claude-plugins-official": true,
     "supabase@claude-plugins-official": true,
     "stripe@claude-plugins-official": true,
     "coderabbit@claude-plugins-official": true,
@@ -140,5 +146,5 @@
       }
     }
   },
-  "effortLevel": "xhigh"
+  "effortLevel": "high"
 }
