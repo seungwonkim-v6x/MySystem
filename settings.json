@@ -66,7 +66,14 @@
       "Read(//tmp/**)",
       "mcp__claude_ai_Slack__slack_read_channel",
       "Read(//Users/seungwonkim/Documents/vprop-beatsync/**)",
-      "mcp__Playwright__browser_network_requests"
+      "mcp__Playwright__browser_network_requests",
+      "mcp__Playwright__browser_close",
+      "mcp__notion__notion-update-page",
+      "Skill(plan-eng-review)",
+      "Skill(plan-eng-review:*)",
+      "mcp__Playwright__browser_tabs",
+      "mcp__Playwright__browser_resize",
+      "mcp__pencil"
     ],
     "additionalDirectories": [
       "/Users/seungwonkim/.claude",
@@ -90,7 +97,11 @@
       "/Users/seungwonkim/Documents/vprop-beatsync/web/app/dashboard/[team_id]/create-video/types",
       "/Users/seungwonkim/Documents/vprop-beatsync/web",
       "/tmp/verify-test-vp486",
-      "/private/tmp/verify-test-vp486"
+      "/private/tmp/verify-test-vp486",
+      "/tmp/verify-test-1776763063",
+      "/private/tmp/verify-test-1776763063",
+      "/tmp/verify-test-1776821779",
+      "/private/tmp/verify-test-1776821779"
     ]
   },
   "model": "opus[1m]",
@@ -100,7 +111,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/submodule-auto-update.sh"
+            "command": "~/.claude/hooks/update-skills.sh"
           }
         ]
       }
@@ -112,6 +123,15 @@
           {
             "type": "command",
             "command": "/Users/seungwonkim/Documents/cc-guard/dist/cc-guard check"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "rtk hook claude"
           }
         ]
       }
@@ -128,21 +148,13 @@
     ]
   },
   "enabledPlugins": {
-    "code-review@claude-plugins-official": true,
-    "code-simplifier@claude-plugins-official": true,
-    "github@claude-plugins-official": true,
-    "ralph-loop@claude-plugins-official": true,
-    "claude-md-management@claude-plugins-official": true,
-    "supabase@claude-plugins-official": true,
-    "stripe@claude-plugins-official": true,
-    "coderabbit@claude-plugins-official": true,
-    "skill-creator@claude-plugins-official": true
+    "frontend-design@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
-    "thedotmack": {
+    "claude-plugins-official": {
       "source": {
-        "source": "github",
-        "repo": "thedotmack/claude-mem"
+        "source": "git",
+        "url": "https://github.com/anthropics/claude-plugins-official.git"
       }
     }
   },

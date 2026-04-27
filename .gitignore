@@ -1,20 +1,47 @@
-# Track only personal config and skills
-# Ignore everything first, then whitelist
+# MySystem — personal Claude Code config
+#
+# Strategy: ignore everything, whitelist tracked items explicitly.
+# External skills (gstack and anything it installs) are NOT whitelisted,
+# so they are ignored by default — no maintenance when gstack evolves.
+# When adding a user-owned skill, add two lines here (see "User-owned
+# skills" section below).
 
 *
 
-# Whitelist
+# Root files — tracked
 !.gitignore
+!.gitattributes
 !CLAUDE.md
 !CHANGELOG.md
+!README.md
+!SETUP.md
+!RTK.md
 !VERSION
 !settings.json
+!setup.sh
+!install.sh
+
+# Structural directories (whitelisted to let git descend into them)
 !skills/
-!skills/**
 !agents/
 !agents/**
 !hooks/
 !hooks/**
-!mempalace/
-!mempalace/**
-!setup.sh
+
+# User-owned skills — tracked. Add a new entry here when you create one.
+# Format: two lines per skill (directory + recursive contents).
+!skills/bugbot/
+!skills/bugbot/**
+!skills/documentation-lookup/
+!skills/documentation-lookup/**
+!skills/search-first/
+!skills/search-first/**
+!skills/slow-down/
+!skills/slow-down/**
+!skills/verify-test/
+!skills/verify-test/**
+
+# OS / editor noise
+.DS_Store
+*.swp
+.vscode/

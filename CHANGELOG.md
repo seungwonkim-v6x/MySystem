@@ -3,6 +3,29 @@
 All notable changes to MySystem are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [7.4.0] - 2026-04-27
+
+### Changed
+- **External skills are no longer git submodules.** `skills/gstack` is now an independent clone managed by `setup.sh`, always pulled at latest `main` instead of pinned to a fixed commit. SessionStart hook no longer errors out trying to roll back to stale SHAs.
+- **`.gitignore` restructured to explicit allow-list.** User-owned skills whitelisted by name; external skills (gstack + anything it installs) stay ignored by default. No maintenance when gstack adds/removes skills.
+- **`setup.sh` rewritten.** Now clones/pulls external repos (declared in `EXTERNAL_REPOS`), runs each external repo's own `./setup`, then validates symlinks and agent → skill mappings. Idempotent.
+- **SessionStart hook rewritten to match the post-submodule world.** Old `hooks/submodule-auto-update.sh` iterated `git submodule status` (empty after the migration) and so silently stopped updating gstack — local stayed pinned at v1.4.1.0 while upstream moved to v1.15.0.0. New `hooks/update-skills.sh` delegates to `setup.sh` (the SSOT), uses `flock` for single-flight against concurrent sessions, and truncates its log every run so stale errors don't get re-reported every session start.
+
+### Added
+- `install.sh` — one-shot installer for new machines. `bash <(curl -fsSL .../install.sh)` backs up any existing `~/.claude`, clones MySystem, and runs `setup.sh`.
+- `README.md` — repo landing page with two entry points (ask Claude, or curl one-liner).
+- `SETUP.md` — single source of truth for install/update/troubleshoot. Shareable URL you can hand to Claude: "read SETUP.md and execute it."
+- CLAUDE.md rule 6: adding an external skill repo → edit `EXTERNAL_REPOS` in `setup.sh` and update the README/SETUP tables; never submodule.
+
+### Removed
+- **Submodules deleted (4):** `gstack`, `superpowers`, `playwright-skill`, `code-review-skill`. `.gitmodules` file removed. `.git/modules/skills/*` refs cleaned.
+- **Unused skill dirs deleted:** `skills/superpowers/`, `skills/playwright-skill/`, `skills/code-review-skill/`, `skills/systematic-debugging/`, `skills/.gstack-backup-0.11.19.0/`. CHANGELOG 7.3.0 claimed playwright/code-review were removed but the working tree still had them — this release actually applies that removal.
+
+### Rationale
+Submodules pin a specific commit, which directly contradicts the "always latest" requirement for gstack (active development, frequent releases). Every SessionStart hook was failing to `git submodule update` because the pinned SHA kept rolling back manual gstack upgrades. The new model: declare the dependency (in `setup.sh`), let git clone freely, never pin.
+
+Trade-off: MySystem no longer snapshots exact versions of external skills at release time. Acceptable because (a) gstack releases its own semver; (b) reproducibility for a personal config repo matters less than staying current; (c) the declaration in `setup.sh` is readable and diff-friendly.
+
 ## [7.3.0] - 2026-04-21
 
 ### Removed

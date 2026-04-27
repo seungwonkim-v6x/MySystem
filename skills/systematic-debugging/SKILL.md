@@ -1,1 +1,0 @@
-/Users/seungwonkim/.claude/skills/superpowers/skills/systematic-debugging/SKILL.md
