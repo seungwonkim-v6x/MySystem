@@ -6,12 +6,15 @@
 export HOME="/Users/seungwonkim"
 MYSYSTEM="$HOME/.claude"
 LOG="$MYSYSTEM/.skill-update.log"
-LOCK="$MYSYSTEM/.skill-update.lock"
+LOCK_DIR="$MYSYSTEM/.skill-update.lock.d"
 
 (
-  # Single-flight: if another session is already updating, skip silently.
-  exec 9>"$LOCK"
-  flock -n 9 || exit 0
+  # Single-flight via atomic mkdir (portable; macOS has no flock).
+  # If another session beat us to it, exit silently.
+  if ! mkdir "$LOCK_DIR" 2>/dev/null; then
+    exit 0
+  fi
+  trap 'rmdir "$LOCK_DIR" 2>/dev/null' EXIT
 
   # Truncate log every run so stale errors don't get reported forever.
   echo "=== $(date -u +%FT%TZ) ===" > "$LOG"

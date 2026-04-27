@@ -3,6 +3,11 @@
 All notable changes to MySystem are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [7.4.1] - 2026-04-27
+
+### Fixed
+- **`hooks/update-skills.sh` no longer relies on `flock`.** macOS does not ship `flock`, so v7.4.0's hook silently exited (`flock: command not found` → `|| exit 0`) without ever calling `setup.sh` — same silent-no-op failure mode as the v7.4.0 bug it was meant to fix. Replaced with an atomic `mkdir`-based lock (`.skill-update.lock.d`) cleaned up via `trap EXIT`. Tested end-to-end: hook now actually invokes `setup.sh` and pulls gstack.
+
 ## [7.4.0] - 2026-04-27
 
 ### Changed
