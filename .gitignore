@@ -25,6 +25,8 @@
 !skills/
 !hooks/
 !hooks/**
+!templates/
+!templates/**
 
 # User-owned skills — tracked. Add a new entry here when you create one.
 # Format: two lines per skill (directory + recursive contents).

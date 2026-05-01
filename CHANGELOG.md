@@ -3,6 +3,38 @@
 All notable changes to MySystem are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [7.6.0] - 2026-05-01
+
+Theme: **Project knowledge convention** — adopt mattpocock's CONTEXT.md / ADR pattern as global templates + CLAUDE.md guidance. No per-project files created; nothing imposed on existing projects.
+
+### Added
+- **`templates/CONTEXT.md.template`** — domain-agnostic seed for a per-project living glossary. Sections: Terms (with `_Avoid_` aliases), Relationships, Flagged ambiguities, Example dialogue, Maintenance rules. Adapted from `mattpocock/skills` (CONTEXT-FORMAT.md) with vocabulary stripped down for general use.
+- **`templates/0000-adr-template.md`** — one-page ADR template. Status / Date / Author / Tags header, then Context / Decision / Alternatives / Consequences (✓✗?) / References / Maintenance. Numbering is monotonic per project.
+- **`CLAUDE.md` § "Project knowledge: CONTEXT.md / ADR (optional)"** — when to add to a project, per-project structure, when to write ADRs, when to update CONTEXT.md, anti-patterns, and the managed-region fence convention. ~36 lines.
+- **`.gitignore`** whitelist for `templates/` and `templates/**`.
+- **Managed-region fence convention** in both templates: `<!-- mysystem:managed-start -->` … `<!-- mysystem:managed-end -->`. No tooling consumes these yet — convention reserved for future automation (e.g., a `/context-write` skill that updates terms without trampling hand-written sections). Cost is two HTML-comment lines per template; benefit is future-proofing alignment with emerging norms (claude-evolve, oop-architect both ship the same shape).
+
+### Rationale
+The 9-step workflow, gstack skills, and `.claude/memory/` already cover process and team-shared decisions. What was missing: a per-project source of truth for *language* (terminology that gets aliased) and *deliberate decisions with rationale* (separate from PR descriptions, which are commit-shaped not decision-shaped). mattpocock's pattern (48k stars) is the validated answer; this release imports it as templates only — no scaffolding skill, no auto-load hook, nothing forced on existing projects.
+
+### Scope discipline
+Explicitly NOT in v7.6.0:
+- New skills (`/setup-context`, `/context-write` were considered, deferred — ship templates first, see if anyone copies them)
+- Session-start auto-loading of `CONTEXT.md`
+- Any change in vProp, cc-guard, or other project repos
+- Modification of gstack skills
+
+If no project copies the templates within ~2 weeks, mark the convention `Deprecated` in v7.6.x and remove. If templates get used, consider scaffolding skill in a future release.
+
+### 15-day ecosystem scan (ref only)
+Surveyed Claude Code skill / agent harness repos created or updated 2026-04-15 to 2026-05-01. Findings:
+- **claude-evolve** (jack60810) — Self-evolving CLAUDE.md with managed-region fences. Inspired this release's fence convention.
+- **unclog** (thomaschill) + **claude-atlas** (grippado) — `~/.claude/` audit tooling. Bookmarked for v7.7.x; revisit when 50-skill count grows or duplicates surface.
+- **skill-audit** (okjpg) + **skill-doctor** (xigua-wang) — SKILL.md linters with `evals/evals.json`. Bookmarked for v7.7.x to validate the 5 user-owned skills.
+- **cavemem** (JuliusBrussee) — Memory-layer compression. Orthogonal to RTK (Bash-tool layer); not adopted, noted.
+- **Modular CLAUDE.md router** pattern (wenjygal, jimhy, ZhongliangGuo) — validates the v7.6.0 split (process in CLAUDE.md, project knowledge in CONTEXT.md/ADR).
+- **Skipped**: design-system skills (wrong domain), harness alternatives (we're firmly on Claude Code), multi-LLM consensus voting (gstack `/codex` already covers this), token-dashboard (RTK's `rtk gain` already covers this).
+
 ## [7.5.0] - 2026-05-01
 
 Theme: **Housekeeping pass.** "Remove what isn't used; document what is."

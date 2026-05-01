@@ -123,6 +123,42 @@ Behavior adapts to who owns issues in the current repo:
 
 ---
 
+## Project knowledge: CONTEXT.md / ADR (optional)
+
+Lightweight convention for projects that benefit from a living glossary and a tracked decision log. Skip entirely for trivial projects.
+
+**When to add to a project**:
+- Domain has 5+ terms that get aliased or confused.
+- Onboarding takes more than reading the README.
+- Decisions get re-litigated because the rationale lives only in old PRs.
+
+**Per-project structure**:
+- `<repo>/CONTEXT.md` — domain glossary. Living document. Read at session start when working on this project.
+- `<repo>/docs/adr/NNNN-<slug>.md` — one ADR per non-trivial decision. Number monotonically.
+
+**Templates** (copy from MySystem when bootstrapping a project):
+- `~/.claude/templates/CONTEXT.md.template`
+- `~/.claude/templates/0000-adr-template.md`
+
+**When to write an ADR**:
+- `/autoplan` approval surfaces a non-obvious choice (architecture, data shape, dependency).
+- A workaround that would surprise the next reader.
+- A migration with a "remove once X" condition.
+
+**When to update CONTEXT.md**:
+- A new domain term lands in code or PR descriptions.
+- A term's meaning shifts (note as ambiguity, don't overwrite).
+- `/review` or `/office-hours` sharpens a definition.
+
+**Anti-patterns**:
+- Don't put implementation details in CONTEXT.md (code's job).
+- Don't put strategy/business decisions in ADRs (product docs).
+- Don't auto-generate ADRs from PRs — every ADR is a deliberate decision.
+
+**Future-proofing**: Templates use `<!-- mysystem:managed-* -->` HTML-comment fences for hypothetical future tooling; hand-written content stays outside the fence. No tooling exists yet — convention is reserved.
+
+---
+
 <important if="modifying the MySystem repository (~/.claude/) itself">
 ## Repo Self-Management Rules
 

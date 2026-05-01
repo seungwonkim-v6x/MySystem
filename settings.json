@@ -151,5 +151,6 @@
       }
     }
   },
-  "autoCompactEnabled": false
+  "autoCompactEnabled": false,
+  "effortLevel": "max"
 }

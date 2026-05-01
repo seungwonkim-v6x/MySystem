@@ -1,0 +1,45 @@
+# CONTEXT — <project name>
+
+> Living glossary of this project's domain language and key relationships.
+> Keep entries short. When a term gets mentioned 3+ times, it earns a place here.
+> Read at session start when working on this project. Sharpen during `/autoplan` and `/review`.
+
+<!-- mysystem:managed-start (intentionally empty — reserved for future tooling) -->
+<!-- mysystem:managed-end -->
+
+## Terms
+
+### <Term>
+**One-line definition.**
+- _Avoid_: <synonyms or near-miss aliases that should NOT appear in PRs / commits / code>
+- Example: <one short example sentence using the term correctly>
+- See also: <related term in this file>
+
+### <Another Term>
+**One-line definition.**
+- _Avoid_: <…>
+- Example: <…>
+- See also: <…>
+
+## Relationships
+
+- `<Term A>` is composed of one or more `<Term B>` (cardinality, lifecycle, ownership)
+- `<Term C>` triggers `<Term D>` via `<event / message / RPC>`
+- `<Term E>` is the storage form of `<Term F>` (one is on-disk, one is in-memory)
+
+## Flagged ambiguities
+
+- `<Term X>` historically meant Y, now means Z. Treat usage in pre-<date> code as Y.
+- `<Term X>` and `<Term Y>` are often confused; the boundary is `<criterion>`.
+
+## Example dialogue
+
+> "Did the agent see the new <Term>?"
+> — meaning: was the latest `<Term entity instance>` included in `<Term context>`?
+
+## How this file is maintained
+
+- **Add** a term when it's said 3+ times across PRs / Slack / this codebase.
+- **Sharpen** a definition when `/autoplan` or `/review` surfaces a wrong reading.
+- **Delete** a term when it's no longer in active code (verify with `git grep`).
+- **Source of truth**: this file. PR descriptions and commit messages defer to terms defined here.
