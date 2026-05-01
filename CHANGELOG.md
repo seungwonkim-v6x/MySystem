@@ -3,6 +3,36 @@
 All notable changes to MySystem are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [7.5.0] - 2026-05-01
+
+Theme: **Housekeeping pass.** "Remove what isn't used; document what is."
+
+### Removed
+- **`agents/ralph-planner.md`** and the entire `agents/` whitelist concept. Zero non-ralph agents had been added in 6+ weeks. `setup.sh` agent → skill validation block (~17 lines) deleted; `.gitignore` `!agents/` whitelist removed; `setup.sh` summary no longer reports an `Agents:` count.
+- **`~/.claude/ralph/`** (untracked, 88K) — `claude-auto-resume.sh`, `ralph-smart.sh`, `vprop/` ralph-autonomous wrapper. Ralph Loop usage stopped (see prior memory entry on idle-`.` waste). `~/.claude/plugins/data/ralph-loop-claude-plugins-official/` empty stub directory also removed.
+- **`mempalace/` tracked residue** — `wings/vprop/entities.json`, `wings/vprop/mempalace.yaml`, `wings`. v7.3.0 declared mempalace removed but left these in the working tree; this release actually `git rm`'s them. Same lineage as v7.4.0's "actually-applies-the-removal" entry.
+- **cc-guard hooks** in `settings.json`: PreToolUse Bash matcher, PreToolUse `mcp__.*` matcher, SessionEnd `cc-guard learn --auto`. User moved to Claude Code's built-in auto permission mode and prefers no extra prompt layer.
+
+### Added
+- **RTK verification step** in `setup.sh` (`command -v rtk` with version echo on hit, warn-without-fail on miss). Catches the silent no-op case where `rtk hook claude` fires but the binary is gone.
+- **Expanded `RTK.md`**: install path (`~/.local/bin/rtk`), current build (`v6x.260421.1`), reference to voyagerx Slack history thread, post-install verify checklist, sanity-check guidance (`rtk gain` should show climbing totals if the hook is firing). Replaces the prior 30-line stub.
+
+### Captured
+- **`settings.json` accumulated drift**: WebFetch domain allow-list expansions (developers.openai.com), MCP `query_dataset`/`search`/`get_properties`/`get_charts`/`query_chart`/`get_chart_definition_params` (claude_ai Amplitude), `slack_search_channels`/`slack_search_users` (claude_ai Slack), and `verify-test-vp553` `additionalDirectories`. Permissions accumulated through normal use; v7.5.0 commits the current state so future drift is diffable.
+- **`autoCompactEnabled: false`** committed. Model is Opus 4.7 (1M context); the previous `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=25` (v7.1.0) was firing too aggressively against the 1M window — repeatedly invalidating the 5-min Anthropic prompt cache and burning generation tokens on summaries for sessions that would never have hit the hard wall anyway. Disabling auto-compact preserves the cache prefix, lets `/clear` handle task boundaries, and trusts the 1M ceiling. The v7.1.0 env override remains in `env.CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` but is now superseded by `autoCompactEnabled: false`.
+
+### Safety implications (cc-guard removal)
+- `rm -rf`, `git push --force`, `DROP TABLE`, etc. no longer hit a regex-based PreToolUse block before execution. Auto permission mode does not replace that safety net — it auto-approves rather than gates. User accepts the trade-off; treat destructive commands with extra care from this version forward. To restore protection: re-add the cc-guard hook entries (binary still installed at `~/Documents/cc-guard/dist/cc-guard`).
+
+### Rationale
+Two conflicting forces were resolved this release:
+1. **"Used or remove"** — ralph hadn't been run in weeks, mempalace was already deprecated, cc-guard was about to become noise after enabling auto permission mode. Three concrete dead-or-redundant subsystems.
+2. **"Used and managed"** — RTK demonstrably saves ~35M tokens (94.6% efficiency, 4,623 commands lifetime per `rtk gain`). It is the most-used tool with the worst documentation in the repo. Promoted from "ghost dependency" to documented dependency.
+
+### Deferred (not in v7.5.0)
+- CONTEXT.md / ADR convention from `mattpocock/skills` — explored in /office-hours, deferred to v7.6.0 to keep this release focused on cleanup.
+- The `feedback_ralph_loop_usage_waste.md` auto-memory entry is now stale (ralph removed) but lives at `~/.claude/projects/.../memory/` which is symlinked into the vProp repo's tracked memory. Cleanup requires a vProp commit; out of scope this session.
+
 ## [7.4.1] - 2026-04-27
 
 ### Fixed

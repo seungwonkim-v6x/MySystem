@@ -73,6 +73,16 @@
       "Skill(plan-eng-review:*)",
       "mcp__Playwright__browser_tabs",
       "mcp__Playwright__browser_resize",
+      "WebFetch(domain:developers.openai.com)",
+      "mcp__context7__query-docs",
+      "mcp__claude_ai_Amplitude__query_dataset",
+      "mcp__claude_ai_Amplitude__search",
+      "mcp__claude_ai_Amplitude__get_properties",
+      "mcp__claude_ai_Amplitude__get_charts",
+      "mcp__claude_ai_Amplitude__query_chart",
+      "mcp__claude_ai_Amplitude__get_chart_definition_params",
+      "mcp__claude_ai_Slack__slack_search_channels",
+      "mcp__claude_ai_Slack__slack_search_users",
       "mcp__pencil"
     ],
     "additionalDirectories": [
@@ -101,7 +111,9 @@
       "/tmp/verify-test-1776763063",
       "/private/tmp/verify-test-1776763063",
       "/tmp/verify-test-1776821779",
-      "/private/tmp/verify-test-1776821779"
+      "/private/tmp/verify-test-1776821779",
+      "/tmp/verify-test-vp553",
+      "/private/tmp/verify-test-vp553"
     ]
   },
   "model": "opus[1m]",
@@ -122,26 +134,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/seungwonkim/Documents/cc-guard/dist/cc-guard check"
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
             "command": "rtk hook claude"
-          }
-        ]
-      }
-    ],
-    "SessionEnd": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "cc-guard learn --auto"
           }
         ]
       }
@@ -158,5 +151,5 @@
       }
     }
   },
-  "effortLevel": "high"
+  "autoCompactEnabled": false
 }

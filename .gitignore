@@ -23,8 +23,6 @@
 
 # Structural directories (whitelisted to let git descend into them)
 !skills/
-!agents/
-!agents/**
 !hooks/
 !hooks/**
 

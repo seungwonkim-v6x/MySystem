@@ -8,7 +8,8 @@
 #   3. Register gstack-installed skill dirs in .git/info/exclude
 #      (so the ignore list tracks gstack's current release without
 #       hardcoding names in the tracked .gitignore)
-#   4. Validate skill symlinks + agent → skill mappings
+#   4. Validate skill symlinks
+#   5. Verify RTK presence (voyagerx internal token-compression proxy)
 
 set -euo pipefail
 
@@ -94,27 +95,18 @@ else
   exit 1
 fi
 
-# Agent → skill mapping
-ALL_OK=true
-if [ -d agents ]; then
-  for agent_file in agents/*.md; do
-    [ -f "$agent_file" ] || continue
-    agent_name=$(basename "$agent_file" .md)
-    skills=$(grep -A10 "^skills:" "$agent_file" 2>/dev/null | grep "  - " | sed 's/.*- //' || true)
-    for skill in $skills; do
-      if [ ! -f "skills/$skill/SKILL.md" ]; then
-        echo "  ✗ agent '$agent_name' needs skill '$skill' — NOT FOUND"
-        ALL_OK=false
-      fi
-    done
-  done
+# RTK verification (voyagerx internal token-compression proxy)
+# Binary lives at ~/.local/bin/rtk; install via internal channels (see RTK.md).
+# settings.json wires `rtk hook claude` as PreToolUse Bash hook.
+if command -v rtk >/dev/null 2>&1; then
+  echo "  ✓ rtk present ($(rtk --version 2>/dev/null | head -1 || echo unknown))"
+else
+  echo "  ⚠ rtk not on PATH — see RTK.md for install (token compression hook will no-op)"
 fi
-$ALL_OK && echo "  ✓ all agents have required skills"
 
 echo ""
 echo "=== Setup Complete ==="
 echo "  Version: $(cat VERSION 2>/dev/null || echo "?")"
-echo "  Agents:  $(ls agents/*.md 2>/dev/null | wc -l | tr -d ' ')"
 echo "  Skills:  $TOTAL"
 echo "  Hooks:   $(ls hooks/*.sh 2>/dev/null | wc -l | tr -d ' ')"
 echo ""
