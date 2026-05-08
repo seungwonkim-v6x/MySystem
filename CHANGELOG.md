@@ -3,7 +3,39 @@
 All notable changes to MySystem are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
-## [7.6.1] - 2026-05-08
+> **Versioning note (2026-05-08)**: MySystem was renumbered from `vN.M.P`
+> (running 1.0.0 → 7.6.1 over Mar–May 2026) into the pre-1.0 `0.x.y` range.
+> Old `MAJOR.MINOR` pairs were collapsed onto sequential new MINOR slots
+> (e.g. `1.0 → 0.0`, `2.0 → 0.1`, `2.3 → 0.4`, `7.6 → 0.29`); old PATCH was
+> preserved. All git tags (`v2.0.0` … `v7.6.1`) were force-replaced with the
+> new mapping. Body text in older entries has been updated to match the new
+> scheme. Solo repo, no external consumers — preserving SemVer signal
+> (still-iterating, no API stability promise) was worth the rewrite.
+
+## [0.29.2] - 2026-05-08
+
+Theme: **Renumber to 0.x.** No behavior change.
+
+### Changed
+- **`VERSION`** — `7.6.1` → `0.29.2` (this release).
+- **All git tags** retagged from `vN.M.P` to `v0.X.Y` per the chronological mapping (44 tags rewritten on local + origin).
+- **`CHANGELOG.md`** headers + body cross-references updated to match.
+- **`CLAUDE.md`**, **`SETUP.md`** — incidental `v7.4.0` references swept to `v0.27.0`.
+
+### Why
+Project never had a stable-API contract; living in `7.x` was overstating maturity. `0.x` is the correct SemVer signal for "still iterating, breaking workflow changes are fair game". Backfilled history rather than just shifting forward, since this is a solo repo with no external consumers and the dual-tag option (44+44) would be more confusing than a clean rewrite.
+
+### Mapping (key landmarks)
+- `v1.0.0 → v0.0.0` (CHANGELOG-only, never tagged)
+- `v2.0.0 → v0.1.0`, `v2.3.3 → v0.4.3`
+- `v3.0.0 → v0.5.0`, `v3.3.0 → v0.8.0`
+- `v4.0.0 → v0.9.0`, `v4.2.0 → v0.11.0`
+- `v5.0.0 → v0.12.0`, `v5.9.0 → v0.21.0`
+- `v6.0.0 → v0.22.0`
+- `v7.0.0 → v0.23.0`, `v7.6.1 → v0.29.1`
+- This release: `v0.29.2`
+
+## [0.29.1] - 2026-05-08
 
 Theme: **Auto Mode no longer overrides the 9-step workflow.**
 
@@ -16,7 +48,7 @@ The harness's Auto Mode preamble started materially shaping behavior — agents 
 ### Scope
 Single-file edit: `CLAUDE.md`. No skills changed, no settings.json change, no behavior change for non-auto sessions.
 
-## [7.6.0] - 2026-05-01
+## [0.29.0] - 2026-05-01
 
 Theme: **Project knowledge convention** — adopt mattpocock's CONTEXT.md / ADR pattern as global templates + CLAUDE.md guidance. No per-project files created; nothing imposed on existing projects.
 
@@ -31,31 +63,31 @@ Theme: **Project knowledge convention** — adopt mattpocock's CONTEXT.md / ADR 
 The 9-step workflow, gstack skills, and `.claude/memory/` already cover process and team-shared decisions. What was missing: a per-project source of truth for *language* (terminology that gets aliased) and *deliberate decisions with rationale* (separate from PR descriptions, which are commit-shaped not decision-shaped). mattpocock's pattern (48k stars) is the validated answer; this release imports it as templates only — no scaffolding skill, no auto-load hook, nothing forced on existing projects.
 
 ### Scope discipline
-Explicitly NOT in v7.6.0:
+Explicitly NOT in v0.29.0:
 - New skills (`/setup-context`, `/context-write` were considered, deferred — ship templates first, see if anyone copies them)
 - Session-start auto-loading of `CONTEXT.md`
 - Any change in vProp, cc-guard, or other project repos
 - Modification of gstack skills
 
-If no project copies the templates within ~2 weeks, mark the convention `Deprecated` in v7.6.x and remove. If templates get used, consider scaffolding skill in a future release.
+If no project copies the templates within ~2 weeks, mark the convention `Deprecated` in v0.29.x and remove. If templates get used, consider scaffolding skill in a future release.
 
 ### 15-day ecosystem scan (ref only)
 Surveyed Claude Code skill / agent harness repos created or updated 2026-04-15 to 2026-05-01. Findings:
 - **claude-evolve** (jack60810) — Self-evolving CLAUDE.md with managed-region fences. Inspired this release's fence convention.
-- **unclog** (thomaschill) + **claude-atlas** (grippado) — `~/.claude/` audit tooling. Bookmarked for v7.7.x; revisit when 50-skill count grows or duplicates surface.
-- **skill-audit** (okjpg) + **skill-doctor** (xigua-wang) — SKILL.md linters with `evals/evals.json`. Bookmarked for v7.7.x to validate the 5 user-owned skills.
+- **unclog** (thomaschill) + **claude-atlas** (grippado) — `~/.claude/` audit tooling. Bookmarked for v0.30.x; revisit when 50-skill count grows or duplicates surface.
+- **skill-audit** (okjpg) + **skill-doctor** (xigua-wang) — SKILL.md linters with `evals/evals.json`. Bookmarked for v0.30.x to validate the 5 user-owned skills.
 - **cavemem** (JuliusBrussee) — Memory-layer compression. Orthogonal to RTK (Bash-tool layer); not adopted, noted.
-- **Modular CLAUDE.md router** pattern (wenjygal, jimhy, ZhongliangGuo) — validates the v7.6.0 split (process in CLAUDE.md, project knowledge in CONTEXT.md/ADR).
+- **Modular CLAUDE.md router** pattern (wenjygal, jimhy, ZhongliangGuo) — validates the v0.29.0 split (process in CLAUDE.md, project knowledge in CONTEXT.md/ADR).
 - **Skipped**: design-system skills (wrong domain), harness alternatives (we're firmly on Claude Code), multi-LLM consensus voting (gstack `/codex` already covers this), token-dashboard (RTK's `rtk gain` already covers this).
 
-## [7.5.0] - 2026-05-01
+## [0.28.0] - 2026-05-01
 
 Theme: **Housekeeping pass.** "Remove what isn't used; document what is."
 
 ### Removed
 - **`agents/ralph-planner.md`** and the entire `agents/` whitelist concept. Zero non-ralph agents had been added in 6+ weeks. `setup.sh` agent → skill validation block (~17 lines) deleted; `.gitignore` `!agents/` whitelist removed; `setup.sh` summary no longer reports an `Agents:` count.
 - **`~/.claude/ralph/`** (untracked, 88K) — `claude-auto-resume.sh`, `ralph-smart.sh`, `vprop/` ralph-autonomous wrapper. Ralph Loop usage stopped (see prior memory entry on idle-`.` waste). `~/.claude/plugins/data/ralph-loop-claude-plugins-official/` empty stub directory also removed.
-- **`mempalace/` tracked residue** — `wings/vprop/entities.json`, `wings/vprop/mempalace.yaml`, `wings`. v7.3.0 declared mempalace removed but left these in the working tree; this release actually `git rm`'s them. Same lineage as v7.4.0's "actually-applies-the-removal" entry.
+- **`mempalace/` tracked residue** — `wings/vprop/entities.json`, `wings/vprop/mempalace.yaml`, `wings`. v0.26.0 declared mempalace removed but left these in the working tree; this release actually `git rm`'s them. Same lineage as v0.27.0's "actually-applies-the-removal" entry.
 - **cc-guard hooks** in `settings.json`: PreToolUse Bash matcher, PreToolUse `mcp__.*` matcher, SessionEnd `cc-guard learn --auto`. User moved to Claude Code's built-in auto permission mode and prefers no extra prompt layer.
 
 ### Added
@@ -63,8 +95,8 @@ Theme: **Housekeeping pass.** "Remove what isn't used; document what is."
 - **Expanded `RTK.md`**: install path (`~/.local/bin/rtk`), current build (`v6x.260421.1`), reference to voyagerx Slack history thread, post-install verify checklist, sanity-check guidance (`rtk gain` should show climbing totals if the hook is firing). Replaces the prior 30-line stub.
 
 ### Captured
-- **`settings.json` accumulated drift**: WebFetch domain allow-list expansions (developers.openai.com), MCP `query_dataset`/`search`/`get_properties`/`get_charts`/`query_chart`/`get_chart_definition_params` (claude_ai Amplitude), `slack_search_channels`/`slack_search_users` (claude_ai Slack), and `verify-test-vp553` `additionalDirectories`. Permissions accumulated through normal use; v7.5.0 commits the current state so future drift is diffable.
-- **`autoCompactEnabled: false`** committed. Model is Opus 4.7 (1M context); the previous `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=25` (v7.1.0) was firing too aggressively against the 1M window — repeatedly invalidating the 5-min Anthropic prompt cache and burning generation tokens on summaries for sessions that would never have hit the hard wall anyway. Disabling auto-compact preserves the cache prefix, lets `/clear` handle task boundaries, and trusts the 1M ceiling. The v7.1.0 env override remains in `env.CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` but is now superseded by `autoCompactEnabled: false`.
+- **`settings.json` accumulated drift**: WebFetch domain allow-list expansions (developers.openai.com), MCP `query_dataset`/`search`/`get_properties`/`get_charts`/`query_chart`/`get_chart_definition_params` (claude_ai Amplitude), `slack_search_channels`/`slack_search_users` (claude_ai Slack), and `verify-test-vp553` `additionalDirectories`. Permissions accumulated through normal use; v0.28.0 commits the current state so future drift is diffable.
+- **`autoCompactEnabled: false`** committed. Model is Opus 4.7 (1M context); the previous `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=25` (v0.24.0) was firing too aggressively against the 1M window — repeatedly invalidating the 5-min Anthropic prompt cache and burning generation tokens on summaries for sessions that would never have hit the hard wall anyway. Disabling auto-compact preserves the cache prefix, lets `/clear` handle task boundaries, and trusts the 1M ceiling. The v0.24.0 env override remains in `env.CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` but is now superseded by `autoCompactEnabled: false`.
 
 ### Safety implications (cc-guard removal)
 - `rm -rf`, `git push --force`, `DROP TABLE`, etc. no longer hit a regex-based PreToolUse block before execution. Auto permission mode does not replace that safety net — it auto-approves rather than gates. User accepts the trade-off; treat destructive commands with extra care from this version forward. To restore protection: re-add the cc-guard hook entries (binary still installed at `~/Documents/cc-guard/dist/cc-guard`).
@@ -74,16 +106,16 @@ Two conflicting forces were resolved this release:
 1. **"Used or remove"** — ralph hadn't been run in weeks, mempalace was already deprecated, cc-guard was about to become noise after enabling auto permission mode. Three concrete dead-or-redundant subsystems.
 2. **"Used and managed"** — RTK demonstrably saves ~35M tokens (94.6% efficiency, 4,623 commands lifetime per `rtk gain`). It is the most-used tool with the worst documentation in the repo. Promoted from "ghost dependency" to documented dependency.
 
-### Deferred (not in v7.5.0)
-- CONTEXT.md / ADR convention from `mattpocock/skills` — explored in /office-hours, deferred to v7.6.0 to keep this release focused on cleanup.
+### Deferred (not in v0.28.0)
+- CONTEXT.md / ADR convention from `mattpocock/skills` — explored in /office-hours, deferred to v0.29.0 to keep this release focused on cleanup.
 - The `feedback_ralph_loop_usage_waste.md` auto-memory entry is now stale (ralph removed) but lives at `~/.claude/projects/.../memory/` which is symlinked into the vProp repo's tracked memory. Cleanup requires a vProp commit; out of scope this session.
 
-## [7.4.1] - 2026-04-27
+## [0.27.1] - 2026-04-27
 
 ### Fixed
-- **`hooks/update-skills.sh` no longer relies on `flock`.** macOS does not ship `flock`, so v7.4.0's hook silently exited (`flock: command not found` → `|| exit 0`) without ever calling `setup.sh` — same silent-no-op failure mode as the v7.4.0 bug it was meant to fix. Replaced with an atomic `mkdir`-based lock (`.skill-update.lock.d`) cleaned up via `trap EXIT`. Tested end-to-end: hook now actually invokes `setup.sh` and pulls gstack.
+- **`hooks/update-skills.sh` no longer relies on `flock`.** macOS does not ship `flock`, so v0.27.0's hook silently exited (`flock: command not found` → `|| exit 0`) without ever calling `setup.sh` — same silent-no-op failure mode as the v0.27.0 bug it was meant to fix. Replaced with an atomic `mkdir`-based lock (`.skill-update.lock.d`) cleaned up via `trap EXIT`. Tested end-to-end: hook now actually invokes `setup.sh` and pulls gstack.
 
-## [7.4.0] - 2026-04-27
+## [0.27.0] - 2026-04-27
 
 ### Changed
 - **External skills are no longer git submodules.** `skills/gstack` is now an independent clone managed by `setup.sh`, always pulled at latest `main` instead of pinned to a fixed commit. SessionStart hook no longer errors out trying to roll back to stale SHAs.
@@ -106,7 +138,7 @@ Submodules pin a specific commit, which directly contradicts the "always latest"
 
 Trade-off: MySystem no longer snapshots exact versions of external skills at release time. Acceptable because (a) gstack releases its own semver; (b) reproducibility for a personal config repo matters less than staying current; (c) the declaration in `setup.sh` is readable and diff-friendly.
 
-## [7.3.0] - 2026-04-21
+## [0.26.0] - 2026-04-21
 
 ### Removed
 - **mempalace system fully removed.** 30-day usage analysis showed ~5 queries/day average and zero writes in the last 5 days; ROI did not justify the ~3,000 tokens injected per session. gstack's local storage (`~/.gstack/projects/`) plus per-project `.claude/memory/` cover the same needs with less overhead.
@@ -122,7 +154,7 @@ Trade-off: MySystem no longer snapshots exact versions of external skills at rel
 - Token savings: roughly 6,000–7,000 tokens per session start.
 - gstack local storage already integrates with the team-shared `.claude/memory/` + `MEMORY.md` auto-load flow. The mempalace KG/drawer/tunnel abstractions were over-engineered for the actual usage pattern.
 
-## [7.2.0] - 2026-04-21
+## [0.25.0] - 2026-04-21
 
 ### Added
 - **Boil the Lake (Completeness Principle)** section in CLAUDE.md — recommend the complete implementation over shortcuts; AI makes the last 10% cost near-zero. Flag "oceans" (rewrites of systems you don't control) as out of scope.
@@ -134,20 +166,20 @@ Trade-off: MySystem no longer snapshots exact versions of external skills at rel
 - `/land-and-deploy`, `/canary`는 vProp처럼 팀 리뷰/머지 흐름이 있고 Vercel+Sentry로 관측되는 환경엔 과함 — 기본 플로우에서 제외.
 - 위 두 원칙(Boil the Lake, Repo Mode)은 gstack 철학 중 플로우 변경 없이 판단 기준으로 흡수할 가치가 가장 높음.
 
-## [7.1.0] - 2026-04-20
+## [0.24.0] - 2026-04-20
 
 ### Changed
 - Context Management: replaced "Compact at 50%" manual rule with auto-compaction via `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=25`. Opus 4.7 (1M context) triggers auto-compaction at ~250K tokens, much earlier than the 83% default — Opus 4.7 burns tokens too fast for the default threshold.
 - settings.json: added `env.CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=25`, `effortLevel: xhigh` (Opus 4.7 default), permissions (Skills for office-hours/autoplan/review/ship, editJiraIssue, vprop libs/src/image, stripe list_subscriptions), additionalDirectories (cc-guard subdirs, verify-test tmp dirs).
 - hooks: added `SessionEnd` cc-guard learn; `PreToolUse` Bash uses absolute path to `cc-guard check`.
 
-## [7.0.1] - 2026-04-15
+## [0.23.1] - 2026-04-15
 
 ### Changed
 - mempalace-auto-mine.sh: `--extract general` for structured memory extraction (decision/problem/milestone instead of raw exchange snippets).
 - settings.json: added permissions (Slack search, Notion search, Playwright, cc-guard hook, mempalace), additional directories, PreToolUse cc-guard hook.
 
-## [7.0.0] - 2026-04-15
+## [0.23.0] - 2026-04-15
 
 ### Changed
 - **Breaking**: Removed custom ensemble system entirely. Coordinator now invokes gstack skills directly.
@@ -168,14 +200,14 @@ Trade-off: MySystem no longer snapshots exact versions of external skills at rel
 - Ensemble Execution Rule, Subagent Permission Rules sections from CLAUDE.md.
 - `superpowers` and `feature-dev` disabled plugin entries from settings.json.
 
-## [5.8.1] - 2026-04-15 (rollback)
+## [0.20.1-rollback] - 2026-04-15
 
 ### Reverted
-- Rolled back from v6.0.0 to v5.8.1. Reverted CLAUDE.md and VERSION.
-- v5.9.0 (Ralph Autonomous Mode) and v6.0.0 (ensemble removal, workflow unification) changes undone.
+- Rolled back from v0.22.0 to v0.20.1. Reverted CLAUDE.md and VERSION.
+- v0.21.0 (Ralph Autonomous Mode) and v0.22.0 (ensemble removal, workflow unification) changes undone.
 - `agents/ralph-planner.md` retained as it's a standalone addition.
 
-## [6.0.0] - 2026-04-14
+## [0.22.0] - 2026-04-14
 
 ### Changed
 - **Breaking**: Removed ensemble (3x subagent per step). Each step now calls 1x subagent directly.
@@ -190,7 +222,7 @@ Trade-off: MySystem no longer snapshots exact versions of external skills at rel
 - 3x parallel subagent execution pattern
 - screen + ralph-autonomous.sh based autonomous execution
 
-## [5.9.0] - 2026-04-14
+## [0.21.0] - 2026-04-14
 
 ### Added
 - **Ralph Autonomous Mode**: Autonomous execution of MySystem workflow while user is away. Each iteration = 1 task x 1 workflow step. Steps 1~8 auto-execute, /ship always requires human.
@@ -205,12 +237,12 @@ Trade-off: MySystem no longer snapshots exact versions of external skills at rel
 - Single agent per step (not ensemble) — 1/3 token cost, suitable for autonomous execution
 - `--disallowed-tools` CLI hard block + `safety-autonomous.md` soft block dual safety
 
-## [5.8.1] - 2026-04-10
+## [0.20.1] - 2026-04-10
 
 ### Added
 - **Central mempalace wing configs** (`mempalace/wings/vprop/`): moved `mempalace.yaml` and `entities.json` out of project directories into MySystem so they don't pollute project git status/diff
 
-## [5.8.0] - 2026-04-10
+## [0.20.0] - 2026-04-10
 
 ### Added
 - **3 external skill submodules**: `code-review-skill` (React/TS/Vue review), `playwright-skill` (E2E tests), `superpowers` (systematic-debugging)
@@ -223,12 +255,12 @@ Trade-off: MySystem no longer snapshots exact versions of external skills at rel
 - `eng-reviewer` agent: added `health` (code quality dashboard)
 - `test-verifier` agent: added `playwright-skill` (E2E test generation)
 
-## [5.7.0] - 2026-04-10
+## [0.19.0] - 2026-04-10
 
 ### Added
 - **setup.sh**: Clone-and-run bootstrap script — inits gstack submodule, restores broken skill symlinks, verifies all agent → skill mappings. Run `cd ~/.claude && ./setup.sh` on any new machine.
 
-## [5.6.0] - 2026-04-10
+## [0.18.0] - 2026-04-10
 
 ### Added
 - **MemPalace integration**: Replaced claude-mem with MemPalace for persistent memory (raw verbatim storage, 96.6% R@5 retrieval)
@@ -242,7 +274,7 @@ Trade-off: MySystem no longer snapshots exact versions of external skills at rel
 ### Changed
 - Subagent models switched from opus to sonnet (cost reduction)
 
-## [5.5.0] - 2026-04-09
+## [0.17.0] - 2026-04-09
 
 ### Added
 - **3 new custom subagents**: `office-hours`, `slow-downer`, `test-verifier` — every ensemble step now has a dedicated subagent with preloaded skills
@@ -252,17 +284,17 @@ Trade-off: MySystem no longer snapshots exact versions of external skills at rel
 - Step Details table: all steps now reference named subagents, no more "generic" entries
 - All 10 subagents have `skills:` frontmatter for automatic SKILL.md preloading
 
-## [5.4.2] - 2026-04-09
+## [0.16.2] - 2026-04-09
 
 ### Fixed
 - **Enforce subagent_type usage**: Added CRITICAL rule + correct/wrong examples to prevent coordinator from ignoring custom subagents and spawning generic `Agent(model: "opus")` with inline prompts instead
 
-## [5.4.1] - 2026-04-09
+## [0.16.1] - 2026-04-09
 
 ### Fixed
 - **/autoplan two-phase flow**: Coordinator must write a plan via EnterPlanMode, get user approval via ExitPlanMode, THEN pass the full approved plan to CEO/Design/Eng reviewers. Previously coordinator was skipping the plan phase and writing its own inline summary directly into subagent prompts.
 
-## [5.4.0] - 2026-04-09
+## [0.16.0] - 2026-04-09
 
 ### Changed
 - **Correct subagent invocation**: Rewrite CLAUDE.md to use `Agent(subagent_type: "name")` pattern
@@ -274,7 +306,7 @@ Trade-off: MySystem no longer snapshots exact versions of external skills at rel
 - Disconnect between Execution Steps (inline prompts) and Step Details (custom agent names) resolved
 - Subagents no longer need to read SKILL.md at runtime — replaced with skills preloading
 
-## [5.3.0] - 2026-04-09
+## [0.15.0] - 2026-04-09
 
 ### Added
 - **Custom Subagents** (`~/.claude/agents/`): 7 dedicated subagent definitions created
@@ -287,13 +319,13 @@ Trade-off: MySystem no longer snapshots exact versions of external skills at rel
 - Step Details table: skill file references replaced with custom subagent references
 - Subagent invocation: Agent tool + inline prompts replaced with pre-defined `.claude/agents/` files
 
-## [5.2.0] - 2026-04-09
+## [0.14.0] - 2026-04-09
 
 ### Changed
 - **/autoplan**: Same skill x3 replaced with role-based subagents (Agent 1=CEO, Agent 2=Design, Agent 3=Eng). Each subagent reads and executes its own role's SKILL.md.
 - **Implementation**: Excluded from ensemble, coordinator runs directly (needs file write permissions)
 
-## [5.1.0] - 2026-04-09
+## [0.13.0] - 2026-04-09
 
 ### Changed
 - **Opus-only ensemble**: Subagent model changed from sonnet to opus. Codex CLI and Gemini CLI removed (unstable).
@@ -309,10 +341,10 @@ Trade-off: MySystem no longer snapshots exact versions of external skills at rel
 - Codex CLI integration (unstable invocation)
 - Gemini CLI integration (unstable invocation)
 
-## [5.0.0] - 2026-04-09
+## [0.12.0] - 2026-04-09
 
 ### Changed
-- **Base reverted to v3.3.0**: Rolled back Scion-based v4.x architecture. Step-detail table (v4.2.0) retained.
+- **Base reverted to v0.8.0**: Rolled back Scion-based v4.x architecture. Step-detail table (v0.11.0) retained.
 - **Ensemble fixed at 5 perspectives**: 3 Claude sonnet subagents + Codex CLI + Gemini CLI. Removed "3-5" variable range.
 - **Codex CLI flags updated**: `--read-only` to `-s read-only`, `--write` to `-s workspace-write` (Codex v0.118.0)
 - **Repo Self-Management**: Skill sync changed from copy to symlink
@@ -331,7 +363,7 @@ Trade-off: MySystem no longer snapshots exact versions of external skills at rel
 - v4.x workflow failing every session due to Scion CLI not being installed
 - Codex CLI v0.118.0 flag compatibility
 
-## [4.2.0] - 2026-04-08
+## [0.11.0] - 2026-04-08
 
 ### Changed
 - **Complete CLAUDE.md rewrite**: reduced from 190 lines to 70 lines. One rule at the top: "your first tool call is /scion-ensemble". Everything else supports that one rule.
@@ -342,7 +374,7 @@ Trade-off: MySystem no longer snapshots exact versions of external skills at rel
 ### Fixed
 - Agent was reasoning "this is overkill" and skipping ensemble because the old CLAUDE.md had too many rules competing for attention. New version has one rule.
 
-## [4.1.0] - 2026-04-08
+## [0.10.0] - 2026-04-08
 
 ### Changed
 - **Step Details rewritten**: every step now explicitly reads the relevant skill's SKILL.md, extracts the methodology, and inlines it into the /scion-ensemble task prompt. Prevents agents from ignoring ensemble and running solo.
@@ -352,7 +384,7 @@ Trade-off: MySystem no longer snapshots exact versions of external skills at rel
 ### Fixed
 - Agent was ignoring Ensemble Execution Rule and running skills directly (solo) because Step Details said "Run /investigate" without mentioning /scion-ensemble.
 
-## [4.0.0] - 2026-04-08
+## [0.9.0] - 2026-04-08
 
 ### Added
 - **scion-ensemble skill**: New `/scion-ensemble` custom skill that spawns a 4-agent multi-model ensemble: 1 local Claude (Agent tool) + 3 Scion containers (Claude Opus, Gemini 2.5 Pro, Codex). Collects results and synthesizes into Consensus / Unique catches / Disagreements.
@@ -364,12 +396,12 @@ Trade-off: MySystem no longer snapshots exact versions of external skills at rel
 - **Breaking**: Requires Scion CLI + Docker for full ensemble. Falls back to local-only Agent tool ensemble if unavailable.
 - Step 7 (/review) and Step 8 (/bugbot) now reference `/scion-ensemble` instead of "Codex runs in parallel"
 
-## [3.3.0] - 2026-04-08
+## [0.8.0] - 2026-04-08
 
 ### Changed
 - Research-backed ensemble: structured perspectives, not just paraphrasing
 
-## [3.0.0] - 2026-04-05
+## [0.5.0] - 2026-04-05
 
 ### Added
 - **Ensemble Execution Rule**: Every workflow step spawns 3-10 identical subagents in parallel, synthesizes results into one report. Core leverage of the system.
@@ -385,26 +417,26 @@ Trade-off: MySystem no longer snapshots exact versions of external skills at rel
 - **Breaking**: Debugging flow expanded (added /research step)
 - Ensemble rule applies to ALL steps (not just review/bugbot)
 
-## [2.3.3] - 2026-03-27
+## [0.4.3] - 2026-03-27
 
 ### Fixed
 - Clarified that /autoplan runs IMMEDIATELY after /slow-down approval, no asking
 - "Plan acceptance ≠ plan review" — ExitPlanMode does not replace /autoplan
 - Agent was skipping /autoplan entirely after user accepted a plan
 
-## [2.3.2] - 2026-03-27
+## [0.4.2] - 2026-03-27
 
 ### Fixed
 - Added "NEVER reorder steps" and "NEVER write code before /slow-down and /autoplan are done"
 - Agent was running /investigate then jumping straight to implementation, skipping /slow-down and /autoplan entirely
 
-## [2.3.1] - 2026-03-27
+## [0.4.1] - 2026-03-27
 
 ### Fixed
 - Clarified that agent must NEVER ask "should we skip?" or suggest skipping
 - User interrupts if they want to skip — agent just runs the next step
 
-## [2.3.0] - 2026-03-27
+## [0.4.0] - 2026-03-27
 
 ### Changed
 - **Breaking**: ALL workflow steps are now MANDATORY — agent has ZERO discretion to skip
@@ -412,13 +444,13 @@ Trade-off: MySystem no longer snapshots exact versions of external skills at rel
 - Only the user can skip a step by explicitly saying "skip [step]"
 - Debugging flow also requires /slow-down and /autoplan (no shortcuts)
 
-## [2.2.0] - 2026-03-27
+## [0.3.0] - 2026-03-27
 
 ### Added
 - CHANGELOG.md for version history tracking
 - Repo self-management rules in CLAUDE.md: agents must bump VERSION, update CHANGELOG, create git tag, and sync global files on every change
 
-## [2.1.0] - 2026-03-26
+## [0.2.0] - 2026-03-26
 
 ### Changed
 - Workflow now has 7 explicit numbered steps, not just 3 gates
@@ -427,7 +459,7 @@ Trade-off: MySystem no longer snapshots exact versions of external skills at rel
 - Added weekly retrospective: /retro with explicit trigger condition
 - Removed separate "Skill Inventory" table — skills are defined by their workflow position
 
-## [2.0.0] - 2026-03-26
+## [0.1.0] - 2026-03-26
 
 ### Changed
 - **Breaking**: All content rewritten in English (was Korean)
@@ -438,7 +470,7 @@ Trade-off: MySystem no longer snapshots exact versions of external skills at rel
 - gstack added as git submodule at skills/gstack/
 - VERSION file for version tracking
 
-## [1.0.0] - 2026-03-26
+## [0.0.0] - 2026-03-26
 
 ### Added
 - Initial setup: CLAUDE.md, settings.json, bugbot skill

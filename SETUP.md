@@ -98,7 +98,7 @@ when gstack evolves.
    be detected automatically by `setup.sh`'s `.git/info/exclude` logic as
    long as they end up as symlinks under `skills/<name>/SKILL.md`.
    Otherwise, add an explicit ignore entry in `.gitignore`.
-4. Never use git submodules — MySystem moved away from them in v7.4.0.
+4. Never use git submodules — MySystem moved away from them in v0.27.0.
 
 ## Troubleshooting
 
@@ -112,7 +112,7 @@ when gstack evolves.
 - **`bun: command not found`** — install bun (see Prerequisites).
 
 - **SessionStart hook complains about submodules** — the old submodule
-  config was removed in v7.4.0. Restart Claude Code (the error comes
+  config was removed in v0.27.0. Restart Claude Code (the error comes
   from a cached process); if it persists, verify `.gitmodules` is gone.
 
 - **A gstack skill disappeared after `./setup.sh`** — gstack dropped it

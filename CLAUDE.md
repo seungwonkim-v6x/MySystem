@@ -181,7 +181,7 @@ When modifying this repository (MySystem), the agent MUST:
 3. **Git tag** — create `vX.Y.Z` tag matching the VERSION file
 4. **Sync skill files** — skill files are managed as **symlinks**, never copied. Use `ln -s` to link.
 5. **Push to origin** — push commits and tags
-6. **Adding an external skill repo** — Append to `EXTERNAL_REPOS` in `setup.sh`, add a row to the table in `README.md` and `SETUP.md`. Never use git submodules (removed in v7.4.0). Skill dirs installed by the external repo are registered dynamically in `.git/info/exclude` by `setup.sh`; do not hardcode their names in `.gitignore`.
+6. **Adding an external skill repo** — Append to `EXTERNAL_REPOS` in `setup.sh`, add a row to the table in `README.md` and `SETUP.md`. Never use git submodules (removed in v0.27.0). Skill dirs installed by the external repo are registered dynamically in `.git/info/exclude` by `setup.sh`; do not hardcode their names in `.gitignore`.
 </important>
 
 @RTK.md
