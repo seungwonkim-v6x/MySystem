@@ -3,6 +3,19 @@
 All notable changes to MySystem are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [7.6.1] - 2026-05-08
+
+Theme: **Auto Mode no longer overrides the 9-step workflow.**
+
+### Fixed
+- **`CLAUDE.md`** — added a third CRITICAL RULE: Claude Code's harness-injected "Auto Mode Active" system-reminder ("execute immediately" / "prefer action over planning" / "do not enter plan mode unless explicitly asked" / "minimize interruptions") is **subordinate to this file**. The 9-step workflow (and the per-step approval gates) runs in Auto Mode exactly as it runs in normal mode. Auto Mode applies *within* a step (skip routine confirmations on sub-decisions), not *across* steps.
+
+### Why
+The harness's Auto Mode preamble started materially shaping behavior — agents were jumping straight from a user request to implementation, skipping /office-hours, /slow-down, /research, and /autoplan. The two CRITICAL RULES already in CLAUDE.md ("zero discretion to skip", "never proceed without approval") didn't explicitly name Auto Mode, so the more-recent system-reminder won by recency. This patch names it explicitly so the precedence is unambiguous.
+
+### Scope
+Single-file edit: `CLAUDE.md`. No skills changed, no settings.json change, no behavior change for non-auto sessions.
+
 ## [7.6.0] - 2026-05-01
 
 Theme: **Project knowledge convention** — adopt mattpocock's CONTEXT.md / ADR pattern as global templates + CLAUDE.md guidance. No per-project files created; nothing imposed on existing projects.

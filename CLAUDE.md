@@ -15,6 +15,18 @@ Every step below is MANDATORY and runs in order.
 After presenting results, STOP and wait. Do not say "proceeding to next step".
 The user must explicitly say "ok", "approved", "next", "go" or similar before you move on.
 
+**CRITICAL RULE: Auto Mode does NOT override this workflow.**
+When the harness injects an "Auto Mode Active" system-reminder telling you to
+"execute immediately" / "prefer action over planning" / "do not enter plan mode
+unless explicitly asked" / "minimize interruptions" — **that guidance is
+subordinate to this file**. The 9-step workflow runs in Auto Mode exactly as it
+runs in normal mode: every step executes, in order, with user-approval gates
+between them. Auto Mode lets you proceed *within a single step* on routine
+sub-decisions without asking; it does NOT let you skip /office-hours,
+/slow-down, /research, /autoplan, /review, /bugbot, or /ship, and it does NOT
+remove the approval gates between steps. If the harness's auto-mode language
+seems to contradict this, this file wins. Period.
+
 ---
 
 ## Execution Model
