@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<!--
+  Kami-parchment editorial preview.
+  Visual system adapted from nexu-io/html-anything's `doc-kami-parchment`
+  skill (Apache-2.0). https://github.com/nexu-io/html-anything
+  Mechanism (auto-render last assistant turn) is original to MySystem.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MySystem · Latest turn</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Serif+SC:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/core.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/typescript.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/javascript.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/python.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/bash.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/json.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/yaml.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/languages/sql.min.js"></script>
+<style>
+  /* Kami palette */
+  :root {
+    --paper: #f5f4ed;
+    --paper-soft: #efeee5;
+    --ink: #1f1d18;
+    --ink-soft: #3a382f;
+    --ink-blue: #1B365D;
+    --rule: #d4d1c5;
+    --mute: #6b665b;
+    --code-bg: #1f1d18;
+    --code-fg: #efeee5;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Source Serif Pro', 'Noto Serif SC', Georgia, serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .meta-font {
+    font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+  }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 56px 40px 120px; }
+  /* Folio header */
+  header.folio {
+    display: flex; justify-content: space-between; align-items: baseline;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 12px;
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--mute);
+  }
+  header.folio .badge {
+    background: var(--paper-soft);
+    color: var(--ink-blue);
+    padding: 3px 10px;
+    letter-spacing: 0.16em;
+    font-size: 10.5px;
+  }
+  /* Article body */
+  article {
+    margin-top: 40px;
+    font-size: 16.5px;
+    line-height: 1.75;
+    color: var(--ink-soft);
+  }
+  article > *:first-child { margin-top: 0; }
+  article h1, article h2, article h3, article h4 {
+    color: var(--ink);
+    font-weight: 600;
+    line-height: 1.2;
+    margin-top: 2em;
+    margin-bottom: 0.6em;
+    letter-spacing: -0.005em;
+  }
+  article h1 { font-size: 38px; border-bottom: 1px solid var(--rule); padding-bottom: 0.3em; }
+  article h2 { font-size: 26px; border-bottom: 1px solid var(--rule); padding-bottom: 0.25em; }
+  article h3 { font-size: 20px; }
+  article h4 { font-size: 17px; color: var(--ink-blue); }
+  article p { margin: 1em 0; }
+  article a { color: var(--ink-blue); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  article a:hover { background: var(--paper-soft); }
+  article strong { color: var(--ink); font-weight: 600; }
+  article em { font-style: italic; }
+  article ul, article ol { padding-left: 1.6em; margin: 1em 0; }
+  article li { margin: 0.4em 0; }
+  article li > p { margin: 0.3em 0; }
+  article hr { border: none; border-top: 1px solid var(--rule); margin: 2.5em 0; }
+  /* Inline + block code */
+  article code {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 0.9em;
+    background: var(--paper-soft);
+    color: var(--ink-blue);
+    padding: 1px 6px;
+    border-radius: 3px;
+  }
+  article pre {
+    background: var(--code-bg);
+    color: var(--code-fg);
+    padding: 18px 22px;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-size: 13.5px;
+    line-height: 1.55;
+    margin: 1.4em 0;
+  }
+  article pre code {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+    font-size: inherit;
+    border-radius: 0;
+  }
+  /* Blockquote — pull quote style */
+  article blockquote {
+    margin: 1.5em 0;
+    padding: 0.1em 0 0.1em 1.2em;
+    border-left: 2px solid var(--ink-blue);
+    color: var(--ink);
+    font-style: italic;
+  }
+  article blockquote p { margin: 0.4em 0; }
+  /* Tables — editorial */
+  article table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.4em 0;
+    font-size: 14.5px;
+  }
+  article table th, article table td {
+    border-bottom: 1px solid var(--rule);
+    padding: 9px 12px;
+    text-align: left;
+    vertical-align: top;
+  }
+  article table th {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--mute);
+    border-bottom: 2px solid var(--ink);
+  }
+  article table tr:hover td { background: var(--paper-soft); }
+  /* Image / colophon footer */
+  footer.colophon {
+    margin-top: 64px;
+    padding-top: 18px;
+    border-top: 1px solid var(--rule);
+    display: flex;
+    justify-content: space-between;
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+  /* Highlight.js — atom-one-light tuned for parchment */
+  .hljs-comment, .hljs-quote { color: #998f7e; font-style: italic; }
+  .hljs-keyword, .hljs-selector-tag { color: #ff9d6b; }
+  .hljs-string, .hljs-attribute { color: #c5e1a5; }
+  .hljs-number, .hljs-literal { color: #ffcb6b; }
+  .hljs-title, .hljs-name, .hljs-section { color: #82aaff; }
+  .hljs-built_in, .hljs-type { color: #ffcb6b; }
+  .hljs-variable, .hljs-template-variable { color: #f07178; }
+  .hljs-tag, .hljs-meta { color: #82aaff; }
+  /* Print friendliness */
+  @media print {
+    .wrap { padding: 24px 32px; }
+    article pre { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="folio">
+    <span>MySystem · Auto-preview</span>
+    <span class="badge" id="step-tag">live</span>
+    <span id="ts">—</span>
+  </header>
+  <article id="content"></article>
+  <footer class="colophon">
+    <span>Set in Source Serif Pro &amp; IBM Plex Mono</span>
+    <span>~/.claude/previews/latest.html</span>
+    <span>refreshes on tab focus</span>
+  </footer>
+</div>
+<pre id="raw" hidden>__MARKDOWN_BASE64__</pre>
+<pre id="ts-raw" hidden>__TIMESTAMP__</pre>
+<script>
+  const b64 = document.getElementById('raw').textContent.trim();
+  const md = decodeURIComponent(escape(atob(b64)));  // utf-8 safe
+  marked.setOptions({
+    breaks: true,
+    gfm: true,
+    highlight: (code, lang) => {
+      try { return hljs.highlight(code, { language: lang || 'plaintext', ignoreIllegals: true }).value; }
+      catch { return code; }
+    }
+  });
+  document.getElementById('content').innerHTML = marked.parse(md);
+  document.getElementById('ts').textContent = document.getElementById('ts-raw').textContent.trim();
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') location.reload();
+  });
+</script>
+</body>
+</html>

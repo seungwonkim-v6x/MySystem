@@ -12,6 +12,50 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [0.32.0] - 2026-05-17
+
+Theme: **Auto-render every substantive assistant turn as HTML.**
+
+Adds a Stop hook that captures the last assistant message, writes it to
+`~/.claude/previews/latest.{md,html}`, and lets a VS Code Live Preview
+panel (or a browser tab) auto-reload it. Markdown stays the wire format;
+HTML becomes the read surface.
+
+### Added
+
+- **`hooks/preview-stop.sh`** — Stop hook. Reads the standard stop payload
+  from stdin, extracts the last assistant text turn from the transcript
+  JSONL via `jq`, skips short / low-signal turns (< 800 chars and no
+  markdown structure), base64-embeds the markdown into a static HTML
+  template, and writes `latest.md` + `latest.html` atomically.
+- **`hooks/preview-template.html`** — kami-parchment editorial template.
+  Visual system adapted from
+  [nexu-io/html-anything](https://github.com/nexu-io/html-anything)'s
+  `doc-kami-parchment` skill (Apache-2.0). Source Serif Pro + IBM Plex
+  Mono, parchment ground, ink-blue accent, hairline rules. Mechanism is
+  original to MySystem.
+- **`settings.json` Stop hook registration** — wires the hook into
+  Claude Code.
+
+### Viewer setup (one-time, on the user)
+
+- **VS Code**: install the Live Preview extension
+  (`ms-vscode.live-server`), open `~/.claude/previews/latest.html` in it
+  once. The extension watches the file and auto-reloads.
+- **Browser fallback**: double-click `latest.html` once. Embedded
+  `visibilitychange` listener reloads on tab focus.
+
+The hook intentionally does **not** call `open` — that would spawn a new
+OS-default tab on every session start.
+
+### Why
+
+Markdown in a CLI sidebar is hard to read for substantive workflow output
+(plans, deep-research, reviews). HTML in a side panel is dramatically
+better, and the cost is one Stop hook plus a one-time viewer setup. The
+short-turn filter keeps the preview from flashing for routine
+back-and-forth.
+
 ## [0.31.0] - 2026-05-17
 
 Theme: **References — curated treasure trove of CS / AI / design knowledge.**

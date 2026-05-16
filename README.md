@@ -60,7 +60,7 @@ skill when no public alternative exists.
 - `skills/` — user-owned (tracked, currently just `verify-test/`) + external (symlinked by `setup.sh`)
 - `external-skills/` — cache for sparse cherry-picked repos (git-ignored)
 - `references/` — `INDEX.md` (tracked) + cloned read-only knowledge repos (git-ignored)
-- `hooks/` — tracked
+- `hooks/` — tracked (includes a Stop hook that renders substantive assistant turns as kami-parchment HTML in your browser at `~/.claude/previews/latest.html`)
 - `setup.sh` — declares + fetches external skills; idempotent
 - `install.sh` — `curl | bash` bootstrap for fresh machines
 
