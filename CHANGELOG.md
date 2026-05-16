@@ -12,6 +12,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [0.30.1] - 2026-05-17
+
+Theme: **Pre-commit templates — defense layer below `/review`.**
+
+Adds two template files under `templates/` so any new project can opt into a
+fast local hook layer before reaching the LLM `/review` step.
+
+### Added
+- `templates/.pre-commit-config.yaml.template` — secrets / lint / format / simple SAST checks, <5s target on small diffs.
+- `templates/PRE-COMMIT-SETUP.md` — how to bootstrap in a new project.
+
+### Why
+`/review`'s value is in trust boundaries, SQL safety, and conditional side effects — things hooks genuinely can't catch. Catching secrets/style/lint with pre-commit hooks first cuts what `/review` has to look at by 60-70% and keeps LLM tokens spent on the hard stuff.
+
 ## [0.30.0] - 2026-05-17
 
 Theme: **Workflow harness consolidation — stop building, start adopting.**
