@@ -30,14 +30,9 @@
 
 # User-owned skills — tracked. Add a new entry here when you create one.
 # Format: two lines per skill (directory + recursive contents).
-!skills/bugbot/
-!skills/bugbot/**
-!skills/documentation-lookup/
-!skills/documentation-lookup/**
-!skills/search-first/
-!skills/search-first/**
-!skills/slow-down/
-!skills/slow-down/**
+# Philosophy: prefer adopting external skills via setup.sh (sparse cherry-pick
+# or full external repo) over writing custom ones. Only add here when no
+# public alternative exists.
 !skills/verify-test/
 !skills/verify-test/**
 

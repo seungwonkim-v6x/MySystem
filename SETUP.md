@@ -67,37 +67,52 @@ git pull
 |------|---------|
 | `CLAUDE.md`, `RTK.md` | Global rules auto-loaded every session |
 | `settings.json` | Claude Code harness config (permissions, hooks, plugins, model) |
-| `skills/` | Mix of user-owned skills (tracked) + external skills (ignored, restored by `setup.sh`) |
-| `agents/`, `hooks/` | Tracked |
+| `skills/` | User-owned (tracked, just `verify-test/`) + external skills (symlinked, ignored) |
+| `external-skills/` | Cache for sparse cherry-picked repos; ignored |
+| `hooks/` | Tracked |
 | `setup.sh` | Declares + fetches external skills; idempotent |
 | `install.sh` | `curl | bash` entry point for fresh machines |
 | `VERSION`, `CHANGELOG.md` | Semver + history |
 
 ## External dependencies
 
-MySystem uses exactly one external skill repo:
+MySystem uses two install mechanisms in `setup.sh`:
+
+### Full-repo install (`EXTERNAL_REPOS`)
+
+The external repo's own setup script installs 20+ skills.
 
 | Name | URL | Role |
 |------|-----|------|
-| gstack | https://github.com/garrytan/gstack.git | Workflow skills (autoplan, ship, review, office-hours, …) |
+| gstack | https://github.com/garrytan/gstack.git | Workflow skills (autoplan, ship, review, office-hours, investigate, retro, …) |
 
-It is **cloned, not pinned** — `setup.sh` always pulls the latest `main`.
-The list of skills gstack installs changes over time; `setup.sh` detects the
-current list at runtime and writes it to `.git/info/exclude` (a git-local,
-untracked ignore file) so the tracked `.gitignore` never needs to be edited
-when gstack evolves.
+### Sparse cherry-pick (`SPARSE_SKILLS`)
+
+Clone repo, symlink **one subpath** as a single skill. Use when you want a
+specific skill from a larger collection without inheriting siblings.
+
+| Skill | URL | Subpath | Notes |
+|-------|-----|---------|-------|
+| requesting-code-review | https://github.com/obra/superpowers.git | `skills/requesting-code-review` | Adversarial 2nd-pass review (workflow step 7) |
+| deep-research | https://github.com/affaan-m/everything-claude-code.git | `.agents/skills/deep-research` | Workflow step 2. Requires firecrawl MCP. |
+
+All sources are **cloned, not pinned** — `setup.sh` always pulls the latest `main`.
+
+### MCP keys
+
+The `deep-research` skill needs a firecrawl API key. Stored as plain text in
+`~/.claude.json` under `mcpServers.firecrawl.env.FIRECRAWL_API_KEY` — that
+file is outside the tracked repo and never committed. On a new machine, you
+must add your own key after running `setup.sh`.
 
 ### Adding another external skill repo
 
-1. Append a new line to `EXTERNAL_REPOS` inside [`setup.sh`](./setup.sh):
-   ```
-   "name|https://github.com/org/repo.git|main"
-   ```
-2. Add a row to the table above.
-3. If that repo installs its own sub-skills (like gstack does), they will
-   be detected automatically by `setup.sh`'s `.git/info/exclude` logic as
-   long as they end up as symlinks under `skills/<name>/SKILL.md`.
-   Otherwise, add an explicit ignore entry in `.gitignore`.
+1. Pick a mechanism: full-repo (sibling skills come along) or sparse cherry-pick
+   (single skill only).
+2. Append to the right list in [`setup.sh`](./setup.sh):
+   - Full repo: `EXTERNAL_REPOS+=( "name|url|main" )`
+   - Sparse: `SPARSE_SKILLS+=( "skill-name|url|main|subpath" )`
+3. Add a row to the table above.
 4. Never use git submodules — MySystem moved away from them in v0.27.0.
 
 ## Troubleshooting
@@ -120,6 +135,14 @@ when gstack evolves.
 
 - **`git status` shows all 20+ gstack skills as untracked** — `.git/info/exclude`
   hasn't been written yet. Run `./setup.sh` once; they'll stop showing.
+
+- **`/deep-research` fails: "firecrawl tool not found"** — firecrawl MCP isn't
+  configured. Add an entry to `~/.claude.json`:
+  ```json
+  "firecrawl": { "command": "npx", "args": ["-y", "firecrawl-mcp"],
+                 "env": { "FIRECRAWL_API_KEY": "fc-..." }, "type": "stdio" }
+  ```
+  Restart Claude Code. Get a key at https://firecrawl.dev.
 
 ## Uninstall
 

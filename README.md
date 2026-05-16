@@ -27,18 +27,25 @@ cd ~/.claude && git pull && ./setup.sh
 
 ## External dependencies
 
-- [gstack](https://github.com/garrytan/gstack) — workflow skills
-  (autoplan, ship, review, office-hours, …)
+| Type | Source | Skills adopted |
+|------|--------|----------------|
+| Full repo | [gstack](https://github.com/garrytan/gstack) | workflow skills (autoplan, ship, review, office-hours, investigate, retro, …) |
+| Sparse cherry-pick | [obra/superpowers](https://github.com/obra/superpowers) | `requesting-code-review` (adversarial 2nd-pass review) |
+| Sparse cherry-pick | [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code) | `deep-research` (needs firecrawl MCP key) |
 
-Always pulled at latest `main`; never pinned. Managed via
-[`setup.sh`](./setup.sh) (no git submodules, no YAML manifest).
+All external repos are always pulled at latest `main`; never pinned. Managed via
+[`setup.sh`](./setup.sh) (no git submodules, no YAML manifest). The MySystem
+philosophy: **harness existing skills, don't build new ones.** New workflow
+needs → hunt for a public skill first, only add a user-owned skill when no
+public alternative exists.
 
 ## Layout
 
 - `CLAUDE.md`, `RTK.md` — global rules loaded every session
 - `settings.json` — harness config (permissions, hooks, plugins)
-- `skills/` — user-owned (tracked) + external (restored by `setup.sh`)
-- `agents/`, `hooks/` — tracked
+- `skills/` — user-owned (tracked, currently just `verify-test/`) + external (symlinked by `setup.sh`)
+- `external-skills/` — cache for sparse cherry-picked repos (git-ignored)
+- `hooks/` — tracked
 - `setup.sh` — declares + fetches external skills; idempotent
 - `install.sh` — `curl | bash` bootstrap for fresh machines
 

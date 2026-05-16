@@ -83,7 +83,14 @@
       "mcp__claude_ai_Amplitude__get_chart_definition_params",
       "mcp__claude_ai_Slack__slack_search_channels",
       "mcp__claude_ai_Slack__slack_search_users",
-      "mcp__pencil"
+      "mcp__pencil",
+      "Bash(rtk ls *)",
+      "Bash(rtk du *)",
+      "Bash(find ~/Downloads/new-landing -type f \\\\\\( -name \"*.jpg\" -o -name \"*.jpeg\" -o -name \"*.png\" -o -name \"*.webp\" -o -name \"*.mp4\" -o -name \"*.webm\" -o -name \"*.mov\" -o -name \"*.svg\" \\\\\\) | head -40)",
+      "Read(//Users/seungwonkim/Downloads/new-landing/**)",
+      "Bash(rtk grep *)",
+      "Bash(awk '/<script>/,/<\\\\/script>/' /Users/seungwonkim/Downloads/new-landing/landing-sample.html)",
+      "Bash(rtk wc *)"
     ],
     "additionalDirectories": [
       "/Users/seungwonkim/.claude",
@@ -141,7 +148,9 @@
     ]
   },
   "enabledPlugins": {
-    "frontend-design@claude-plugins-official": true
+    "frontend-design@claude-plugins-official": true,
+    "context7@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "claude-plugins-official": {
@@ -151,6 +160,6 @@
       }
     }
   },
-  "autoCompactEnabled": false,
-  "effortLevel": "max"
+  "effortLevel": "high",
+  "autoCompactEnabled": false
 }

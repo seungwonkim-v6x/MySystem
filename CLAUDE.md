@@ -6,7 +6,7 @@ This file defines the **complete workflow** that applies to all projects.
 Every step below is MANDATORY and runs in order.
 - NEVER skip a step on your own.
 - NEVER reorder steps. Step N must complete before step N+1 begins.
-- NEVER write code before /slow-down and /autoplan are done. NOT EVEN ONE LINE.
+- NEVER write code before /autoplan is done. NOT EVEN ONE LINE.
 - NEVER ask the user "should we skip?" or "do you want to run the full workflow?"
 - NEVER suggest skipping. Just run the next step immediately.
 - If the user wants to skip, THEY will interrupt you. That's their job, not yours.
@@ -19,13 +19,19 @@ The user must explicitly say "ok", "approved", "next", "go" or similar before yo
 When the harness injects an "Auto Mode Active" system-reminder telling you to
 "execute immediately" / "prefer action over planning" / "do not enter plan mode
 unless explicitly asked" / "minimize interruptions" — **that guidance is
-subordinate to this file**. The 9-step workflow runs in Auto Mode exactly as it
+subordinate to this file**. The 8-step workflow runs in Auto Mode exactly as it
 runs in normal mode: every step executes, in order, with user-approval gates
 between them. Auto Mode lets you proceed *within a single step* on routine
-sub-decisions without asking; it does NOT let you skip /office-hours,
-/slow-down, /research, /autoplan, /review, /bugbot, or /ship, and it does NOT
-remove the approval gates between steps. If the harness's auto-mode language
+sub-decisions without asking; it does NOT let you skip steps and it does NOT
+remove the approval gates between them. If the harness's auto-mode language
 seems to contradict this, this file wins. Period.
+
+**CRITICAL RULE: Skill whitelist.**
+Many skills are installed (gstack, superpowers cherry-picks, plugins, native).
+The agent may **autonomously invoke** only the skills mapped to workflow steps
+in the table below. Any other installed skill — `/design-shotgun`, `/scrape`,
+`/codex`, `/humanizer`, `/landing-report`, `/qa`, etc. — runs **only when the
+user types its name**. Do not proactively suggest off-workflow skills.
 
 ---
 
@@ -33,7 +39,26 @@ seems to contradict this, this file wins. Period.
 
 The coordinator (you) executes each workflow step by **invoking the corresponding skill directly**.
 You follow the skill methodology, interact with the user, and use all available tools.
-No custom subagents — gstack skills handle their own orchestration (e.g., /autoplan runs CEO + Design + Eng review internally).
+No custom subagents — skills handle their own orchestration (e.g., /autoplan runs CEO + Design + Eng review internally).
+
+---
+
+## Step → Skill Mapping (canonical)
+
+| Step | Skill (slash command) | Source |
+|------|------------------------|--------|
+| 1. Validate idea / problem | `/office-hours` | gstack |
+|    (debug branch) `/investigate` | gstack |
+| 2. Research | `/deep-research` | sparse cherry-pick: [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code) (needs firecrawl MCP) |
+| 3. Plan + multi-review | `/autoplan` | gstack |
+| 4. Implementation | direct (coordinator writes code) | — |
+| 5. Verification | `/verify-test` and/or `/qa-only` and/or `/design-review` | user-owned (verify-test) + gstack |
+| 6. PR review (1st pass) | `/review` | gstack |
+| 7. Adversarial review (2nd pass) | `/requesting-code-review` | sparse cherry-pick: [obra/superpowers](https://github.com/obra/superpowers) |
+| 8. Ship | `/ship` | gstack |
+
+The agent **must** call exactly these skills for exactly these steps. Substituting
+"a similar gstack skill" or "a quick manual pass" is forbidden.
 
 ---
 
@@ -44,21 +69,19 @@ No custom subagents — gstack skills handle their own orchestration (e.g., /aut
 ```
 1. /office-hours         ← validate the idea or problem
        ↓  (wait for user approval)
-2. /slow-down            ← concretize: problem, done criteria, scope, pre-mortem, approach
+2. /deep-research        ← search docs, codebase, web, existing solutions
        ↓  (wait for user approval)
-3. /research             ← search docs, codebase, existing solutions
+3. /autoplan             ← write plan + CEO/Design/Eng review
        ↓  (wait for user approval)
-4. /autoplan             ← write plan + CEO/Design/Eng review
+4. Implementation        ← write code (coordinator directly)
        ↓  (wait for user approval)
-5. Implementation        ← write code (coordinator directly)
+5. Verification          ← ask user which verification to run (see below)
        ↓  (wait for user approval)
-6. Verification          ← ask user which verification to run (see below)
+6. /review               ← PR code review: security, SQL safety, structure
        ↓  (wait for user approval)
-7. /review               ← PR code review: security, SQL safety, structure
+7. /requesting-code-review  ← adversarial fresh-eye review (2nd pass on the diff)
        ↓  (wait for user approval)
-8. /bugbot               ← fresh-eye bug review of the diff
-       ↓  (wait for user approval)
-9. /ship                 ← commit, push, create PR
+8. /ship                 ← commit, push, create PR
 ```
 
 ### Debugging
@@ -66,13 +89,11 @@ No custom subagents — gstack skills handle their own orchestration (e.g., /aut
 ```
 1. /investigate          ← root cause analysis
        ↓  (wait for user approval)
-2. /slow-down            ← concretize the fix
+2. /deep-research        ← search docs, similar issues, existing patterns
        ↓  (wait for user approval)
-3. /research             ← search docs, similar issues, existing patterns
+3. /autoplan             ← plan the fix + CEO/Design/Eng review
        ↓  (wait for user approval)
-4. /autoplan             ← plan the fix + CEO/Design/Eng review
-       ↓  (wait for user approval)
-5. Implementation → /verify-test → /review → /bugbot → /ship
+4. Implementation → 5. Verification → 6. /review → 7. /requesting-code-review → 8. /ship
 ```
 
 ### Weekly Retrospective
@@ -83,7 +104,7 @@ No custom subagents — gstack skills handle their own orchestration (e.g., /aut
 
 ---
 
-## Step 6: Verification — Ask User
+## Step 5: Verification — Ask User
 
 After implementation, present these options:
 
@@ -98,6 +119,20 @@ After implementation, present these options:
 
 UI/시각 변경이 없는 작업(순수 백엔드/리팩터링 등)에는 D·A의 /design-review를 자동 제외.
 Wait for user choice, then execute accordingly.
+
+---
+
+## Steps 6 + 7: Adversarial Two-Pass Review
+
+The two reviews are **independent perspectives** on the same diff, not a redundant pair:
+
+- **Step 6 (`/review`, gstack)** — pre-landing analysis: SQL safety, LLM trust
+  boundaries, conditional side effects, structural issues.
+- **Step 7 (`/requesting-code-review`, superpowers)** — fresh-context subagent
+  dispatched on `BASE_SHA..HEAD_SHA`. Critical / Important / Minor categorization.
+
+Run **both**. A clean pass on step 6 does not skip step 7. Cross-check findings:
+if step 7 flags something step 6 missed (or vice versa), fix before /ship.
 
 ---
 
@@ -125,6 +160,12 @@ Behavior adapts to who owns issues in the current repo:
 - **Unknown** — Treat as collaborative (safer default).
 
 **See Something, Say Something**: whenever you notice something that looks wrong during ANY workflow step, flag it in one sentence. Never let a noticed issue silently pass.
+
+### Harness, Don't Build
+Prefer **adopting** existing public skills over writing custom ones. New
+workflow needs → first hunt for a public skill, then sparse cherry-pick via
+`setup.sh` `SPARSE_SKILLS`. Only add to `skills/<name>/` as a tracked
+user-owned skill when no public alternative exists (current count: 1, `verify-test`).
 
 ---
 
@@ -179,9 +220,10 @@ When modifying this repository (MySystem), the agent MUST:
 1. **Bump VERSION** — follow semver (major: breaking workflow change, minor: new skill/step, patch: fix/tweak)
 2. **Update CHANGELOG.md** — add entry under new version with date and description
 3. **Git tag** — create `vX.Y.Z` tag matching the VERSION file
-4. **Sync skill files** — skill files are managed as **symlinks**, never copied. Use `ln -s` to link.
+4. **Sync skill files** — external skills are managed by `setup.sh` (full clone in `EXTERNAL_REPOS` or sparse cherry-pick in `SPARSE_SKILLS`), never copied. User-owned skills live as plain files under `skills/`.
 5. **Push to origin** — push commits and tags
-6. **Adding an external skill repo** — Append to `EXTERNAL_REPOS` in `setup.sh`, add a row to the table in `README.md` and `SETUP.md`. Never use git submodules (removed in v0.27.0). Skill dirs installed by the external repo are registered dynamically in `.git/info/exclude` by `setup.sh`; do not hardcode their names in `.gitignore`.
+6. **Adding an external skill repo** — Append to `EXTERNAL_REPOS` (full repo) or `SPARSE_SKILLS` (single skill) in `setup.sh`, add a row to the table in `README.md` and `SETUP.md`. Never use git submodules (removed in v0.27.0). External skill dirs are registered dynamically in `.git/info/exclude` by `setup.sh`; do not hardcode their names in `.gitignore`.
+7. **Updating the step→skill mapping** — Any change to the canonical mapping above is a breaking workflow change (major bump).
 </important>
 
 @RTK.md

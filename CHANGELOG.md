@@ -12,6 +12,62 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [0.30.0] - 2026-05-17
+
+Theme: **Workflow harness consolidation — stop building, start adopting.**
+
+Reshapes the workflow around a strict step→skill mapping. Drops three user-owned
+skills that gstack/context7/MCP already cover, replaces `/bugbot` with an
+adversarial cherry-picked review from `obra/superpowers`, adds a `/deep-research`
+step backed by `affaan-m/everything-claude-code` + firecrawl MCP.
+
+### Workflow
+
+- **Step count: 9 → 8.** Removed `/slow-down` (concretization redundant with `/autoplan`'s plan-writing phase).
+- **Step 6 / Step 7 are now adversarial.** `/review` (gstack, structural+SQL+LLM-trust) and `/requesting-code-review` (superpowers, fresh-eye Critical/Important/Minor) both run; clean pass on one does not skip the other.
+- **New CLAUDE.md table**: canonical step→skill mapping. The agent must call exactly the listed skill for each step — no substitutions.
+- **New CRITICAL RULE**: skill whitelist. Skills outside the mapping table run only when the user types the name. No proactive suggestions for off-workflow skills.
+
+### Skills
+
+- **Removed (4)** — `slow-down`, `search-first`, `documentation-lookup`, `bugbot`. The first three weren't used by the workflow; `bugbot` was replaced by `requesting-code-review`.
+- **Added via sparse cherry-pick** — `requesting-code-review` from [obra/superpowers](https://github.com/obra/superpowers), `deep-research` from [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code).
+- **Kept user-owned (1)** — `verify-test`. No public alternative found across 9+ skill collections.
+
+### setup.sh
+
+- New `SPARSE_SKILLS` list (format `"skill-name|url|branch|subpath"`). Clones repo into `external-skills/<name>/` and symlinks one subpath into `skills/<name>/`. Use when you want one skill from a larger collection without inheriting siblings.
+- `EXTERNAL_REPOS` (full-clone) and `SPARSE_SKILLS` (cherry-pick) are now the two install mechanisms.
+- `.git/info/exclude` regeneration now covers `external-skills/` plus every non-whitelisted skill dir found post-install.
+
+### MCP / Config
+
+- **Added**: `firecrawl` MCP at user level (`~/.claude.json`). Powers `/deep-research`. Key stored as plain text in `mcpServers.firecrawl.env.FIRECRAWL_API_KEY` (file is outside the tracked repo).
+- **Scoped to vProp only**: `Playwright`, `trigger` — moved from user-level to `projects."/Users/seungwonkim/Documents/vprop".mcpServers`. They only activate when Claude Code runs inside that workspace, keeping vProp's git tree untouched.
+- **Removed**: `dev_manager` (no longer needed).
+- **User-level MCPs after this release**: `context7`, `firecrawl`, `pencil` only.
+
+### Cleanup
+
+- Deleted `agents/` (20 files; MySystem never invoked any of them).
+- Deleted `commands/sc/` (SuperClaude — parallel system, not part of the harness).
+- Deleted stale backups: `settings.json.bak*` (×3), `backup-pre-superclaude-20260507-165651/`, `.mysystem-archive/`, `.skill-update.log`.
+
+### Docs
+
+- `CLAUDE.md` — new step→skill mapping table; skill-whitelist rule; "Harness, Don't Build" principle; self-management rule 7 (mapping changes are major bumps).
+- `README.md`, `SETUP.md` — external-dependencies table now distinguishes full-repo from sparse cherry-pick; firecrawl-key bootstrap documented.
+
+### Migration (other machines)
+
+```
+cd ~/.claude && git pull && ./setup.sh
+# then add firecrawl key to ~/.claude.json by hand (see SETUP.md)
+```
+
+### Why
+The agent was scattering across 100+ skills (gstack's 48 + SuperClaude's 31 + 20 agents + native + plugin servers), most of which the 9-step workflow never called. The mapping table + whitelist rule + cleanup collapse the available surface back down to what the workflow actually uses, while adopting two genuinely complementary skills from outside gstack (one for adversarial review, one for web research).
+
 ## [0.29.2] - 2026-05-08
 
 Theme: **Renumber to 0.x.** No behavior change.
