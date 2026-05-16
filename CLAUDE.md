@@ -167,6 +167,18 @@ workflow needs → first hunt for a public skill, then sparse cherry-pick via
 `setup.sh` `SPARSE_SKILLS`. Only add to `skills/<name>/` as a tracked
 user-owned skill when no public alternative exists (current count: 1, `verify-test`).
 
+### Consult References Before Searching the Web
+`~/.claude/references/` is a curated treasure trove of CS / AI / design
+knowledge bases (system-design-primer, papers-we-love, awesome-falsehood,
+engineering-blogs, design systems, …). When a task touches one of these
+domains — large-scale design, distributed systems, schema validation
+(names/dates/addresses), AI agent patterns, UI/design system work —
+**grep `references/` first**, then fall back to web search.
+
+The full catalog with "use when" hooks lives at `references/INDEX.md`. Read
+it at the start of a session that smells design-system, system-design, or
+AI-research-heavy.
+
 ---
 
 ## Context Management

@@ -96,7 +96,17 @@ specific skill from a larger collection without inheriting siblings.
 | requesting-code-review | https://github.com/obra/superpowers.git | `skills/requesting-code-review` | Adversarial 2nd-pass review (workflow step 7) |
 | deep-research | https://github.com/affaan-m/everything-claude-code.git | `.agents/skills/deep-research` | Workflow step 2. Requires firecrawl MCP. |
 
-All sources are **cloned, not pinned** — `setup.sh` always pulls the latest `main`.
+### Reference repos (`REFERENCE_REPOS`)
+
+Plain `git clone` into `references/<name>/`. **No symlinks, no skill behaviour** —
+these are read-only knowledge bases for human + agent lookup. Curated entry
+point: [`references/INDEX.md`](./references/INDEX.md). Twelve seed repos cover
+system design, distributed systems papers, CS hazards (falsehoods), design
+patterns, engineering blogs, LLM / AI agents, design systems + Tailwind +
+React components.
+
+All sources are **cloned, not pinned** — `setup.sh` always pulls each repo's
+default branch.
 
 ### MCP keys
 
@@ -114,6 +124,16 @@ must add your own key after running `setup.sh`.
    - Sparse: `SPARSE_SKILLS+=( "skill-name|url|main|subpath" )`
 3. Add a row to the table above.
 4. Never use git submodules — MySystem moved away from them in v0.27.0.
+
+### Adding another reference repo
+
+1. Append to `REFERENCE_REPOS` in `setup.sh`:
+   ```
+   "local-name|https://github.com/org/repo.git|branch"
+   ```
+2. Add a row to `references/INDEX.md` under the right category with a
+   one-line "Use when" hook.
+3. Run `./setup.sh` — clones into `references/<local-name>/`.
 
 ## Troubleshooting
 

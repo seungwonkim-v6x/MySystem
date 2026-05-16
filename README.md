@@ -27,17 +27,31 @@ cd ~/.claude && git pull && ./setup.sh
 
 ## External dependencies
 
+### Skills (workflow)
+
 | Type | Source | Skills adopted |
 |------|--------|----------------|
 | Full repo | [gstack](https://github.com/garrytan/gstack) | workflow skills (autoplan, ship, review, office-hours, investigate, retro, …) |
 | Sparse cherry-pick | [obra/superpowers](https://github.com/obra/superpowers) | `requesting-code-review` (adversarial 2nd-pass review) |
 | Sparse cherry-pick | [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code) | `deep-research` (needs firecrawl MCP key) |
 
-All external repos are always pulled at latest `main`; never pinned. Managed via
-[`setup.sh`](./setup.sh) (no git submodules, no YAML manifest). The MySystem
-philosophy: **harness existing skills, don't build new ones.** New workflow
-needs → hunt for a public skill first, only add a user-owned skill when no
-public alternative exists.
+### References (treasure trove — read-only knowledge bases)
+
+12 curated repos cloned into `references/<name>/`. Not skills; the agent
+greps them when a task touches the matching domain. Full catalog with
+"use when" hooks: [`references/INDEX.md`](./references/INDEX.md).
+
+Covers: system design (system-design-primer, awesome-scalability),
+CS classics (papers-we-love), schema-design hazards (awesome-falsehood),
+design patterns, engineering blogs by company, LLM/AI agents,
+design systems (awesome-design-md, awesome-design-systems),
+Tailwind, React components.
+
+All external repos are always pulled at latest default branch; never pinned.
+Managed via [`setup.sh`](./setup.sh) (no git submodules, no YAML manifest).
+The MySystem philosophy: **harness existing skills, don't build new ones.**
+New workflow needs → hunt for a public skill first, only add a user-owned
+skill when no public alternative exists.
 
 ## Layout
 
@@ -45,6 +59,7 @@ public alternative exists.
 - `settings.json` — harness config (permissions, hooks, plugins)
 - `skills/` — user-owned (tracked, currently just `verify-test/`) + external (symlinked by `setup.sh`)
 - `external-skills/` — cache for sparse cherry-picked repos (git-ignored)
+- `references/` — `INDEX.md` (tracked) + cloned read-only knowledge repos (git-ignored)
 - `hooks/` — tracked
 - `setup.sh` — declares + fetches external skills; idempotent
 - `install.sh` — `curl | bash` bootstrap for fresh machines

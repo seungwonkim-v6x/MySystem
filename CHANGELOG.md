@@ -12,6 +12,50 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [0.31.0] - 2026-05-17
+
+Theme: **References — curated treasure trove of CS / AI / design knowledge.**
+
+Introduces a third install mechanism alongside `EXTERNAL_REPOS` (full-clone
+skills) and `SPARSE_SKILLS` (cherry-picked skills): `REFERENCE_REPOS`. These
+are plain `git clone`s into `references/<name>/` — **not** skills. The agent
+greps them when a task touches the matching domain (system design, schema
+validation hazards, design systems, etc.) instead of going straight to web
+search.
+
+### Added
+
+- **`REFERENCE_REPOS` mechanism in `setup.sh`** — clone-only, no symlinks, no skill
+  behaviour. Auto-registered in `.git/info/exclude`.
+- **`references/INDEX.md`** (tracked) — curated entry point with "use when"
+  hooks for each repo.
+- **12 seed reference repos** (~640MB total):
+  - Engineering wisdom: `system-design-primer`, `awesome-scalability`,
+    `papers-we-love`, `awesome-falsehood`, `awesome-design-patterns`,
+    `engineering-blogs`
+  - AI / LLM: `awesome-llm`, `awesome-ai-agents`
+  - Design / Frontend: `awesome-design-md`, `awesome-design-systems`,
+    `awesome-tailwindcss`, `awesome-react-components`
+- **CLAUDE.md** — new "Consult References Before Searching the Web" operating
+  principle. The agent must grep `references/` before falling back to web
+  search when the task touches one of the listed domains.
+
+### Why
+
+The agent burns fresh context rediscovering things the community already
+indexed — every name-validation discussion is awesome-falsehood, every
+distributed-systems decision is papers-we-love + system-design-primer. Local
+clones flip the default: grep first, web second. Cost is disk (~640MB);
+upside is faster lookups, version-pinned to last pull, and zero per-query
+token cost.
+
+### Updated
+
+- `setup.sh` — new `[4/6]` step for reference repos; `.git/info/exclude`
+  generator now also covers `references/<name>/`.
+- `.gitignore` — `!references/` + `!references/INDEX.md` whitelisted.
+- `README.md`, `SETUP.md` — new sections documenting the references area.
+
 ## [0.30.1] - 2026-05-17
 
 Theme: **Pre-commit templates — defense layer below `/review`.**
