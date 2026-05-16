@@ -35,6 +35,17 @@ cd ~/.claude && git pull && ./setup.sh
 | Sparse cherry-pick | [obra/superpowers](https://github.com/obra/superpowers) | `requesting-code-review` (adversarial 2nd-pass review) |
 | Sparse cherry-pick | [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code) | `deep-research` (needs firecrawl MCP key) |
 
+### Claude Code plugins (auto-fetched)
+
+Registered in `settings.json` via `extraKnownMarketplaces` + `enabledPlugins`.
+Claude Code fetches them on the next session start — no extra setup script,
+no API keys.
+
+| Marketplace | Plugins | Role |
+|---|---|---|
+| [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) | `frontend-design`, `context7`, `code-review` | Official starter plugins |
+| [DrCatHicks/learning-opportunities](https://github.com/DrCatHicks/learning-opportunities) (CC-BY-4.0) | `learning-opportunities`, `learning-opportunities-auto`, `orient` | Post-commit nudge for 10-15 min learning exercises (max 2/session) |
+
 ### References (treasure trove — read-only knowledge bases)
 
 12 curated repos cloned into `references/<name>/`. Not skills; the agent

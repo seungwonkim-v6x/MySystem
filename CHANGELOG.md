@@ -12,6 +12,104 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [0.33.0] - 2026-05-17
+
+Theme: **Adopt learning-opportunities — deliberate practice while AI-coding.**
+
+Wires [DrCatHicks/learning-opportunities](https://github.com/DrCatHicks/learning-opportunities)
+into MySystem via Claude Code's plugin marketplace mechanism. `learning-opportunities-auto`
+nudges Claude to offer a 10-15 minute science-based learning exercise (prediction,
+retrieval practice, generation) whenever the Bash tool's command/output contains
+both "git" and "commit". Hard cap: 2 offers per session via a session-scoped temp
+file; the cap is consumed by false positives too (e.g. `git log`, `git show`).
+"Decline → stop offering" is a prompt-level instruction in the hook's
+`additionalContext`, **not enforced state** — context compaction may revive offers
+within the 2-offer budget.
+
+### Why
+
+The 8-step workflow optimizes task completion; expertise growth is incidental.
+For a junior developer with high AI-assist usage, the gap between "AI shipped
+it" and "I understand it" compounds silently. learning-opportunities closes
+that gap **at the moment of architectural change** — when retrieval practice
+costs ~10 minutes but pays back for months.
+
+User insight that drove the adoption choice: "I will never invoke it manually."
+If the trigger isn't automatic, the skill is effectively uninstalled.
+PostToolUse hook on `git commit` solves that without piling work onto every
+Bash invocation.
+
+### Added — three plugins
+
+- **learning-opportunities** — core skill. Offers ≤2 lesson invitations per
+  session after architectural work. Built-in pause protocol prevents Claude
+  from leaking the answer into the question.
+- **learning-opportunities-auto** — PostToolUse hook (matcher: Bash) that
+  matches the loose regex `git.*commit` against the Bash payload (commands or
+  output), then nudges Claude to consider whether the work warrants a lesson.
+  Session-scoped 2-offer cap (`${TMPDIR}/lo_auto_<session>.state`). Decline
+  semantics are prompt-only — see CLAUDE.md skill-whitelist exception.
+- **orient** — generates a repo-specific `orientation.md` for the core skill.
+  Explicit-invocation only (`disable-model-invocation: true`). Useful when
+  entering a new codebase (cc-guard, vprop-beatsync, …).
+
+### Settings (single file)
+
+- `settings.json` — `extraKnownMarketplaces.learning-opportunities` registered
+  (git URL, tracking the upstream `main` branch — not pinned to a commit;
+  unforced upstream changes propagate to every machine on the next session
+  start). `enabledPlugins` adds three entries.
+- `CLAUDE.md` — explicit exception to the **Skill whitelist** rule documents
+  that the PostToolUse auto-nudge is allowed; learning-opportunities operates
+  *outside* the 8-step workflow as a single-shot interaction.
+
+### Adoption mechanism — not SPARSE_SKILLS
+
+Initial design assumed `setup.sh` SPARSE_SKILLS would suffice. Deep-research
+caught the trap: `learning-opportunities-auto/hooks/hooks.json` invokes
+`${CLAUDE_PLUGIN_ROOT}/hooks/post-tool-use.sh`. That environment variable is
+**only set by the plugin loader**, not by symlinking the skill directory into
+`skills/`. SPARSE_SKILLS would import the files and silently break the hook.
+Plugin marketplace registration is the supported integration path; it matches
+the existing `claude-plugins-official` pattern in `settings.json`.
+
+### Adoption mechanism — not a fork
+
+learning-opportunities-auto's 2-offer-per-session hard counter is the only
+enforced frequency control upstream provides. A custom wrapper (option C in
+/office-hours) was rejected — it crosses MySystem's "harness, don't build"
+line. Trade-off accepted: looser-than-ideal trigger semantics in exchange for
+zero maintenance burden.
+
+### Why not learning-goal (yet)
+
+[DrCatHicks/learning-goal](https://github.com/DrCatHicks/learning-goal) — the
+paired pre-work skill that applies Mental Contrasting with Implementation
+Intentions before a task — is intentionally deferred. Re-evaluate after six
+weeks of learning-opportunities use; premature inclusion = scope creep.
+
+### Migration (other machines)
+
+```
+cd ~/.claude && git pull
+# Next Claude Code session auto-fetches the new marketplace.
+# Verify with: /plugin list  (the three new entries should appear enabled)
+```
+
+No setup.sh re-run required; no firecrawl-style API key.
+
+### Attribution
+
+`learning-opportunities`, `learning-opportunities-auto`, and `orient` © Dr.
+Cat Hicks 2026 — licensed [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/),
+provided as-is without warranty. Source: <https://github.com/DrCatHicks/learning-opportunities>.
+
+### Verification needed (Step 5)
+
+`git commit` in a new Claude Code session should produce a learning-opportunities
+nudge. If it does not after restart, run `/plugin list` and confirm the three
+entries show as enabled.
+
 ## [0.32.0] - 2026-05-17
 
 Theme: **Auto-render every substantive assistant turn as HTML.**
@@ -317,12 +415,12 @@ Trade-off: MySystem no longer snapshots exact versions of external skills at rel
 ### Added
 - **Boil the Lake (Completeness Principle)** section in CLAUDE.md — recommend the complete implementation over shortcuts; AI makes the last 10% cost near-zero. Flag "oceans" (rewrites of systems you don't control) as out of scope.
 - **Repo Mode (Solo vs Collaborative)** in CLAUDE.md — agent behavior adapts to who owns issues. Solo repos (cc-guard, MySystem): proactive fixes for noticed issues. Collaborative repos (vProp): flag-only, default to asking. "See Something, Say Something" rule — never let a noticed issue silently pass.
-- **Step 6 Verification** — added `/design-review` option. Options expanded to A(전부)/B(verify-test)/C(qa-only)/D(design-review)/E(기능 둘 다)/F(skip). UI 변경 없는 작업에는 design-review 자동 제외.
+- **Step 6 Verification** — added `/design-review` option. Options expanded to A (all) / B (verify-test only) / C (qa-only only) / D (design-review only) / E (both functional) / F (skip). For non-UI work, the design-review entries are dropped automatically.
 
 ### Rationale
-- gstack `/review`가 이미 Codex adversarial을 자동 실행(50+ line 기준)하므로 별도 `/codex` 스텝은 중복 — 추가하지 않음.
-- `/land-and-deploy`, `/canary`는 vProp처럼 팀 리뷰/머지 흐름이 있고 Vercel+Sentry로 관측되는 환경엔 과함 — 기본 플로우에서 제외.
-- 위 두 원칙(Boil the Lake, Repo Mode)은 gstack 철학 중 플로우 변경 없이 판단 기준으로 흡수할 가치가 가장 높음.
+- gstack's `/review` already runs Codex adversarial automatically (above the ~50-line threshold), so adding a separate `/codex` step would be redundant. Skipped.
+- `/land-and-deploy` and `/canary` overshoot for repos like vProp that already have team review + merge flow plus Vercel + Sentry observability. Left out of the default flow.
+- The two new principles (Boil the Lake, Repo Mode) are the highest-leverage parts of gstack's philosophy to absorb as judgment criteria — they shape decisions without requiring workflow changes.
 
 ## [0.24.0] - 2026-04-20
 

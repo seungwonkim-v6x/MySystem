@@ -108,6 +108,34 @@ React components.
 All sources are **cloned, not pinned** — `setup.sh` always pulls each repo's
 default branch.
 
+### Claude Code plugins
+
+`settings.json` registers two marketplaces in `extraKnownMarketplaces` and
+enables six plugins in `enabledPlugins`:
+
+| Marketplace | Plugins |
+|---|---|
+| `claude-plugins-official` (Anthropic) | `frontend-design`, `context7`, `code-review` |
+| `learning-opportunities` (DrCatHicks) | `learning-opportunities`, `learning-opportunities-auto`, `orient` |
+
+Claude Code clones each marketplace on first session start after `git pull`,
+then fetches and activates the enabled plugins. **No `setup.sh` re-run is
+required, and no API keys are needed.** To confirm activation in a fresh
+session, run `/plugin list` — the three `learning-opportunities` entries
+should appear as enabled alongside the official ones.
+
+To disable any one plugin, flip its `enabledPlugins` entry to `false` in
+`settings.json` and commit. The change propagates on the next `git pull` on
+every machine.
+
+**Marketplace URLs are unpinned** (track upstream `main`). DrCatHicks is a
+single-maintainer repo; review its diff before pulling MySystem updates if
+the plugin's behavior matters to you. Anthropic's official marketplace is
+the same shape but a much smaller trust delta.
+
+`learning-opportunities` plugins are CC-BY-4.0; see CHANGELOG v0.33.0
+Attribution for the full notice.
+
 ### MCP keys
 
 The `deep-research` skill needs a firecrawl API key. Stored as plain text in

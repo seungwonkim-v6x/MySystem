@@ -33,6 +33,18 @@ in the table below. Any other installed skill — `/design-shotgun`, `/scrape`,
 `/codex`, `/humanizer`, `/landing-report`, `/qa`, etc. — runs **only when the
 user types its name**. Do not proactively suggest off-workflow skills.
 
+**Exception — learning-opportunities plugin.** `learning-opportunities-auto`
+fires a PostToolUse hook (matcher: Bash) that nudges Claude to offer a lesson
+whenever the Bash tool's command/output contains both "git" and "commit"
+(upstream regex is intentionally loose — `git log`, `git show`, etc. can
+false-positive). Hard cap: 2 offers per session via a session-scoped temp
+file. "Decline → stop offering" is a prompt-level instruction passed to
+Claude in the hook's `additionalContext`, **not enforced state** — context
+compaction can revive offers within the 2-offer budget. It operates
+**outside** the 8-step workflow as a single-shot interaction, not as an
+autonomously-invoked skill. Allowed as an explicit exception to the skill
+whitelist rule above. Category: learning-aid.
+
 ---
 
 ## Execution Model
@@ -108,17 +120,18 @@ The agent **must** call exactly these skills for exactly these steps. Substituti
 
 After implementation, present these options:
 
-> 어떤 검증을 실행할까요?
+> Which verification should we run?
 >
-> **A) 전부** — /verify-test + /qa-only + /design-review (UI 변경 시)
-> **B) /verify-test만** — throwaway 코드 테스트
-> **C) /qa-only만** — 브라우저로 실제 플로우 검증
-> **D) /design-review만** — 디자이너 관점 시각 QA (spacing, hierarchy, AI slop)
-> **E) 둘 다(기능)** — /verify-test + /qa-only
-> **F) 건너뛰기** — 검증 없이 /review로 진행
+> **A) All** — /verify-test + /qa-only + /design-review (when UI changed)
+> **B) /verify-test only** — throwaway code test
+> **C) /qa-only only** — browser-driven flow check
+> **D) /design-review only** — designer's-eye visual QA (spacing, hierarchy, AI slop)
+> **E) Both functional** — /verify-test + /qa-only
+> **F) Skip** — proceed directly to /review
 
-UI/시각 변경이 없는 작업(순수 백엔드/리팩터링 등)에는 D·A의 /design-review를 자동 제외.
-Wait for user choice, then execute accordingly.
+Drop the /design-review entries from D and A automatically when the change has
+no UI/visual surface (pure backend, refactor, infra). Wait for the user's
+choice, then execute accordingly.
 
 ---
 

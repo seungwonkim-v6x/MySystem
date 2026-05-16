@@ -160,13 +160,22 @@
   "enabledPlugins": {
     "frontend-design@claude-plugins-official": true,
     "context7@claude-plugins-official": true,
-    "code-review@claude-plugins-official": true
+    "code-review@claude-plugins-official": true,
+    "learning-opportunities@learning-opportunities": true,
+    "learning-opportunities-auto@learning-opportunities": true,
+    "orient@learning-opportunities": true
   },
   "extraKnownMarketplaces": {
     "claude-plugins-official": {
       "source": {
         "source": "git",
         "url": "https://github.com/anthropics/claude-plugins-official.git"
+      }
+    },
+    "learning-opportunities": {
+      "source": {
+        "source": "git",
+        "url": "https://github.com/DrCatHicks/learning-opportunities.git"
       }
     }
   },
