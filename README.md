@@ -67,6 +67,9 @@ skill when no public alternative exists.
 ## Layout
 
 - `CLAUDE.md`, `RTK.md` — global rules loaded every session
+- `CONTEXT.md` — project glossary (who, why, vocabulary, install mechanisms)
+- `docs/adr/` — Architecture Decision Records for MySystem itself
+- `.out-of-scope/` — explicit "considered, chose no" rationales
 - `settings.json` — harness config (permissions, hooks, plugins)
 - `skills/` — user-owned (tracked, currently just `verify-test/`) + external (symlinked by `setup.sh`)
 - `external-skills/` — cache for sparse cherry-picked repos (git-ignored)

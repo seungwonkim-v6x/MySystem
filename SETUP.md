@@ -66,6 +66,9 @@ git pull
 | Path | Purpose |
 |------|---------|
 | `CLAUDE.md`, `RTK.md` | Global rules auto-loaded every session |
+| `CONTEXT.md` | Project glossary — who, why, vocabulary, install mechanisms |
+| `docs/adr/` | Architecture Decision Records for MySystem itself |
+| `.out-of-scope/` | "Considered, chose no" decision records |
 | `settings.json` | Claude Code harness config (permissions, hooks, plugins, model) |
 | `skills/` | User-owned (tracked, just `verify-test/`) + external skills (symlinked, ignored) |
 | `external-skills/` | Cache for sparse cherry-picked repos; ignored |

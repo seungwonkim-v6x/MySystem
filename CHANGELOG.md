@@ -12,6 +12,79 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [0.34.0] - 2026-05-18
+
+Theme: **Decision-record discipline — borrow mattpocock's structure.**
+
+Adopts three organizational patterns from
+[mattpocock/skills](https://github.com/mattpocock/skills) (89k ⭐) without
+touching workflow semantics:
+
+### Added — three new tracked surfaces
+
+- **`docs/adr/`** — Architecture Decision Records start landing as real
+  documents instead of just a template. Five retrospective ADRs cover the
+  big v0.30-0.33 decisions:
+  - 0001 workflow harness consolidation
+  - 0002 SPARSE_SKILLS install mechanism
+  - 0003 references treasure trove
+  - 0004 kami-parchment HTML preview hook
+  - 0005 plugin marketplace for hook-bearing plugins
+- **`.out-of-scope/`** — Explicit "considered, chose no" rationales. Five
+  seed entries capture decisions that would otherwise be buried in CHANGELOG
+  prose:
+  - `learning-goal-paired-skill.md` (deferred 6 weeks, with re-check date)
+  - `sparse-skills-for-hook-plugins.md` (technical reason: `${CLAUDE_PLUGIN_ROOT}`)
+  - `custom-frequency-wrapper.md` (philosophical reason: "harness, don't build")
+  - `superclaude-parallel-system.md` (architectural reason: parallel ≠ complementary)
+  - `subagents-directory.md` (zero-invocation reason: 20 unused agent files)
+- **`CONTEXT.md`** at the repo root — project glossary. Vocabulary
+  (harness-don't-build, skill whitelist, boil the lake, repo mode), 8-step
+  workflow shape, install-mechanism table, external-dependency surface, and
+  a "what to read first" pointer for onboarding.
+
+### Why borrow from mattpocock
+
+`docs/adr/` and CHANGELOG answer different questions: CHANGELOG captures
+*what changed*, ADRs capture *why this trade-off*. Until v0.34.0 MySystem
+had only the template for ADRs and zero actual ADRs — a contradiction for
+a repo that records lots of trade-offs.
+
+`.out-of-scope/` solves a different gap: decisions to *not* do things
+disappear into CHANGELOG prose ("Why not learning-goal", "not a fork", etc.)
+and are hard to find when re-deciding six months later. A dedicated file
+per "no" gives each rejection a permanent address.
+
+`CONTEXT.md` exists because the project finally has enough vocabulary
+(harness-don't-build, skill whitelist, three install mechanisms, repo mode)
+that requiring a new reader to derive it from `CLAUDE.md` + CHANGELOG +
+git log is wasteful.
+
+### Skipped from mattpocock's pattern
+
+- **Bucket folders** (`skills/engineering/`, `skills/productivity/`, etc.) —
+  MySystem's `skills/` has only `verify-test/` as user-owned; everything
+  else is external. Bucketing would impose structure on content that isn't
+  there.
+- **`.claude-plugin/plugin.json`** — MySystem uses `settings.json`
+  `enabledPlugins` directly. Different mechanism, no duplication needed.
+- **`scripts/list-skills.sh`** — gstack already prints the equivalent.
+- **MIT LICENSE + public distribution** — MySystem stays personal for now;
+  the "switch to public" decision is its own ADR when (if) it happens.
+
+### .gitignore updates
+
+Whitelists `CONTEXT.md`, `docs/`, `docs/**`, `.out-of-scope/`,
+`.out-of-scope/**` under the "ignore everything, whitelist tracked"
+strategy.
+
+### Migration
+
+```
+cd ~/.claude && git pull
+# No script to run. The new directories are docs; no behavior change.
+```
+
 ## [0.33.0] - 2026-05-17
 
 Theme: **Adopt learning-opportunities — deliberate practice while AI-coding.**

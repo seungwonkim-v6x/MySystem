@@ -13,6 +13,7 @@
 !.gitattributes
 !CLAUDE.md
 !CHANGELOG.md
+!CONTEXT.md
 !README.md
 !SETUP.md
 !RTK.md
@@ -29,6 +30,10 @@
 !templates/**
 !references/
 !references/INDEX.md
+!docs/
+!docs/**
+!.out-of-scope/
+!.out-of-scope/**
 
 # User-owned skills — tracked. Add a new entry here when you create one.
 # Format: two lines per skill (directory + recursive contents).
