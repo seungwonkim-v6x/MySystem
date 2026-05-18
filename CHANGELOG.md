@@ -12,6 +12,162 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [0.35.0] - 2026-05-18
+
+Theme: **Security defense-in-depth — always-on PreToolUse hooks (dry-run first).**
+
+Closes the always-on safety gap: until now, destructive-command protection lived
+only in opt-in `/careful` and `/guard` skills (user had to remember). v0.35.0
+adopts 4 hand-vendored PreToolUse hooks that fire unconditionally for
+catastrophic operations. Ships in **dry-run mode** (`MYSYSTEM_HOOKS_ENFORCE`
+unset); a v0.35.1 patch flips to enforce after a 48-hour zero-false-positive
+observation window per the calibrate-before-enforce pattern.
+
+Source: best-practices research catalog
+(`~/.gstack/projects/seungwonkim-v6x-MySystem/best-practices-research-20260518.md`,
+44 patterns across 10 repos). Reviewer-driven revisions (Claude subagent
+CEO + Eng reviews) applied: fail-open templates, hand-vendor with attribution,
+hard-refuse for force-push to main, dry-run mode, simplified hook-ordering
+rationale. See [ADR-0006](docs/adr/0006-defense-in-depth-pretooluse-hooks.md).
+
+### Added — 4 PreToolUse hooks (hand-vendored, fail-open, dry-run default)
+
+- **`hooks/secret-scanner.py`** — intercepts `git commit` variants. Scans
+  staged diff against 11 regexes (Anthropic, OpenAI, AWS, Stripe, GitHub,
+  Slack, MongoDB/MySQL/Postgres connection strings, JWT). Hard-refuses 2
+  private-key header patterns regardless of bypass. Soft-bypass:
+  `MYSYSTEM_ALLOW_SECRET_COMMIT=1` for intentional test fixtures.
+  Adapted from davila7/claude-code-templates.
+
+- **`hooks/dangerous-command-blocker.py`** — blocks `rm -rf /` on system
+  paths (allows `/tmp/`, `/private/tmp/`, `/var/folders/`), `dd` to block
+  devices, `mkfs`, redirects into `.git/` and `.claude/`, shred `-u`, fork
+  bombs, `curl | bash`. No bypass — manual UI for legitimate use.
+  Adapted from davila7/claude-code-templates.
+
+- **`hooks/env-file-protection.py`** — blocks Write/Edit/MultiEdit on any
+  `.env*` path. Rewritten from upstream's matcher-conditional approach to
+  portable Python check on `tool_input.file_path`. No bypass.
+  Adapted from davila7/claude-code-templates.
+
+- **`hooks/block-dangerous-git.sh`** — blocks `git push`, `git push --force`,
+  `git reset --hard`, `git clean -f[d]`, `git branch -D`, `git checkout .`,
+  `git restore .`. **Hard-refuses force-push to origin main/master regardless
+  of `MYSYSTEM_ALLOW_FORCE_PUSH=1`** (prompt-injection defense — env var
+  could be set by injected tool output). Bypass works only for feature
+  branches. Adapted from mattpocock/skills git-guardrails-claude-code.
+
+All 4 scripts wrap their logic in try/except → log to
+`~/.claude/logs/hook-errors.log` → exit 0 on internal error (**fail-open**).
+A buggy hook never bricks the workflow.
+
+### Added — settings.json hardening
+
+- **`permissions.ask`** list — 10 risk-tiered Bash patterns (rm, rmdir,
+  shred, dd, mkfs, chmod, chown, kill, killall, pkill). Always-on
+  confirmation prompt without breaking flow on read-only ops. Package
+  managers deliberately excluded (would prompt-spam during normal dev).
+  Adapted from shanraisshan/claude-code-best-practice.
+
+- **`respectGitignore: true`** — keeps `node_modules/`, `.venv/`, build
+  outputs out of search index. Adapted from shanraisshan.
+
+- **PreToolUse hook ordering** — 3 Bash blockers prepended before existing
+  `rtk hook claude` so BLOCKED stderr messages surface uncompressed.
+  Each PreToolUse hook receives the original `tool_input` independently —
+  the original "rtk pipeline-mutates downstream" claim in draft v1 of the
+  plan was wrong; corrected in ADR-0006.
+
+### Added — Stop hook desktop notification
+
+- **`hooks/preview-stop.sh`** — appended `osascript -e 'display
+  notification ...'` (macOS conditional, fail-silent). Existing kami HTML
+  preview rendering unchanged. Adapted from davila7.
+
+### Added — operational infrastructure
+
+- `~/.claude/logs/hook-errors.log` and `hook-dry-run.log` (created on
+  first hook fire). Use `tail -f ~/.claude/logs/hook-dry-run.log` to watch
+  what WOULD have been blocked during the 48-hour observation window.
+
+### Decisions deliberately NOT changed
+
+- **`CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` stays at `25`** (not bumped to 80 as
+  the shanraisshan template suggests). v7.1.0 deliberately set it to 25
+  for Opus 4.7's 1M context; RTK.md documents the rationale. The general
+  advice doesn't apply when context is 4× larger. Logged in ADR-0006
+  "Decisions deferred" section.
+
+### Verification — required before v0.35.1 enforce flip
+
+1. Benchmark per-Bash overhead < 200ms (Python cold-start × 2 + bash × 1).
+   Record to `~/.gstack/projects/seungwonkim-v6x-MySystem/v0.35.0-hook-benchmark.md`.
+2. Run normal workflow 48 hours with `MYSYSTEM_HOOKS_ENFORCE` unset.
+   Review `~/.claude/logs/hook-dry-run.log`. Zero false positives required.
+3. End-to-end /ship dry-run: verify gstack's `git push` (with
+   `MYSYSTEM_ALLOW_FORCE_PUSH=1`) succeeds for feature branches AND that
+   force-push to `origin main` is still hard-refused.
+4. Fail-open verification: manually break one hook (add `1/0` to Python or
+   garbage line to bash); confirm Bash commands still proceed; error
+   logged to `hook-errors.log`.
+
+When all 4 pass: edit `settings.json` to add `"MYSYSTEM_HOOKS_ENFORCE": "1"`
+in the `env` block, bump VERSION to 0.35.1, document in CHANGELOG, tag.
+
+### Rollback
+
+Each hook is independently removable:
+1. Delete the script from `hooks/`
+2. Remove the corresponding entry from `settings.json` `hooks.PreToolUse`
+3. Tag as v0.35.x patch with revert note
+
+If `permissions.ask` becomes too noisy: trim the list (no full revert needed).
+
+### Documentation
+
+- [ADR-0006](docs/adr/0006-defense-in-depth-pretooluse-hooks.md) — captures
+  the design decisions, reviewer concerns, and alternatives considered.
+
+### Attribution
+
+- Hook script logic adapted from
+  [davila7/claude-code-templates](https://github.com/davila7/claude-code-templates)
+  (secret-scanner, dangerous-command-blocker, env-file-protection,
+  desktop-notification-on-stop) and
+  [mattpocock/skills](https://github.com/mattpocock/skills)
+  (git-guardrails-claude-code). Settings.json patterns
+  (`permissions.ask`, `respectGitignore`) from
+  [shanraisshan/claude-code-best-practice](https://github.com/shanraisshan/claude-code-best-practice).
+  License verification at vendor time (MIT/Apache assumed; verify upstream
+  before next refresh).
+
+### Post-review hardening (applied during /review + /requesting-code-review)
+
+A 2nd-pass adversarial review surfaced 4 critical + 8 important findings.
+All criticals + actionable importants addressed inline before /ship; remaining
+items documented in ADR-0006 with rationale.
+
+- **Hard-refuse for force-push to main/master** now covers all known refspec
+  variants: `--force origin main`, `--force-with-lease origin main`,
+  `HEAD:main`, `+main`, `+refs/heads/main`, and `git -c key=val push ...`
+  prefix bypass. Hard-refuse is unconditional regardless of
+  `MYSYSTEM_ALLOW_FORCE_PUSH=1`.
+- **`rm -rf` detection** broadened to catch separated flags (`rm -r -f`),
+  uppercase variants (`-fR`, `-Rf`), and `bash -c "rm -rf /etc"` wrappers.
+- **OpenAI key regex** tightened from `sk-[A-Za-z0-9]{32,}` to require the
+  `T3BlbkFJ` substring (present in every real key). Eliminates false
+  positives on doc placeholders like `sk-EXAMPLE...`.
+- **`datetime.utcnow()` deprecation** eliminated across all 3 Python hooks
+  (Python 3.13+ compatibility).
+- **`.env*` multi-suffix paths** now matched (`.env.production.local`,
+  `.env.development.local`, etc.).
+- **Absolute-path `.claude/` redirects** now blocked
+  (`echo evil > /Users/foo/.claude/CLAUDE.md`).
+- **`git -c key=val commit` bypass** in secret-scanner closed (same
+  `GIT_VERB` pattern as block-dangerous-git.sh).
+
+---
+
 ## [0.34.0] - 2026-05-18
 
 Theme: **Decision-record discipline — borrow mattpocock's structure.**

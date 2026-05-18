@@ -26,6 +26,9 @@
 !skills/
 !hooks/
 !hooks/**
+hooks/__pycache__/
+hooks/**/__pycache__/
+hooks/**/*.pyc
 !templates/
 !templates/**
 !references/

@@ -121,6 +121,18 @@
       "/private/tmp/verify-test-1776821779",
       "/tmp/verify-test-vp553",
       "/private/tmp/verify-test-vp553"
+    ],
+    "ask": [
+      "Bash(chmod *)",
+      "Bash(chown *)",
+      "Bash(dd *)",
+      "Bash(kill *)",
+      "Bash(killall *)",
+      "Bash(mkfs *)",
+      "Bash(pkill *)",
+      "Bash(rm *)",
+      "Bash(rmdir *)",
+      "Bash(shred *)"
     ]
   },
   "model": "opus[1m]",
@@ -136,6 +148,32 @@
       }
     ],
     "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/hooks/dangerous-command-blocker.py"
+          },
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/hooks/secret-scanner.py"
+          },
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/block-dangerous-git.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/hooks/env-file-protection.py"
+          }
+        ]
+      },
       {
         "matcher": "Bash",
         "hooks": [
@@ -180,5 +218,6 @@
     }
   },
   "effortLevel": "high",
-  "autoCompactEnabled": false
+  "autoCompactEnabled": false,
+  "respectGitignore": true
 }

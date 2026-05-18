@@ -70,4 +70,11 @@ mv "$tmp" "$PREVIEW_DIR/latest.html"
 # The hook intentionally does NOT call `open` — that would spawn a new
 # OS-default tab on every session start.
 
+# v0.35.0: desktop notification on response complete (macOS only, fail-silent)
+# Adapted from https://github.com/davila7/claude-code-templates
+# Path: cli-tool/components/hooks/monitoring/desktop-notification-on-stop.json
+if command -v osascript >/dev/null 2>&1; then
+  osascript -e 'display notification "Response complete" with title "Claude Code"' 2>/dev/null || true
+fi
+
 exit 0
