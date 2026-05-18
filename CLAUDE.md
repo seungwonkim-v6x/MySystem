@@ -157,17 +157,67 @@ No custom subagents — skills handle their own orchestration (e.g., /autoplan r
 | Step | Skill (slash command) | Source |
 |------|------------------------|--------|
 | 1. Validate idea / problem | `/office-hours` | gstack |
-|    (debug branch) `/investigate` | gstack |
+|    (debug branch) `/investigate` (or `/diagnose` for feedback-loop-first cases) | gstack / sparse cherry-pick: [mattpocock/skills](https://github.com/mattpocock/skills) |
 | 2. Research | `/deep-research` | sparse cherry-pick: [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code) (needs firecrawl MCP) |
+|    (optional pre-3) `/grill-with-docs` | sparse cherry-pick: [mattpocock/skills](https://github.com/mattpocock/skills) — interview against CONTEXT.md/ADRs |
 | 3. Plan + multi-review | `/autoplan` | gstack |
 | 4. Implementation | direct (coordinator writes code) | — |
 | 5. Verification | `/verify-test` and/or `/qa-only` and/or `/design-review` | user-owned (verify-test) + gstack |
+|    (Step 5 augment) `/verification-before-completion` | sparse cherry-pick: [obra/superpowers](https://github.com/obra/superpowers) — Iron Law: no completion claims without evidence |
 | 6. PR review (1st pass) | `/review` | gstack |
 | 7. Adversarial review (2nd pass) | `/requesting-code-review` | sparse cherry-pick: [obra/superpowers](https://github.com/obra/superpowers) |
 | 8. Ship | `/ship` | gstack |
+|    (cross-agent handoff) `/handoff` | sparse cherry-pick: [mattpocock/skills](https://github.com/mattpocock/skills) — fresh-agent continuation doc |
 
 The agent **must** call exactly these skills for exactly these steps. Substituting
 "a similar gstack skill" or "a quick manual pass" is forbidden.
+
+### v0.37.0 skill additions — invocation policy
+
+8 sparse cherry-pick skills added via `setup.sh` `SPARSE_SKILLS` (4 obra/superpowers
++ mattpocock plus the existing 2). Each is classified autonomous (in the
+whitelist for agent-initiated invocation at the step shown) or
+user-invoked only (typed by the user; agent does not proactively suggest).
+
+**Autonomous (added to workflow whitelist):**
+- `/verification-before-completion` — augments Step 5. Fires whenever the
+  user picks any verification option (A/B/C/D/E in the Step-5 menu). Iron
+  Law: "no completion claims without fresh verification evidence." Even
+  when user picks F (Skip), the rule applies to any "I tested it" claim
+  from Step 4.
+- `/diagnose` — alternate to `/investigate` for the Debug Step 1 when a
+  feedback loop must be built before hypothesizing. Use when bug is
+  intermittent, requires fixture capture, or needs a fuzz/bisection
+  harness. Otherwise `/investigate` is the default.
+- `/grill-with-docs` — optional pre-Step-3 interview against the project's
+  CONTEXT.md glossary and ADRs. Use when planning a change to a domain
+  with established vocabulary; makes ADR/CONTEXT.md load-bearing.
+- `/handoff` — auto-suggested after `/context-save` for cross-agent
+  delegation (Conductor workspace, sibling sub-agent, fresh session with
+  different model). Distinct intent from `/context-save` which targets
+  same-human resume.
+
+**User-invoked only (NOT in autonomous whitelist):**
+- `/test-driven-development` — opt-in Step 4 modifier. Iron Law: "no
+  production code without a failing test first." Apply when test-first
+  discipline is appropriate; not all changes are TDD-suitable (e.g.,
+  docs, config, exploratory spikes).
+- `/prototype` — opt-in for throwaway runnable code answering one
+  question. Pairs with ADR discipline: capture-the-answer rule.
+- `/triage` — opt-in for collaborative-repo issue management. Adds
+  AI-disclaimer prefix to all triage-time comments.
+- `/zoom-out` — opt-in navigation aid: "give me a map using the project's
+  glossary vocab." Manual-only.
+
+**SHA pinning (per ADR-0005 amendment in ADR-0007):**
+- The 4 autonomous skills are pinned to specific commit SHAs in
+  `setup.sh` `SPARSE_SKILLS`. Supply-chain risk on workflow-whitelisted
+  code that the agent invokes silently.
+- The 4 user-invoked skills (plus the 2 pre-existing
+  requesting-code-review + deep-research) remain unpinned per ADR-0005
+  original convention. Owner sees the source before invocation.
+- Refresh process: re-vendor manually by bumping the SHA after reading
+  upstream diff (recorded as a CHANGELOG note).
 
 ---
 
@@ -300,6 +350,16 @@ After implementation, present these options:
 Drop the /design-review entries from D and A automatically when the change has
 no UI/visual surface (pure backend, refactor, infra). Wait for the user's
 choice, then execute accordingly.
+
+**Automatic Step-5 augment (v0.37.0+):** Whichever option the user picks
+(A/B/C/D/E), also invoke `/verification-before-completion` (obra/superpowers
+Iron Law: no completion claims without fresh verification evidence). This
+runs orthogonally to the chosen verification method — it cross-checks any
+"I tested it" / "this works" claim from Step 4 against actual verification
+artifacts. If the user picks F (Skip), still invoke
+`/verification-before-completion` to gate against unverified completion
+claims propagating to /review. The augment is autonomous (in the v0.37.0
+whitelist); do not ask the user whether to run it.
 
 ### Quick Visual Check (pre-Step-5, when UI changed)
 

@@ -94,10 +94,21 @@ The external repo's own setup script installs 20+ skills.
 Clone repo, symlink **one subpath** as a single skill. Use when you want a
 specific skill from a larger collection without inheriting siblings.
 
-| Skill | URL | Subpath | Notes |
-|-------|-----|---------|-------|
-| requesting-code-review | https://github.com/obra/superpowers.git | `skills/requesting-code-review` | Adversarial 2nd-pass review (workflow step 7) |
-| deep-research | https://github.com/affaan-m/everything-claude-code.git | `.agents/skills/deep-research` | Workflow step 2. Requires firecrawl MCP. |
+Format: `"skill-name|url|branch|subpath[|optional-commit-SHA]"`. Optional 5th
+field pins to a specific commit (autonomous skills only — see ADR-0007).
+
+| Skill | URL | Subpath | Pin? | Notes |
+|-------|-----|---------|------|-------|
+| requesting-code-review | https://github.com/obra/superpowers.git | `skills/requesting-code-review` | unpinned | Adversarial 2nd-pass review (Step 7) |
+| deep-research | https://github.com/affaan-m/everything-claude-code.git | `.agents/skills/deep-research` | unpinned | Step 2. Requires firecrawl MCP. |
+| **verification-before-completion** | https://github.com/obra/superpowers.git | `skills/verification-before-completion` | pinned `f2cbfbefebbf` | Step 5 augment (Iron Law: no completion claims without evidence) |
+| **test-driven-development** | https://github.com/obra/superpowers.git | `skills/test-driven-development` | unpinned | User-invoked Step 4 modifier (Iron Law: no prod code without failing test) |
+| **diagnose** | https://github.com/mattpocock/skills.git | `skills/engineering/diagnose` | pinned `e74f0061bb67` | Debug Step 1 alternate (feedback-loop-first) |
+| **grill-with-docs** | https://github.com/mattpocock/skills.git | `skills/engineering/grill-with-docs` | pinned `e74f0061bb67` | Pre-Step-3 (interview vs CONTEXT.md/ADRs) |
+| **prototype** | https://github.com/mattpocock/skills.git | `skills/engineering/prototype` | unpinned | User-invoked throwaway runnable code |
+| **triage** | https://github.com/mattpocock/skills.git | `skills/engineering/triage` | unpinned | User-invoked (collaborative-repo issues) |
+| **zoom-out** | https://github.com/mattpocock/skills.git | `skills/engineering/zoom-out` | unpinned | User-invoked navigation aid |
+| **handoff** | https://github.com/mattpocock/skills.git | `skills/productivity/handoff` | pinned `e74f0061bb67` | Cross-agent continuation doc (distinct from `/context-save`) |
 
 ### Reference repos (`REFERENCE_REPOS`)
 
@@ -152,7 +163,7 @@ must add your own key after running `setup.sh`.
    (single skill only).
 2. Append to the right list in [`setup.sh`](./setup.sh):
    - Full repo: `EXTERNAL_REPOS+=( "name|url|main" )`
-   - Sparse: `SPARSE_SKILLS+=( "skill-name|url|main|subpath" )`
+   - Sparse: `SPARSE_SKILLS+=( "skill-name|url|main|subpath" )` (unpinned) OR `SPARSE_SKILLS+=( "skill-name|url|main|subpath|commit-SHA" )` (pinned per ADR-0007 — required for autonomous skills)
 3. Add a row to the table above.
 4. Never use git submodules — MySystem moved away from them in v0.27.0.
 

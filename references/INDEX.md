@@ -35,6 +35,18 @@ last, and doesn't burn fresh context on rediscovery.
 | **Tailwind ecosystem** | `references/awesome-tailwindcss/` | Hunting a Tailwind plugin, template, component lib, or learning resource |
 | **React components** | `references/awesome-react-components/` | "Is there a battle-tested React component for X?" — table, form, calendar, etc. |
 
+## Skill authoring (added v0.37.0 — not clone targets, just citable docs)
+
+These are external authoring contracts MySystem treats as authoritative
+for the relevant artifact class. NOT cloned into `references/` — they
+live at the upstream URLs. Listed here because the agent consults them
+when writing or modifying the matching artifact in MySystem.
+
+| Source | Use when |
+|--------|---------|
+| [anthropics/skills `skill-creator/SKILL.md`](https://github.com/anthropics/skills/blob/main/skills/skill-creator/SKILL.md) | Writing or modifying a SKILL.md in `~/.claude/skills/`. Rules: 2-field frontmatter (`name`, `description`); body <500 lines; pushy descriptions; explain WHY over ALL-CAPS. Exception: data-hygiene / one-way-door rules (see `.out-of-scope/all-caps-rules-in-user-owned-skills.md`). |
+| [wshobson/agents](https://github.com/wshobson/agents) sub-agent convention | Defining a sub-agent `.md` (if MySystem ever ships one). Frontmatter: `name` + `description` + `model`. Body: role / when-to-use / focus / deliverables / success-indicators (5 sections). |
+
 ## How to use
 
 ```bash

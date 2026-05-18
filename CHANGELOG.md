@@ -12,6 +12,129 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [0.37.0] - 2026-05-18
+
+Theme: **Skill cherry-pick batch — 8 new SPARSE_SKILLS + SHA pinning for autonomous picks.**
+
+Translates the v0.36.0 best-practices research catalog
+(`~/.gstack/projects/seungwonkim-v6x-MySystem/best-practices-research-20260518.md`)
+into 8 new external skill installations via `SPARSE_SKILLS`. 4 are added
+to the autonomous workflow whitelist (in CLAUDE.md Step → Skill Mapping);
+4 are user-invoked only.
+
+### Added — 8 SPARSE_SKILLS entries
+
+**obra/superpowers (Iron Law skills):**
+- `verification-before-completion` — autonomous Step 5 augment. SHA-pinned to `f2cbfbefebbf`.
+- `test-driven-development` — user-invoked Step 4 modifier. Unpinned (manual invocation = source visible to user).
+
+**mattpocock/skills (engineering bucket):**
+- `diagnose` — autonomous Debug Step 1 alternate. SHA-pinned to `e74f0061bb67`.
+- `grill-with-docs` — autonomous pre-Step-3 option. SHA-pinned to `e74f0061bb67`.
+- `prototype` — user-invoked throwaway runnable code. Unpinned.
+- `triage` — user-invoked issue management (collaborative repos). Unpinned.
+- `zoom-out` — user-invoked navigation aid. Unpinned.
+
+**mattpocock/skills (productivity bucket):**
+- `handoff` — autonomous cross-agent continuation doc. SHA-pinned to `e74f0061bb67`.
+
+### Added — `setup.sh` format extension (amends ADR-0005)
+
+`SPARSE_SKILLS` entries now accept an **optional 5th field** for commit
+SHA. When present, `setup.sh` runs `git checkout <SHA>` after clone
+instead of tracking branch tip. If the SHA becomes unreachable (upstream
+history rewrite), setup.sh exits 1 with a clear remediation message.
+
+**Pin policy** (per ADR-0007):
+- **Autonomous skills MUST be pinned** — supply-chain mitigation. The
+  agent invokes these silently; a compromised upstream commit would
+  become live behavior.
+- **User-invoked skills MAY remain unpinned** — owner sees the content
+  before invocation, so silent drift is acceptable.
+
+This is the smallest possible amendment to ADR-0005's "unpinned by
+design" original: it pins 4 of 11 entries (the 4 autonomous v0.37.0
+adds). The 2 pre-existing unpinned entries (requesting-code-review,
+deep-research) stay unpinned for backward compatibility.
+
+### Added — ADR-0007
+
+[`docs/adr/0007-skill-cherry-pick-batch-v0.37.md`](docs/adr/0007-skill-cherry-pick-batch-v0.37.md) documents the batch decisions:
+- Per-skill rationale + autonomy classification
+- ADR-0005 amendment for SHA pinning
+- setup.sh format extension
+- Initial SHA capture (2026-05-18 via `gh api`)
+- Refresh log template for future pin bumps
+
+### Updated — CLAUDE.md
+
+- **Step → Skill Mapping** now references the 4 autonomous v0.37.0 skills
+  inline (with their workflow integration points).
+- **New "v0.37.0 skill additions — invocation policy" section** under
+  Step → Skill Mapping spells out autonomous vs user-invoked
+  classification + the SHA-pin gradient.
+
+### Updated — references/INDEX.md
+
+New "Skill authoring" section (not clone targets, just citable docs):
+- `anthropics/skills` SKILL.md authoring contract (2-field frontmatter,
+  body <500 lines, pushy descriptions, explain WHY over ALL-CAPS — with
+  documented data-hygiene exception per
+  `.out-of-scope/all-caps-rules-in-user-owned-skills.md`)
+- `wshobson/agents` sub-agent frontmatter convention (name + description
+  + model + 5-section body)
+
+### Updated — README.md and SETUP.md
+
+`SPARSE_SKILLS` table grows from 2 to 10 rows. New rows show:
+- Pin status (pinned <SHA> vs unpinned)
+- Notes column maps each skill to its workflow role + invocation mode
+
+### What did NOT change
+
+- 8-step workflow (Steps 1-8 + Debug Step 1 alternate) — autonomous
+  skills augment existing steps, don't add new steps.
+- gstack full clone — unchanged.
+- Plugin marketplace mechanism — unchanged.
+- ADR-0005 itself — amended via ADR-0007's reference but not edited.
+- Reference repos (12 clones in `references/`) — unchanged.
+
+### Process
+
+Step 5 verification skipped (no behavior to test mechanically — skills
+are external clones the user fetches via `setup.sh`). /review focused on
+internal consistency between CLAUDE.md whitelist, setup.sh format, and
+ADR-0007 claims. /requesting-code-review focused on supply-chain edge
+cases (e.g., upstream rewriting history past pinned SHA, refresh process
+realism, repo-rename handling).
+
+### Hook-enforcement candidates
+
+Per v0.36.0's "every CRITICAL RULE should aspire to harness enforcement"
+sweep heading. Tracking these for next-patch consideration:
+
+- **SHA-pin tampering detection** — Could be enforced by a setup.sh
+  post-clone hook that verifies the SHA matches the registered value
+  before symlinking. (Already mostly enforced via `git checkout` exit
+  code, but explicit verification of the symlink-target SHA would catch
+  tampering after install.)
+- **Autonomous-skill invocation logging** — Could be enforced by a
+  SessionStart hook that snapshots which SPARSE_SKILLS are pinned + a
+  PostToolUse hook on the Skill tool that logs each autonomous-skill
+  invocation for audit.
+
+### Attribution
+
+- Patterns sourced from
+  [obra/superpowers](https://github.com/obra/superpowers) and
+  [mattpocock/skills](https://github.com/mattpocock/skills), credited
+  per skill in `setup.sh`, CLAUDE.md, and ADR-0007.
+- SHA-pin pattern inspired by git submodule discipline (rejected as a
+  mechanism in v0.27.0) but applied at the array-entry level for
+  lighter-weight maintenance.
+
+---
+
 ## [0.36.0] - 2026-05-18
 
 Theme: **CLAUDE.md hardening — adopt externally-validated prompt patterns + codify anti-patterns.**

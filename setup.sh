@@ -27,12 +27,39 @@ EXTERNAL_REPOS=(
 )
 
 # ── Sparse cherry-pick skills ────────────────────────────────
-# Format: "skill-name|url|branch|subpath-in-repo"
+# Format: "skill-name|url|branch|subpath-in-repo[|commit-SHA]"
 # Clones the repo into external-skills/<skill-name>/ (cache, not tracked)
 # and symlinks <subpath> as skills/<skill-name>/.
+#
+# Optional 5th field: short-SHA (8-12 hex chars). When present, setup.sh
+# checks out that commit after clone instead of tracking branch tip.
+# Pin autonomous (workflow-whitelisted) skills; leave user-invoked skills
+# unpinned per ADR-0005 amendment in ADR-0007 (v0.37.0).
 SPARSE_SKILLS=(
+  # Step 7 — pre-v0.37.0 baseline (unpinned per ADR-0005 original convention)
   "requesting-code-review|https://github.com/obra/superpowers.git|main|skills/requesting-code-review"
+  # Step 2 — pre-v0.37.0 baseline (unpinned)
   "deep-research|https://github.com/affaan-m/everything-claude-code.git|main|.agents/skills/deep-research"
+
+  # v0.37.0 adds — obra/superpowers (Iron Law skills)
+  # Autonomous (Step 5 augment) — pinned
+  "verification-before-completion|https://github.com/obra/superpowers.git|main|skills/verification-before-completion|f2cbfbefebbf"
+  # User-invoked only — unpinned (manual invocation = user sees content)
+  "test-driven-development|https://github.com/obra/superpowers.git|main|skills/test-driven-development"
+
+  # v0.37.0 adds — mattpocock/skills (engineering bucket)
+  # Autonomous (debug alternate) — pinned
+  "diagnose|https://github.com/mattpocock/skills.git|main|skills/engineering/diagnose|e74f0061bb67"
+  # Autonomous (pre-Step-3 option) — pinned
+  "grill-with-docs|https://github.com/mattpocock/skills.git|main|skills/engineering/grill-with-docs|e74f0061bb67"
+  # User-invoked only — unpinned
+  "prototype|https://github.com/mattpocock/skills.git|main|skills/engineering/prototype"
+  "triage|https://github.com/mattpocock/skills.git|main|skills/engineering/triage"
+  "zoom-out|https://github.com/mattpocock/skills.git|main|skills/engineering/zoom-out"
+
+  # v0.37.0 adds — mattpocock/skills (productivity bucket)
+  # Autonomous (cross-agent handoff after /context-save fails) — pinned
+  "handoff|https://github.com/mattpocock/skills.git|main|skills/productivity/handoff|e74f0061bb67"
 )
 
 # ── Reference repos (the "treasure trove") ───────────────────
@@ -96,12 +123,44 @@ echo ""
 echo "[3/6] Installing sparse cherry-pick skills..."
 mkdir -p external-skills
 for entry in "${SPARSE_SKILLS[@]}"; do
-  IFS='|' read -r skill_name url branch subpath <<< "$entry"
+  IFS='|' read -r skill_name url branch subpath sha <<< "$entry"
   cache_dir="external-skills/$skill_name"
   link_target="skills/$skill_name"
   abs_source="$REPO_ROOT/$cache_dir/$subpath"
 
-  clone_or_pull "$cache_dir" "$url" "$branch"
+  if [ -n "${sha:-}" ]; then
+    # Pinned path (ADR-0007): clone if missing, then fetch + checkout SHA.
+    # Don't use `git pull --ff-only` because HEAD is detached at the pinned
+    # SHA after the first install — pull would fail on subsequent runs.
+    if [ ! -d "$cache_dir/.git" ]; then
+      echo "  cloning $cache_dir from $url..."
+      [ -e "$cache_dir" ] && rm -rf "$cache_dir"
+      git clone --branch "$branch" "$url" "$cache_dir" 2>&1 | sed 's/^/    /'
+    else
+      echo "  fetching $cache_dir (pinned)..."
+      # Explicit refspec so refs/remotes/origin/<branch> advances (not just
+      # FETCH_HEAD). ADR-0007's refresh workflow relies on `git log <SHA>..origin/main`
+      # showing the real diff window; FETCH_HEAD alone would make that stale.
+      # Also handles the case where the entry's branch field was renamed —
+      # if the remote doesn't have that branch, the fetch fails loudly here
+      # instead of producing a cryptic checkout error.
+      if ! ( cd "$cache_dir" && git fetch origin "$branch:refs/remotes/origin/$branch" --quiet 2>&1 | sed 's/^/    /' ); then
+        echo "  ✗ $skill_name: fetch failed — branch '$branch' may not exist upstream anymore."
+        echo "    Fix: check upstream's default branch and update the entry in setup.sh."
+        exit 1
+      fi
+    fi
+    if ! ( cd "$cache_dir" && git checkout --quiet "$sha" 2>&1 ); then
+      echo "  ✗ $skill_name: pinned SHA '$sha' not reachable on $branch"
+      echo "    Repo may have rewritten history. Fix: update SHA in setup.sh"
+      echo "    (after reading upstream diff) or remove the pin to track branch tip."
+      exit 1
+    fi
+    echo "  pinned $cache_dir to $sha"
+  else
+    # Unpinned path (ADR-0005 original convention): clone or pull branch tip.
+    clone_or_pull "$cache_dir" "$url" "$branch"
+  fi
 
   if [ ! -e "$abs_source" ]; then
     echo "  ✗ $skill_name: subpath '$subpath' not found in repo"
@@ -113,7 +172,11 @@ for entry in "${SPARSE_SKILLS[@]}"; do
     rm -rf "$link_target"
   fi
   ln -s "$abs_source" "$link_target"
-  echo "  ✓ $skill_name → $cache_dir/$subpath"
+  if [ -n "${sha:-}" ]; then
+    echo "  ✓ $skill_name → $cache_dir/$subpath (pinned $sha)"
+  else
+    echo "  ✓ $skill_name → $cache_dir/$subpath"
+  fi
 done
 
 # ── [4/6] Reference repos (treasure trove) ───────────────────

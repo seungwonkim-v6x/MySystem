@@ -32,8 +32,11 @@ cd ~/.claude && git pull && ./setup.sh
 | Type | Source | Skills adopted |
 |------|--------|----------------|
 | Full repo | [gstack](https://github.com/garrytan/gstack) | workflow skills (autoplan, ship, review, office-hours, investigate, retro, …) |
-| Sparse cherry-pick | [obra/superpowers](https://github.com/obra/superpowers) | `requesting-code-review` (adversarial 2nd-pass review) |
-| Sparse cherry-pick | [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code) | `deep-research` (needs firecrawl MCP key) |
+| Sparse cherry-pick | [obra/superpowers](https://github.com/obra/superpowers) | `requesting-code-review` (Step 7), `verification-before-completion` (Step 5 augment, SHA-pinned), `test-driven-development` (user-invoked) |
+| Sparse cherry-pick | [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code) | `deep-research` (Step 2, needs firecrawl MCP key) |
+| Sparse cherry-pick | [mattpocock/skills](https://github.com/mattpocock/skills) | `diagnose` (debug alternate, SHA-pinned), `grill-with-docs` (pre-Step-3, SHA-pinned), `handoff` (cross-agent, SHA-pinned), `prototype`, `triage`, `zoom-out` (user-invoked) |
+
+**SHA pinning**: autonomous (workflow-whitelisted) sparse skills are pinned to specific commit SHAs in [`setup.sh`](setup.sh) per [ADR-0007](docs/adr/0007-skill-cherry-pick-batch-v0.37.md). User-invoked skills remain unpinned.
 
 ### Claude Code plugins (auto-fetched)
 
