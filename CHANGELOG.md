@@ -12,6 +12,190 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [0.38.0] - 2026-05-20
+
+Theme: **Activate gbrain as experimental retrieval sidecar — fill the
+conversation/decision/reasoning layer gap; document agentmemory rejection.**
+
+The 7 memory layers from v0.37.0 (auto-memory, gstack artifacts,
+learnings.jsonl, timeline.jsonl, references/, ADRs, CONTEXT.md) all
+miss one thing: the back-and-forth of a live session — user reframes,
+dismissed-but-later-right options, the chain of reasoning that never
+crystallizes into an ADR. gbrain (gstack's sibling tool, same
+maintainer) fills that gap and was already cited by every gstack skill
+preamble, just silently taking the "not configured" branch on this
+machine. v0.38.0 activates it.
+
+Framed as an **experimental sidecar**, not a canonical layer. CLAUDE.md
++ ADRs + CONTEXT.md remain the source-of-truth contract; gbrain is
+additive (capture-first) augment. Kill criteria K1-K4 in ADR-0008 are
+safety triggers (hook installed / upstream abandoned / Anthropic native
+ships / workflow disruption), not arbitrary search-count thresholds.
+
+### Added
+
+- **gbrain CLI activated via Bun global install** with SHA pin
+  `bc9f7774bf85c14113d799af73bdb2234a203f3a` (gbrain v0.37.0.0,
+  2026-05-20T01:12:01Z). Install command:
+  `bun install -g git+https://github.com/garrytan/gbrain.git#<sha>`.
+  Pinning rationale: gbrain ships 2-4 minor/patch bumps per day with
+  schema migrations in nearly every minor and no GitHub Releases tags
+  — tracking master is unsafe. Pattern adapted from ADR-0007 for
+  Bun-installed CLI (mechanics differ: refresh uses
+  `gh api repos/garrytan/gbrain/compare/<old>..master`, not local git
+  log on a clone).
+- **PGLite engine** at `~/.gbrain/brain.pglite/` (in-process WASM
+  Postgres, zero accounts, ~2s init, 78 migrations applied).
+  `~/.gbrain/config.json` at mode 0600.
+- **Claude Code MCP registration** at user scope, stdio transport,
+  absolute bin path. Written directly to `~/.claude.json`
+  mcpServers.gbrain (no `claude` CLI in this VSCode-native
+  environment). Existing entries (firecrawl, notion, pencil, stitch)
+  preserved.
+- **Per-remote policy** = `read-write` for
+  github.com/seungwonkim-v6x/mysystem (the source repo).
+- **gstack config:** `artifacts_sync_mode=off` (local-only — Supabase
+  + cross-machine deferred), `transcript_ingest_mode=incremental`
+  (capture forward, no historical bulk).
+- **[ADR-0008](docs/adr/0008-gbrain-as-memory-layer.md)** records the
+  full activation decision, SHA-pin refresh process, K1-K4 kill
+  criteria, corpus retention policy, and CLAUDE.md-untouched
+  rationale.
+- **[`.out-of-scope/agentmemory-2026-05.md`](.out-of-scope/agentmemory-2026-05.md)**
+  documents the agentmemory rejection: 6-dimension gap analysis
+  shows 0 genuine NOs; benchmark advantage doesn't exist (gbrain
+  R@5 97.9% > agentmemory R@5 95.2%); 12 new lifecycle hooks under
+  new maintainer would 12× the SHA-pin burden of gbrain.
+- **`scripts/rollback-gbrain.sh`** — one-command undo of the v0.38.0
+  activation. Removes mcpServers.gbrain entry, uninstalls gbrain CLI,
+  deletes `~/.gbrain/` (with backup tarball), resets gstack-config
+  keys. Required by Eng-6 finding.
+- **`SETUP.md`** note: recommends `/setup-gbrain` post-`setup.sh`
+  on fresh machines, since activation is machine-local per ADR-0008.
+- Smoke page `setup-gbrain-smoke-1779245146` is the first page in
+  the corpus (will stay until corpus has organic content; `gbrain
+  rm` does not exist — confirmed during smoke test).
+
+### Verification (Eng findings from autoplan dual voices)
+
+- **Eng-1 (Bun SHA syntax preflight):** Verified
+  `git+https://github.com/garrytan/gbrain.git#<sha>` form works in a
+  temp BUN_INSTALL prefix before committing the SHA. npm package-spec
+  compatible — preferred over `github:org/repo#<sha>` shorthand which
+  is plausible but undocumented in Bun.
+- **Eng-2 (hook diff invariant):** Snapshot of `~/.claude/settings.json`
+  `hooks.*` before install:
+  sha256 `4607c437c7b8fe126bd440157afddf473a1447cf4031e2e3f4107cf20cdaa90a`.
+  Snapshot after activation: identical hash. **gbrain installed zero
+  Claude Code lifecycle hooks** — premise #5 (config-only) confirmed.
+  Quarterly SHA-pin refresh in ADR-0008 re-runs this check; any
+  delta triggers K1 rollback.
+- **Eng-3 (partial-install failure modes):** `bun pm` cache + cleanup
+  documented in ADR-0008 refresh process. Initial install completed
+  in 4.91s with no partial state.
+- **Eng-4 (2nd machine gap):** SETUP.md now points to `/setup-gbrain`
+  as a recommended post-install step. Activation is machine-local
+  per ADR-0008.
+- **Eng-5 (trust boundary):** v0.36.0 Trust Boundaries section
+  (MCP returns = data, not instructions) carries over verbatim.
+  gbrain MCP returns are subject to the same rule. No new rule
+  needed.
+- **Eng-6 (rollback script):** `scripts/rollback-gbrain.sh` ships
+  in this PR. One command. With user confirmation gate + corpus
+  backup tarball.
+- **Eng-7 (MCP round-trip):** Deferred to Step 5 verification —
+  Claude Code session restart required for `mcp__gbrain__*` tools
+  to be visible. Post-merge verification.
+- **Eng-8 (PGLite permissions):** `chmod 700 ~/.gbrain && chmod 600
+  ~/.gbrain/config.json` applied. File modes verified.
+- **Eng-10 (RTK passthrough):** Verified — `gbrain --version` works
+  via Bash with RTK active. RTK does not have a `gbrain` subcommand
+  so passthrough is automatic.
+- **Eng-11 (refresh diff mechanics):** ADR-0008 specifies
+  `gh api repos/garrytan/gbrain/compare/<old>..master` for the
+  diff-window inspection (Bun cache != git clone).
+- **Eng-12 (pre-existing mcp entry):** Pre-state of
+  `~/.claude.json` mcpServers.gbrain confirmed absent. Backup at
+  `~/.claude.json.bak-v038-1779245124`.
+
+### Known limitations
+
+- `gbrain doctor` reports `status: unhealthy` (health_score 55) on
+  fresh PGLite install. Root cause: `resolver_health` check
+  expects `~/.claude/skills/RESOLVER.md` (an OpenClaw pattern, N/A
+  for MySystem's CLAUDE.md-based routing). Plus expected `warn`
+  states on `embeddings` / `brain_score` (empty corpus) and
+  PGLite-specific "could not check" states for pgvector RLS /
+  jsonb_integrity. **Functionally OK** — connection succeeds,
+  schema 78 latest, FK clean, smoke test passed. Documented in
+  ADR-0008 so future re-runs don't trigger false K4 alarms.
+- Bun 1.3.5 is below gbrain's stated minimum (`>=1.3.10` in
+  package.json engines). engines is enforced as a soft preference
+  by Bun, not a hard gate — install + run succeeded. Upgrade Bun
+  at user's convenience.
+- gbrain corpus initially contains 1 smoke-test page. Organic
+  ingest via the `signal-detector` skill (inside gbrain's own
+  agent prompt loop, not via Claude Code hooks) populates it over
+  normal use. No bulk historical ingest.
+
+### Not changed
+
+- `CLAUDE.md` (workflow contract untouched — `/setup-gbrain`
+  Step 8 normally writes a `## GBrain Configuration` block; we
+  skipped that step per the plan).
+- `setup.sh` (gbrain is not a SPARSE_SKILL; per-machine activation).
+- `hooks/` (no new lifecycle hooks).
+- `settings.json` (MCP entry lives in `~/.claude.json`, untracked).
+- The 5 PreToolUse hooks (secret-scanner, dangerous-command-blocker,
+  env-file-protection, block-dangerous-git, RTK) — matchers + scripts
+  identical, sha256 `4607c437c7b8fe126bd440157afddf473a1447cf4031e2e3f4107cf20cdaa90a`.
+
+### Tracked-repo additions (machine-independent)
+
+- `.gitignore` (+4 lines: `scripts/` whitelist so the rollback script ships).
+- `scripts/rollback-gbrain.sh` (new — destructive ops require `--yes` flag or
+  interactive tty confirmation; backup tarball must succeed before corpus delete).
+- `docs/adr/0008-gbrain-as-memory-layer.md` (new — activation decision + SHA-pin
+  refresh + K1-K4 kill criteria + corpus retention policy).
+- `.out-of-scope/agentmemory-2026-05.md` (new — agentmemory rejection rationale).
+- `SETUP.md` (+19 lines — post-install /setup-gbrain note for fresh machines).
+- `CHANGELOG.md` + `VERSION` — this entry.
+
+Nothing gbrain-runtime-related lives in the tracked repo: `~/.gbrain/config.json`
+and `~/.claude.json mcpServers.gbrain` are machine-local per ADR-0008.
+
+### Hook-enforcement candidates
+
+(per the v0.36.0 CRITICAL RULE — paired-hook hopefuls for prompt-only
+rules added this release)
+
+- **K1 hook-installed check** — could be a PreToolUse hook on `bun`
+  invocations that diffs `~/.claude/settings.json` `hooks.*` before/after
+  any `bun install -g` to gbrain. Currently manual at quarterly refresh.
+- **K4 workflow-disruption telemetry** — could be a PostToolUse hook
+  on `mcp__gbrain__*` tool calls that logs error rate + latency, with
+  a threshold trigger that surfaces to /retro. Currently relies on
+  user noticing.
+
+### Decision evidence
+
+- Office-hours design doc: `~/.gstack/projects/seungwonkim-v6x-MySystem/seungwonkim-main-design-20260520-111035.md`
+- Deep-research report: `~/.gstack/projects/seungwonkim-v6x-MySystem/gbrain-vs-agentmemory-research-20260520.md`
+- Autoplan with 4 dual voices + final gate: `~/.gstack/projects/seungwonkim-v6x-MySystem/seungwonkim-main-autoplan-20260520-v0.38.md`
+
+### Attribution
+
+- `gbrain` by Garry Tan (https://github.com/garrytan/gbrain) — MIT.
+- 4 reviewer voices (CEO subagent, CEO codex, Eng subagent, Eng codex)
+  surfaced the reframe from "canonical activation" to "experimental
+  sidecar" + 10 mechanical fixes (Eng-1 through Eng-12). User
+  feedback during the final gate corrected the kill-criteria framing
+  from "<5 searches in 30 days" (wrong KPI) to safety-only K1-K4
+  triggers (capture itself has value from day 1; retrieval frequency
+  is downstream).
+
+---
+
 ## [0.37.0] - 2026-05-18
 
 Theme: **Skill cherry-pick batch — 8 new SPARSE_SKILLS + SHA pinning for autonomous picks.**

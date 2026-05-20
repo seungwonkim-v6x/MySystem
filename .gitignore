@@ -46,6 +46,10 @@ hooks/**/*.pyc
 !skills/verify-test/
 !skills/verify-test/**
 
+# Scripts — tracked rollback/ops helpers (v0.38.0+).
+!scripts/
+!scripts/**
+
 # OS / editor noise
 .DS_Store
 *.swp

@@ -53,6 +53,25 @@ git pull
 
 `setup.sh` is idempotent — running it twice is safe.
 
+### Post-install on a fresh machine — recommended
+
+After `setup.sh` completes on a new Mac, also activate gbrain (v0.38.0+) so
+the gstack skill preambles take the "GBrain configured" branch instead of
+silently falling through:
+
+1. Start Claude Code in any directory.
+2. Type `/setup-gbrain` — pick **Path 3 (PGLite-local)** for solo machines.
+3. Activation is machine-local — `~/.gbrain/config.json` and the
+   `mcpServers.gbrain` entry in `~/.claude.json` are NOT tracked by this
+   repo (per [ADR-0008](./docs/adr/0008-gbrain-as-memory-layer.md)). Each
+   machine must run `/setup-gbrain` once.
+4. SHA pin: install gbrain CLI via the exact pinned commit recorded in
+   ADR-0008 (current pin: `bc9f7774bf85c14113d799af73bdb2234a203f3a`).
+   Refresh cadence is quarterly per ADR-0008.
+
+Skip this step if you intentionally want to stay on the dormant "not
+configured" branch (e.g., evaluation machine, ephemeral container).
+
 ## Prerequisites
 
 - **git** (required)
