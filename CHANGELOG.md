@@ -12,6 +12,117 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [0.40.0] - 2026-05-20
+
+### Added — gbrain persistent memory: CLAUDE.md triggers + hourly auto-capture (ADR-0008 amendment)
+
+**CLAUDE.md section**: New `## Persistent Memory (gbrain)` block adds explicit
+retrieval triggers (call `mcp__gbrain__search` / `get_page` / `recall` BEFORE
+generating, on cues like "어제 그거" / "remember when" / `/office-hours` Phase 1 /
+cross-repo references) and write triggers (call `put_page` / `add_link` /
+`add_timeline_entry` AFTER decision moments). Skip rules carved out for routine
+grep/read, trivial yes/no, ephemeral chitchat — anything `git log` or `grep`
+would surface later.
+
+**Auto-capture pipeline**: New `scripts/gbrain-ingest-sessions.sh` extracts
+user + assistant text from `~/.claude/projects/**/*.jsonl` (filtering out
+`tool_use`, `tool_result`, system reminders, hook output) and writes one gbrain
+page per session with slug `cc-session-<repo>-<short-uuid>`. Idempotent via
+marker files in `~/.gbrain/ingested/` keyed on `<size>-<mtime>`. Hourly via
+`~/Library/LaunchAgents/com.user.gbrain-session-capture.plist` (machine-local,
+not tracked — same principle as ADR-0008 Section 6 "Machine-local state").
+
+**Backfill knob**: `TIME_WINDOW=<minutes> bash scripts/gbrain-ingest-sessions.sh`
+overrides the 65-minute default (catches last hour + 5 min slack). Manual sweep
+of last week: `TIME_WINDOW=10080 …`. Per-session content cap 500KB
+(`MAX_SIZE_KB`); oversize sessions logged and skipped, not truncated.
+
+**ADR-0008 Amendment 2026-05-20**: Section 6 "CLAUDE.md untouched" reframed as
+v0.38.0 release-discipline boundary, not permanent rule. Section 2 ("additive,
+not replacement") stays in force. K-criteria K1-K4 re-verified: the launchd job
+is user-installed not gbrain-installed, so K1 still holds; the Anthropic memory
+MCP at `modelcontextprotocol/servers` is third-party install, not Claude Code
+native, so K3 doesn't fire.
+
+**Why amendment, not new ADR**: The underlying decision (gbrain as additive
+retrieval sidecar, chosen over agentmemory after 4-reviewer autoplan at v0.38)
+is unchanged. Only the release-boundary deferrals lift. New ADR would inflate
+the registry; in-place amendment preserves continuity.
+
+### Motivation
+
+v0.38.0 activated gbrain MCP but deferred two pieces of the design's intent —
+(a) the CLAUDE.md trigger block, and (b) the actual capture mechanism behind
+`transcript_ingest_mode=incremental`. Observed state by 2026-05-20:
+`gbrain stats` reported Pages: 1, Embedded: 0 — tool registered, never used.
+This release closes both gaps without swapping tools, preserving the 250-line
+ADR-0008 + rollback script + SHA-pin policy investment.
+
+### Slug + content design (gotchas surfaced during script bring-up)
+
+- **Repo extraction** strips `^-Users-<user>-` plus common parent dirs
+  (`Documents-`, `src-`, `code-`, `projects-`) so
+  `~/.claude/projects/-Users-seungwonkim-Documents-vprop` becomes `vprop`,
+  not `Documents-vprop`. The longer form caused early put-failures via some
+  slug-canonicalization path in gbrain v0.37.
+- **UUID prefix is 12 chars**, not 8 — collision-resistant for sibling sessions
+  like `agent-abedcab6a60d02b4f` vs `agent-aee9164889e9d64ab`.
+- **`GBRAIN_MAX_FENCES_PER_PAGE` raised to 2000** (default 100). Code-heavy
+  sessions routinely exceed the default; the cap cascades into "Page not found"
+  put-failures rather than just warning.
+- **Frontmatter `type: transcript`** lets `list_pages --type transcript` and
+  `list_pages --tag cc-transcript` filter cleanly.
+
+### Verification (run during release)
+
+```
+gbrain stats          # before:  Pages: 1, Chunks: 1, Embedded: 0
+gbrain stats          # after:   Pages: 12, Chunks: 996, Embedded: 0
+mcp__gbrain__search "12-factor adoption gbrain reactivation"   # returns score 0.99
+launchctl list | grep gbrain         # com.user.gbrain-session-capture registered
+tail ~/.gbrain/ingest-log.jsonl      # second run: 8 processed, 6 ingested, 0 errored
+```
+
+Embedded stays 0 because no embedding backend is configured. PGLite + tsvector
+keyword search works without it. If semantic retrieval becomes a real need
+(e.g., recall a discussion by paraphrase, not keyword), evaluate Ollama + local
+embedding model then.
+
+### Rollback
+
+`~/.claude/scripts/rollback-gbrain.sh` (existing from v0.38.0) plus:
+
+```
+launchctl unload ~/Library/LaunchAgents/com.user.gbrain-session-capture.plist
+rm ~/Library/LaunchAgents/com.user.gbrain-session-capture.plist
+rm scripts/gbrain-ingest-sessions.sh
+rm -rf ~/.gbrain/ingested/ ~/.gbrain/ingest-log.jsonl
+git revert <this-commit>     # undoes CLAUDE.md + ADR-0008 + VERSION + CHANGELOG
+```
+
+### Not shipping in this release — v0.40 was originally scoped for 12-factor F5/F9 adoption
+
+The 8-step workflow ran (/office-hours → /deep-research → /autoplan with
+CEO/Eng/DX subagent review) for humanlayer/12-factor-agents F5 (unify state) +
+F9 (compact errors) adoption. Three reviewer voices flagged: (a) F9 MVP was a
+placebo (surfaces a count to humans, doesn't feed compacted errors back to the
+LLM), (b) Task 5 hook trailer was technically wrong (3 of 4 PreToolUse hooks
+are Python — bash trailer can't be appended), (c) STATE_INDEX.md was the wrong
+primitive per CEO ("2014 wiki-thinking, F5 spirit is unified state object the
+agent reads, not another doc humans grep"), (d) effort/output ratio inverted —
+1.5h planning for a minor bump = meta-project drift. User aborted cleanly per
+the new `feedback-trigger-driven-shipping` memory: workflow-completion inertia
+< trigger-driven shipping discipline.
+
+The artifacts (design doc, deep-research report, autoplan with reviews) live at
+`~/.gstack/projects/seungwonkim-v6x-MySystem/` for the next time a real trigger
+("2nd time I couldn't find an ADR" / native equivalent doesn't ship) makes this
+work load-bearing. Until then, the gbrain-as-memory-layer reactivation captures
+more of the underlying retrieval intent at lower cost than F5/F9 hook infra
+would have.
+
+---
+
 ## [0.39.0] - 2026-05-20
 
 ### Added — md→html auto-preview hook (system-wide PostToolUse)

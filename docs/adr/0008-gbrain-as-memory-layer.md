@@ -248,6 +248,72 @@ When the SHA pin is bumped, append a row here:
 |------|---------|---------|---------|-------------------|-------|
 | 2026-05-20 | (initial) | bc9f7774bf85 | gbrain v0.37.0.0 | clean (hooks unchanged) | Initial activation. Health-score 55 due to N/A resolver_health. Smoke test put/search passed. |
 
+## Amendment 2026-05-20: Section 6 lift + capture pipeline wired
+
+v0.38.0 deferred two pieces of this ADR's intent:
+(a) the CLAUDE.md trigger block (Section 6 left CLAUDE.md untouched as a release
+    boundary), and
+(b) the actual auto-capture mechanism (Section 2's "capture-first" framing had
+    `transcript_ingest_mode=incremental` configured but no pipeline wired).
+
+Both are now addressed. The amendment is in-place rather than a new ADR because the
+underlying decision (gbrain as additive retrieval sidecar) is unchanged — only the
+release-boundary deferrals are lifted.
+
+### Changes
+
+1. **CLAUDE.md `## Persistent Memory (gbrain)` section added.** Explicit retrieval +
+   write triggers, plus a pointer to the auto-capture pipeline below. Section 2's
+   "additive, not replacement" framing is preserved verbatim. Section 6's "untouched"
+   was a v0.38.0 release-discipline boundary, not a permanent rule — clarified by
+   this amendment.
+
+2. **Auto-capture pipeline wired:**
+   - `~/.claude/scripts/gbrain-ingest-sessions.sh` extracts user + assistant text from
+     `~/.claude/projects/**/*.jsonl`, filters out `tool_use` / `tool_result` /
+     system reminders / hook output, and calls `gbrain put` per session with slug
+     `cc-session-<repo>-<short-uuid>`, frontmatter `type: transcript`.
+   - Idempotent via marker files in `~/.gbrain/ingested/` (sig = `<size>-<mtime>`).
+     Re-runs on a session only when the JSONL has new content.
+   - Hourly via `~/Library/LaunchAgents/com.user.gbrain-session-capture.plist`
+     (`StartInterval = 3600`, `RunAtLoad = false`).
+   - Per-session content cap of 500KB (configurable via `MAX_SIZE_KB`); oversize
+     sessions are logged and skipped, not truncated.
+   - Backfill via `TIME_WINDOW=10080 bash gbrain-ingest-sessions.sh` (default 65 min
+     for hourly cron + 5 min slack).
+   - Ingest log at `~/.gbrain/ingest-log.jsonl` (per-session entries + per-run summary).
+
+3. **K-criteria status (re-verified):**
+   - **K1 (no gbrain-installed hooks):** holds. The launchd plist is user-installed
+     (`~/Library/LaunchAgents/`), separate from gbrain itself. `~/.claude/settings.json`
+     hooks unchanged.
+   - **K2 (maintainer alive):** unchanged.
+   - **K3 (Anthropic native equivalent):** does not fire. The Anthropic memory MCP
+     server at modelcontextprotocol/servers is third-party install, not Claude Code
+     native. K3's "ships native" precondition not met.
+   - **K4 (workflow disruption):** new attack surface = the launchd job + the ingest
+     script. Failure modes:
+     - jq missing → script logs error to `~/.gbrain/ingest-log.jsonl` and exits clean.
+     - gbrain missing → same.
+     - Oversize session → logged and skipped, no corpus corruption.
+     - Markers diverge from PGLite state → manual fix is `rm -rf ~/.gbrain/ingested/`
+       (forces re-ingest on next run; idempotent because gbrain `put` is upsert).
+
+4. **No new dependencies.** Script uses `bash`, `jq`, `find`, `stat`, `du`, `mktemp`,
+   `gbrain` — all already present per ADR-0008's activation steps.
+
+5. **Rollback path extended.** `~/.claude/scripts/rollback-gbrain.sh` still works as
+   the runtime undo. To also remove the auto-capture:
+   - `launchctl unload ~/Library/LaunchAgents/com.user.gbrain-session-capture.plist`
+   - `rm ~/Library/LaunchAgents/com.user.gbrain-session-capture.plist`
+   - `rm ~/.claude/scripts/gbrain-ingest-sessions.sh`
+   - `rm -rf ~/.gbrain/ingested/ ~/.gbrain/ingest-log.jsonl`
+
+6. **Corpus growth expectation.** First scheduled run + manual backfill will populate
+   one page per recent session. Per-session pages are bounded at 500KB. Quarterly
+   review per Section 5 still applies; the additional retention policy decision
+   ("how long to keep cc-transcript pages") is deferred until corpus is observed.
+
 ## Implementation evidence
 
 For future reviewers verifying this ADR matches reality:

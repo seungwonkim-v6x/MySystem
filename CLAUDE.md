@@ -632,4 +632,49 @@ generalized — the failure mode applies to every git-mutating side effect,
 not just commits.)
 </important>
 
+---
+
+## Persistent Memory (gbrain)
+
+gbrain MCP is registered per ADR-0008 (experimental retrieval sidecar). The v0.38.0
+release deferred (a) the CLAUDE.md trigger block and (b) the auto-capture mechanism.
+This section + the launchd job below close both gaps, amending ADR-0008 Section 6.
+The "additive, not replacement" framing of Section 2 stays in force.
+
+**Retrieval — call BEFORE generating:**
+- User references a prior session ("어제 그거", "remember when", "예전에", "지난번"):
+  `mcp__gbrain__search` on keywords → `mcp__gbrain__get_page` on top hit.
+- `/office-hours` Phase 1 or `/investigate` Phase 1: `mcp__gbrain__search` on problem
+  keywords before generating premises or hypotheses. Falls under skill preamble's
+  prior-learnings discovery.
+- Cross-repo question (working on vProp, user mentions a MySystem decision, or vice
+  versa): `mcp__gbrain__list_pages` with tag filter `cc-transcript`, scan for repo name.
+- User about to commit to a decision: `mcp__gbrain__recall` with grep filter to surface
+  prior facts on the entity.
+
+**Write — call AFTER decision moments:**
+- Non-obvious choice (architecture, scope cut, tool selection, ADR-worthy):
+  `mcp__gbrain__put_page` with slug `decision-<topic>-<YYYY-MM-DD>`, body containing
+  context / decision / why / alternatives-considered.
+- New ADR landed: `mcp__gbrain__add_link` from the decision page to the ADR file path.
+- Session lands a concrete next-step commitment ("I'll do X next week", "next session
+  start with Y"): `mcp__gbrain__add_timeline_entry` on the relevant page.
+
+**Skip writes for:** routine grep/read, trivial yes/no, single-line tweaks, ephemeral
+chitchat. If `git log` or `grep` would surface it later, don't double-store.
+
+**Auto-capture pipeline:** `~/Library/LaunchAgents/com.user.gbrain-session-capture.plist`
+runs `~/.claude/scripts/gbrain-ingest-sessions.sh` hourly. Extracts user + assistant
+text from Claude Code session JSONL files (skipping tool_use, tool_result, system
+reminders, hook output) and writes one `cc-session-<repo>-<uuid>` page per session.
+Idempotent via marker files in `~/.gbrain/ingested/`. Ingest log at
+`~/.gbrain/ingest-log.jsonl`.
+
+**Privacy and rollback:** All writes are local (PGLite at `~/.gbrain/brain.pglite/`).
+`artifacts_sync_mode=off`. Per ADR-0008, nothing leaves the machine. K1-K4 kill
+criteria from ADR-0008 unchanged — the launchd job is user-installed, not
+gbrain-installed, so K1 (no gbrain-installed hooks) still holds. Rollback via
+`~/.claude/scripts/rollback-gbrain.sh` plus `launchctl unload
+~/Library/LaunchAgents/com.user.gbrain-session-capture.plist`.
+
 @RTK.md
