@@ -1,4 +1,5 @@
 {
+  "respectGitignore": true,
   "env": {
     "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "25"
   },
@@ -90,7 +91,22 @@
       "Read(//Users/seungwonkim/Downloads/new-landing/**)",
       "Bash(rtk grep *)",
       "Bash(awk '/<script>/,/<\\\\/script>/' /Users/seungwonkim/Downloads/new-landing/landing-sample.html)",
-      "Bash(rtk wc *)"
+      "Bash(rtk wc *)",
+      "Bash(bash -n ~/.claude/hooks/render-md.sh)",
+      "Bash(sed -e 's|PLACEHOLDER|__TRACKED_VAR__|' /tmp/template.txt)",
+      "Bash(echo \"exit=$?\")"
+    ],
+    "ask": [
+      "Bash(chmod *)",
+      "Bash(chown *)",
+      "Bash(dd *)",
+      "Bash(kill *)",
+      "Bash(killall *)",
+      "Bash(mkfs *)",
+      "Bash(pkill *)",
+      "Bash(rm *)",
+      "Bash(rmdir *)",
+      "Bash(shred *)"
     ],
     "additionalDirectories": [
       "/Users/seungwonkim/.claude",
@@ -121,18 +137,6 @@
       "/private/tmp/verify-test-1776821779",
       "/tmp/verify-test-vp553",
       "/private/tmp/verify-test-vp553"
-    ],
-    "ask": [
-      "Bash(chmod *)",
-      "Bash(chown *)",
-      "Bash(dd *)",
-      "Bash(kill *)",
-      "Bash(killall *)",
-      "Bash(mkfs *)",
-      "Bash(pkill *)",
-      "Bash(rm *)",
-      "Bash(rmdir *)",
-      "Bash(shred *)"
     ]
   },
   "model": "opus[1m]",
@@ -193,6 +197,17 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/render-md.sh"
+          }
+        ]
+      }
     ]
   },
   "enabledPlugins": {
@@ -218,6 +233,5 @@
     }
   },
   "effortLevel": "high",
-  "autoCompactEnabled": false,
-  "respectGitignore": true
+  "autoCompactEnabled": false
 }

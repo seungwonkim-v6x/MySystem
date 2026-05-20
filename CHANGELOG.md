@@ -12,6 +12,87 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [0.39.0] - 2026-05-20
+
+### Added — md→html auto-preview hook (system-wide PostToolUse)
+
+**Hook**: New `hooks/render-md.sh` wired as a PostToolUse handler on
+`Write|Edit|MultiEdit`. Auto-renders any markdown file written by Claude
+(in any repo) to `~/.claude/previews/latest-md.html`. Open it once in VS
+Code Live Preview; every subsequent md write refreshes the view
+automatically.
+
+**Motivation**: v0.38.0 produced 5 markdown artifacts (design doc +
+research + autoplan + ADR-0008 + .out-of-scope) totaling ~28KB. The user
+had to open each as raw .md text. The existing v0.32.0 Stop-event preview
+(`latest.html`) captures the last assistant turn, not file writes — a
+different signal. This hook closes the gap for file artifacts without
+disturbing the turn-based preview.
+
+**Reuses verbatim**:
+- `hooks/preview-template.html` (kami-parchment, marked.js render
+  pipeline, Source Serif Pro + IBM Plex Mono)
+- The jq + sed + base64 + atomic-rename pattern from
+  `hooks/preview-stop.sh`
+- `~/.claude/previews/` output directory
+
+**Different signal from latest.html**:
+- `latest.html`    = last substantive assistant turn (Stop event)
+- `latest-md.html` = last markdown file written (PostToolUse event)
+- Both update independently; neither replaces the other.
+
+**Filters (skip render)**:
+- Not a `.md` file (case-insensitive)
+- File >256KB (sed-arg sanity ceiling)
+- Path under `~/.claude/previews/`, `~/.claude/external-skills/`,
+  `~/.claude/skills/gstack/`, `~/.claude/references/`, `~/.gstack/`,
+  `*/node_modules/`, `*/.git/`, `*/__pycache__/`, `*/.next/`, `*/dist/`,
+  `*/build/`
+- File unreadable / missing (handles mid-rename Edit races)
+
+**Fail-open guarantee**: PostToolUse hooks **cannot block tools** per
+Claude Code docs (`code.claude.com/docs/en/hooks`). Render errors are
+logged to `~/.claude/logs/md-render.log`; the original Write/Edit always
+succeeds. `set -e` deliberately omitted from the hook so internal errors
+log+continue rather than propagate.
+
+**Re-entrancy**: Doc-confirmed safe. Hook commands are subprocesses;
+filesystem writes from inside the hook do not invoke Claude's Write/Edit
+tool and therefore do not re-trigger PostToolUse. The
+`~/.claude/previews/` path-prefix filter is belt-and-suspenders.
+
+**System-wide by construction**: Lives in `~/.claude/settings.json`, so
+the hook fires equally in MySystem, vProp, cc-guard, and any future
+repo. Cross-repo adoption requires zero per-repo configuration.
+
+**Sidecar `latest-md.md`**: Mirrors v0.32.0 pattern — the raw source
+markdown is copied to `~/.claude/previews/latest-md.md` for grep /
+re-render convenience.
+
+### Files
+
+- `hooks/render-md.sh` — new (~80 lines bash, `chmod +x`)
+- `settings.json` — `+1 PostToolUse[]` block (the 5 PreToolUse hook
+  scripts and their sha256 hashes are untouched; v0.38.0 K1 baseline
+  `4607c437c7b8fe126bd440157afddf473a1447cf4031e2e3f4107cf20cdaa90a`
+  remains valid)
+- `CHANGELOG.md` — this entry
+- `VERSION` — 0.38.0 → 0.39.0
+
+### Plan invariants verified
+
+- ✅ CLAUDE.md unchanged (workflow contract intact)
+- ✅ 5 PreToolUse hook scripts unchanged (sha256 baseline preserved)
+- ✅ `hooks/preview-stop.sh` + `hooks/preview-template.html` unchanged
+- ✅ Fail-open by mechanism (PostToolUse can't block)
+- ✅ Cross-repo by construction (settings.json applies globally)
+
+### Hook-enforcement candidates
+
+(None this release — this release IS a harness migration, taking a manual
+"open and read every md file" loop and moving it to PostToolUse hook
+enforcement.)
+
 ## [0.38.0] - 2026-05-20
 
 Theme: **Activate gbrain as experimental retrieval sidecar — fill the
