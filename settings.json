@@ -94,7 +94,11 @@
       "Bash(rtk wc *)",
       "Bash(bash -n ~/.claude/hooks/render-md.sh)",
       "Bash(sed -e 's|PLACEHOLDER|__TRACKED_VAR__|' /tmp/template.txt)",
-      "Bash(echo \"exit=$?\")"
+      "Bash(echo \"exit=$?\")",
+      "Bash(pnpm --filter @vprop/trigger exec vitest run src/services/hookreelVideo/templates/__tests__/VP782_bugbot2.test.ts)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ],
     "ask": [
       "Bash(chmod *)",
@@ -232,6 +236,6 @@
       }
     }
   },
-  "effortLevel": "high",
+  "effortLevel": "xhigh",
   "autoCompactEnabled": false
 }

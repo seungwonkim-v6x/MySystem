@@ -84,7 +84,9 @@ configured" branch (e.g., evaluation machine, ephemeral container).
 
 | Path | Purpose |
 |------|---------|
-| `CLAUDE.md`, `RTK.md` | Global rules auto-loaded every session |
+| `CLAUDE.md`, `RTK.md` | Global rules auto-loaded every session (CLAUDE.md re-injected after `/compact`) |
+| `rules/*.md` | Native `.claude/rules/`: 3 always-loaded (operating-principles, trust-boundaries, gbrain-protocol) + 1 path-scoped to `~/.claude/**` (repo-self-management). See ADR-0009. |
+| `scripts/` | Ops helpers — `claude-md-budget.sh` (always-loaded chain + Codex CLI cap check), gbrain ingest, rollback scripts |
 | `CONTEXT.md` | Project glossary — who, why, vocabulary, install mechanisms |
 | `docs/adr/` | Architecture Decision Records for MySystem itself |
 | `.out-of-scope/` | "Considered, chose no" decision records |

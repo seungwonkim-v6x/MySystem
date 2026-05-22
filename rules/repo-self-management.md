@@ -1,0 +1,43 @@
+---
+paths:
+  - "~/.claude/CLAUDE.md"
+  - "~/.claude/CHANGELOG.md"
+  - "~/.claude/VERSION"
+  - "~/.claude/docs/adr/**"
+  - "~/.claude/setup.sh"
+  - "~/.claude/scripts/**"
+  - "~/.claude/skills/**"
+  - "~/.claude/hooks/**"
+  - "~/.claude/rules/**"
+  - "~/.claude/settings.json"
+  - "~/.claude/README.md"
+  - "~/.claude/SETUP.md"
+  - "~/.claude/.gitignore"
+---
+
+# Repo Self-Management Rules (MySystem)
+
+This rule is **path-scoped** with absolute `~/.claude/` paths so it only triggers when Claude reads files inside the MySystem repo. The earlier draft used `**/CHANGELOG.md`, `**/scripts/**`, etc. which (because `~/.claude/rules/` is user-level) would inject MySystem release rules into unrelated projects like vProp or cc-guard. The absolute home paths in the frontmatter prevent that leak.
+
+**Compaction-survival belt-and-suspenders:** Anthropic's context-window docs state path-scoped rules are NOT re-injected after `/compact` until a matching file is read again. The two most dangerous rules below (single-logical-change commits, NEVER PostToolUse git mutation) are therefore ALSO restated inline in `~/.claude/CLAUDE.md`'s "Critical Workflow Rules" block, which is re-read on compaction natively. The rest of this file is informational — if you `/compact` mid-MySystem-session and then keep editing MySystem files, the rule reloads when you touch a matching file.
+
+## Required steps when modifying MySystem
+
+1. **Bump VERSION** — follow semver:
+   - major: breaking workflow change (e.g., changing the canonical Step → Skill mapping)
+   - minor: new skill / new step / new rule
+   - patch: fix or tweak
+2. **Update CHANGELOG.md** — add an entry under the new version with date and description
+3. **Git tag** — `/ship` creates `vX.Y.Z` tag matching the VERSION file (don't tag manually mid-stream)
+4. **Sync skill files** — external skills are managed by `setup.sh` (full clone in `EXTERNAL_REPOS` or sparse cherry-pick in `SPARSE_SKILLS`), never copied. User-owned skills live as plain files under `skills/`.
+5. **Push to origin** — push commits and tags (handled by `/ship`)
+6. **Adding an external skill repo** — Append to `EXTERNAL_REPOS` (full repo) or `SPARSE_SKILLS` (single skill) in `setup.sh`, add a row to the table in `README.md` and `SETUP.md`. Never use git submodules (removed in v0.27.0). External skill dirs are registered dynamically in `.git/info/exclude` by `setup.sh`; do not hardcode their names in `.gitignore`.
+7. **Updating the step→skill mapping** — Any change to the canonical mapping in `CLAUDE.md` is a breaking workflow change (major bump).
+
+## Forbidden Patterns
+
+**Commits are scoped to a single logical change, not a single file.** Bundle related file edits together into one commit. Per-file commits are an anti-pattern — they fragment history, defeat atomic-revert semantics, and produce review noise. The `/ship` workflow handles atomic commits; do not pre-fragment them. Use squash semantics where the host platform supports them.
+
+**NEVER install PostToolUse hooks that mutate git state.** This includes `git add` / staging, `git commit`, `git commit --amend`, `git push`, `git pr create`, and any other write to `.git/` or the remote. Git state changes are produced only by `/ship` or by explicit user request, never as a side effect of a tool call. Such hooks poison history with garbage messages, defeat atomic-commit discipline, silently bypass pre-commit hooks elsewhere, and undermine the "review before commit" gate. If a PostToolUse hook auto-stages, auto-commits, auto-pushes, or auto-PRs, REMOVE IT.
+
+(Anti-patterns from shanraisshan/claude-code-best-practice and davila7/claude-code-templates `git-workflow/smart-commit.json`, generalized — the failure mode applies to every git-mutating side effect, not just commits.)

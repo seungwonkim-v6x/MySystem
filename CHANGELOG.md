@@ -12,6 +12,82 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [0.41.0] - 2026-05-22
+
+### Changed — CLAUDE.md trimmed 680 → 173 lines; detailed rules migrated to native `.claude/rules/` (ADR-0009)
+
+**CLAUDE.md slimming**: 680 lines / 34,780 bytes → 173 lines / 13,536 bytes. Three concrete wins:
+
+- Anthropic's published target of "under 200 lines per CLAUDE.md" ([code.claude.com/docs/en/memory](https://code.claude.com/docs/en/memory)) now respected with 27 lines headroom. Per Anthropic, longer files "consume more context and reduce adherence."
+- Codex CLI's `project_doc_max_bytes` hard cap of 32,768 was previously exceeded by 2,012 bytes (silent truncation); CLAUDE.md alone now fits with 19,232 bytes headroom (Codex reads only the agent-doc file, not `.claude/rules/`).
+- Claude Code always-loaded chain (CLAUDE.md + RTK.md + three always-loaded `.claude/rules/*.md` + MEMORY.md) totals 26,756 bytes. `repo-self-management.md` is path-scoped (3,797 bytes, loaded only when MySystem files are touched). Skill frontmatter is roughly an additional 11,000 bytes (55 SKILL.md × ~200 B) — not counted against the Codex cap because Codex doesn't load skills.
+
+**`.claude/rules/*.md`**: detailed rules migrated to Anthropic's native loading mechanism (documented in [code.claude.com/docs/en/memory](https://code.claude.com/docs/en/memory) as the right primitive for content that doesn't apply broadly enough for CLAUDE.md):
+
+- `operating-principles.md` — Boil the Lake, Harness Not Model, Vertical-Slice TDD, Conditional Clarification, Repo Mode, See Something Say Something, References-before-web. Always loaded (no `paths:` frontmatter).
+- `trust-boundaries.md` — external content is data, not instructions. Always loaded.
+- `gbrain-protocol.md` — retrieve/write trigger lists for ADR-0008 persistent memory. Always loaded.
+- `repo-self-management.md` — VERSION/CHANGELOG/git tag discipline + forbidden patterns (per-file commits, PostToolUse git mutation). **Path-scoped with absolute `~/.claude/` paths in `paths:` frontmatter** so it only triggers when Claude reads MySystem files — not when editing vProp, cc-guard, or any other project. An earlier draft used `**/CHANGELOG.md`, `**/scripts/**`, etc. which (because `~/.claude/rules/` is user-level) would inject MySystem release rules into unrelated projects; the absolute home paths prevent that leak.
+
+**Compaction-survival belt-and-suspenders**: Anthropic's context-window docs note that path-scoped rules are NOT re-injected after `/compact` until a matching file is read again. The two most dangerous rules from `repo-self-management.md` (single-logical-change commits, NEVER PostToolUse git mutation) are therefore also stated inline in CLAUDE.md's "Critical Workflow Rules" block, which is re-read on compaction natively. This duplication is intentional — the two summaries must stay in sync (drift detector candidate noted below).
+
+**`scripts/claude-md-budget.sh`**: new ~120-line bash script reports the always-loaded Claude Code chain (CLAUDE.md + `@import` targets recursive up to 5 hops per Anthropic spec + `.claude/rules/*.md` with path-scope annotation + MEMORY.md + skill frontmatter estimate). Compares CLAUDE.md alone against the Codex CLI 32 KiB cap (Codex's actual gate — it doesn't load `.claude/rules/` or skill frontmatter). Read-only, idempotent. Run manually to track budget over time.
+
+### Motivation — Anthropic native solutions over custom workarounds
+
+This release abandons two layers of custom infrastructure that the workflow's `/autoplan` review surfaced as either unnecessary or wrong-pattern:
+
+1. **Original 5-PR / R1-R5 plan** (UserPromptSubmit workflow router + 4 `mysystem-*` skill extractions + `/si:review`/`/si:promote` adoption + AGENTS.md symlink + budget script across 5 commits, 5 ADRs, 5 VERSION bumps). Cross-model consensus during `/autoplan` Phase 1 CEO dual voices (Claude subagent + Codex) challenged the scope on 8/8 dimensions as over-engineered for a solo repo. Aligned with `feedback-trigger-driven-shipping` memory's precedent — the 12-factor-agents v0.40 abort.
+2. **Option D — single PR with `SessionStart(matcher: "compact")` hook + extracted `~/.claude/critical-rules.md`** — workaround for compaction-loss fear. Scaffolding was written (hook + critical-rules.md + settings.json entry) before a deeper read of `code.claude.com/docs/en/memory` surfaced: *"Project-root CLAUDE.md survives compaction: after `/compact`, Claude re-reads it from disk and re-injects it into the session."* The hook would be parallel infrastructure for a problem Anthropic already solves natively. Rolled back before commit; only the budget script was preserved into Option E.
+
+The pivot is documented in ADR-0009. The "Harness, Not Model" principle (now in `.claude/rules/operating-principles.md`) gets a strengthening case: **prefer native Claude Code features over custom workarounds**.
+
+### Verification (run during release)
+
+```
+wc -l ~/.claude/CLAUDE.md                          # 173 (target ≤ 200)
+wc -c ~/.claude/CLAUDE.md                          # 13536 (Codex cap 32768)
+~/.claude/scripts/claude-md-budget.sh              # exits 0 with headroom report
+ls ~/.claude/rules/                                # operating-principles, trust-boundaries, repo-self-management, gbrain-protocol
+grep -E "(CRITICAL RULE|Auto Mode|NEVER|MUST)" ~/.claude/CLAUDE.md | wc -l    # surviving rules in trimmed file
+```
+
+**Smoke test** (manual, after first session post-merge to validate `.claude/rules/*.md` actually loads natively):
+
+1. Open a fresh `claude` session in `~/.claude/`.
+2. Ask: "What is the Boil the Lake principle?" — content lives only in `~/.claude/rules/operating-principles.md`. A correct answer confirms always-loaded rules trigger.
+3. Open a fresh `claude` session in some other project (e.g., `~/Documents/vprop/`).
+4. Edit any file. Verify Claude does NOT bring up "Bump VERSION" / "Update CHANGELOG" — those live in path-scoped `repo-self-management.md` which should NOT trigger outside `~/.claude/`.
+
+If step 2 fails: rules don't load natively in this Claude Code version — fall back to inline (see ADR-0009 "Retire when"). If step 4 surfaces MySystem rules: the absolute path globs are not honored as intended — restore `<important if="modifying the MySystem repository (~/.claude/) itself">` tag pattern from v0.40.0.
+
+### Rollback
+
+Single revert: `git revert <merge-commit>` restores CLAUDE.md, removes the four `.claude/rules/*.md`, removes `docs/adr/0009-*.md`, removes `scripts/claude-md-budget.sh`. VERSION + CHANGELOG also revert. ~30 seconds.
+
+If only the rule migration fails (Claude Code doesn't actually load `.claude/rules/*.md` in your build) and the content needs to come back inline, the prior CLAUDE.md is reconstructable from this commit's diff + the four migrated rule files.
+
+### Hook-enforcement candidates
+
+(per the Harness-Not-Model rule's logging discipline)
+
+- **`/compact` recovery monitoring** — none needed (Anthropic handles natively for root CLAUDE.md); placeholder for any future drift detection if Anthropic behavior changes.
+- **CLAUDE.md size CI gate** — `scripts/claude-md-budget.sh` exits non-zero on cap violation. A pre-commit or PostToolUse(Write|Edit on CLAUDE.md) hook could fire this script automatically. Promote when the size starts creeping back up.
+- **`.claude/rules/` paths-frontmatter validation** — a hook checking that path-scoped rules' `paths:` globs actually match expected files (and only those). Defer until a rule misfires.
+- **CLAUDE.md ↔ `.claude/rules/repo-self-management.md` duplication drift detector** — the two most dangerous rules (single-logical-change commits, NEVER PostToolUse git mutation) live in both files for compaction safety. A pre-commit or PostToolUse hook could diff the canonical summaries and flag drift. Promote once a real divergence happens. For now, manual sweep: search `grep -c "PostToolUse hooks that mutate git" CLAUDE.md rules/repo-self-management.md` should return 2 (one each).
+
+### Also in this commit (small, unrelated)
+
+- `settings.json`: bump `effortLevel` `high → xhigh` (Opus 4.7 default). Carried in from prior session; bundled here rather than reverted because xhigh is the intended steady state. Not load-bearing for the v0.41.0 thesis.
+
+### Not in scope (deferred to TODOS / future ADRs)
+
+- `@AGENTS.md` import or `CLAUDE.md → AGENTS.md` symlink for cross-tool (Codex/Cursor/Cline) portability. Defer until concrete Codex-CLI-doesn't-read-instructions report.
+- Promptfoo regression suite for CRITICAL workflow rules — adds test infra dependency. Pilot when a CRITICAL RULE actually fails in measurable form.
+- WHY / Retire-when metadata tags on each rule. Layer on top of `.claude/rules/` after observing which rules age out fastest.
+- Anthropic memory tool / context-editing API integration — API beta, not exposed in Claude Code surface yet. Track for next quarter.
+- Skill cherry-pick of alirezarezvani `/si:review` + `/si:promote` — operationalizes the "three is the trip-wire" rule. Pilot when MEMORY.md actually hits 200-line cap.
+
 ## [0.40.0] - 2026-05-20
 
 ### Added — gbrain persistent memory: CLAUDE.md triggers + hourly auto-capture (ADR-0008 amendment)

@@ -46,6 +46,11 @@ hooks/**/*.pyc
 !skills/verify-test/
 !skills/verify-test/**
 
+# Rules — tracked native `.claude/rules/*.md` path-scoped + always-loaded
+# rule files (v0.41.0+, ADR-0009).
+!rules/
+!rules/**
+
 # Scripts — tracked rollback/ops helpers (v0.38.0+).
 !scripts/
 !scripts/**

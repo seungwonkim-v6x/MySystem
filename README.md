@@ -69,11 +69,13 @@ skill when no public alternative exists.
 
 ## Layout
 
-- `CLAUDE.md`, `RTK.md` — global rules loaded every session
+- `CLAUDE.md`, `RTK.md` — global rules loaded every session (CLAUDE.md re-injected by Claude Code natively after `/compact`)
+- `rules/*.md` — detailed rules loaded by Anthropic's native `.claude/rules/` mechanism. Three are always-loaded (`operating-principles.md`, `trust-boundaries.md`, `gbrain-protocol.md`). `repo-self-management.md` is path-scoped via absolute `~/.claude/` paths so it triggers only when editing MySystem itself, not when working in vProp/cc-guard/etc. See ADR-0009.
 - `CONTEXT.md` — project glossary (who, why, vocabulary, install mechanisms)
 - `docs/adr/` — Architecture Decision Records for MySystem itself
 - `.out-of-scope/` — explicit "considered, chose no" rationales
 - `settings.json` — harness config (permissions, hooks, plugins)
+- `scripts/` — ops helpers; `claude-md-budget.sh` itemizes the always-loaded chain and Codex CLI cap compliance
 - `skills/` — user-owned (tracked, currently just `verify-test/`) + external (symlinked by `setup.sh`)
 - `external-skills/` — cache for sparse cherry-picked repos (git-ignored)
 - `references/` — `INDEX.md` (tracked) + cloned read-only knowledge repos (git-ignored)
