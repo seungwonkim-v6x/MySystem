@@ -98,7 +98,20 @@
       "Bash(pnpm --filter @vprop/trigger exec vitest run src/services/hookreelVideo/templates/__tests__/VP782_bugbot2.test.ts)",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(xcodegen generate *)",
+      "Bash(rtk find *)",
+      "Bash(rtk git *)",
+      "Bash(ln -s \"/Users/seungwonkim/Documents/vprop/.claude/worktrees/VP-790-reva-marketing-v1/web/app/\\(marketing\\)\" \"/Users/seungwonkim/Documents/vprop/web/app/\\(marketing\\)\")",
+      "Read(//Users/seungwonkim/Documents/vprop/web/app/**)",
+      "Read(//Users/seungwonkim/Documents/vprop/web/**)",
+      "Bash(/Users/seungwonkim/Documents/vprop/web/node_modules/.bin/tsc --noEmit --jsx preserve --module esnext --moduleResolution bundler --target es2022 --skipLibCheck --strict --esModuleInterop --resolveJsonModule --isolatedModules --types \"node,react\" \"app/\\(marketing\\)/marketing/MarketingInteractions.tsx\" \"app/\\(marketing\\)/marketing/page.tsx\" \"app/\\(marketing\\)/layout.tsx\")",
+      "Bash(/Users/seungwonkim/Documents/vprop/web/node_modules/.bin/tsc --noEmit -p .)",
+      "Bash(mkdir -p \"web/app/\\(marketing\\)/access/steps\")",
+      "Bash(mkdir -p \"web/app/\\(marketing\\)/access/ui\")",
+      "Bash(mv \"web/app/\\(marketing\\)/marketing/onboarding/types.ts\" \"web/app/\\(marketing\\)/access/types.ts\")",
+      "Bash(mv \"web/app/\\(marketing\\)/marketing/onboarding/flow.ts\" \"web/app/\\(marketing\\)/access/flow.ts\")",
+      "Bash(mv \"web/app/\\(marketing\\)/marketing/onboarding/store.ts\" \"web/app/\\(marketing\\)/access/store.ts\")"
     ],
     "ask": [
       "Bash(chmod *)",
@@ -237,5 +250,6 @@
     }
   },
   "effortLevel": "xhigh",
-  "autoCompactEnabled": false
+  "autoCompactEnabled": false,
+  "remoteControlAtStartup": true
 }
