@@ -39,10 +39,6 @@ This rule complements (does not replace) cross-step approval gates AND the manda
 
 Force questions only on: Outcome (what success looks like), Audience (who the artifact is for), Format (what kind of artifact), Hard constraints (deadlines, blocked tech, budget). If all four are inferrable from prior turns, the design doc, or sensible defaults, do not ask.
 
-## Consult References Before Searching the Web
-
-`~/.claude/references/` is a curated treasure trove of CS / AI / design knowledge bases. When a task touches one of these domains — large-scale design, distributed systems, schema validation, AI agent patterns, UI/design system work — **grep `references/` first**, then fall back to web search. The full catalog with "use when" hooks lives at `references/INDEX.md`.
-
 ## Repo Mode — Solo vs Collaborative
 
 Behavior adapts to who owns issues:

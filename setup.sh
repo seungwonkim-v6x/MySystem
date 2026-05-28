@@ -62,26 +62,6 @@ SPARSE_SKILLS=(
   "handoff|https://github.com/mattpocock/skills.git|main|skills/productivity/handoff|e74f0061bb67"
 )
 
-# ── Reference repos (the "treasure trove") ───────────────────
-# Format: "local-name|url|branch"
-# Cloned into references/<local-name>/. No symlinks, no skill behaviour —
-# these are read-only knowledge bases for human + agent lookup. Curated
-# index lives at references/INDEX.md (tracked).
-REFERENCE_REPOS=(
-  "system-design-primer|https://github.com/donnemartin/system-design-primer.git|master"
-  "awesome-scalability|https://github.com/binhnguyennus/awesome-scalability.git|master"
-  "papers-we-love|https://github.com/papers-we-love/papers-we-love.git|main"
-  "awesome-falsehood|https://github.com/kdeldycke/awesome-falsehood.git|main"
-  "awesome-design-patterns|https://github.com/DovAmir/awesome-design-patterns.git|master"
-  "engineering-blogs|https://github.com/kilimchoi/engineering-blogs.git|master"
-  "awesome-llm|https://github.com/Hannibal046/Awesome-LLM.git|main"
-  "awesome-ai-agents|https://github.com/e2b-dev/awesome-ai-agents.git|main"
-  "awesome-design-md|https://github.com/VoltAgent/awesome-design-md.git|main"
-  "awesome-design-systems|https://github.com/alexpate/awesome-design-systems.git|master"
-  "awesome-tailwindcss|https://github.com/aniftyco/awesome-tailwindcss.git|master"
-  "awesome-react-components|https://github.com/brillout/awesome-react-components.git|master"
-)
-
 clone_or_pull() {
   local dest="$1" url="$2" branch="$3"
 
@@ -99,17 +79,17 @@ clone_or_pull() {
   fi
 }
 
-# ── [1/6] Full external repos ────────────────────────────────
-echo "[1/6] Syncing full external skill repos..."
+# ── [1/5] Full external repos ────────────────────────────────
+echo "[1/5] Syncing full external skill repos..."
 for entry in "${EXTERNAL_REPOS[@]}"; do
   IFS='|' read -r name url branch <<< "$entry"
   clone_or_pull "skills/$name" "$url" "$branch"
 done
 echo "  ✓ external repos ready"
 
-# ── [2/6] Run gstack's own setup ─────────────────────────────
+# ── [2/5] Run gstack's own setup ─────────────────────────────
 echo ""
-echo "[2/6] Running gstack setup..."
+echo "[2/5] Running gstack setup..."
 if [ -x "skills/gstack/setup" ]; then
   ( cd skills/gstack && ./setup 2>&1 | sed 's/^/  /' )
   echo "  ✓ gstack skills installed"
@@ -118,9 +98,9 @@ else
   exit 1
 fi
 
-# ── [3/6] Sparse cherry-pick skills ──────────────────────────
+# ── [3/5] Sparse cherry-pick skills ──────────────────────────
 echo ""
-echo "[3/6] Installing sparse cherry-pick skills..."
+echo "[3/5] Installing sparse cherry-pick skills..."
 mkdir -p external-skills
 for entry in "${SPARSE_SKILLS[@]}"; do
   IFS='|' read -r skill_name url branch subpath sha <<< "$entry"
@@ -179,16 +159,6 @@ for entry in "${SPARSE_SKILLS[@]}"; do
   fi
 done
 
-# ── [4/6] Reference repos (treasure trove) ───────────────────
-echo ""
-echo "[4/6] Syncing reference repos..."
-mkdir -p references
-for entry in "${REFERENCE_REPOS[@]}"; do
-  IFS='|' read -r name url branch <<< "$entry"
-  clone_or_pull "references/$name" "$url" "$branch"
-done
-echo "  ✓ ${#REFERENCE_REPOS[@]} reference repos ready"
-
 # Register external dirs in local-only ignore so they don't pollute git status
 EXCLUDE_FILE=".git/info/exclude"
 {
@@ -197,10 +167,6 @@ EXCLUDE_FILE=".git/info/exclude"
   for entry in "${EXTERNAL_REPOS[@]}"; do
     IFS='|' read -r name _ _ <<< "$entry"
     echo "skills/$name/"
-  done
-  for entry in "${REFERENCE_REPOS[@]}"; do
-    IFS='|' read -r name _ _ <<< "$entry"
-    echo "references/$name/"
   done
   # Also exclude any gstack-installed skill dir that isn't whitelisted in .gitignore.
   # gstack symlinks land directly under skills/. We register each non-whitelisted
@@ -215,9 +181,9 @@ EXCLUDE_FILE=".git/info/exclude"
   done
 } > "$EXCLUDE_FILE"
 
-# ── [5/6] Validate ───────────────────────────────────────────
+# ── [4/5] Validate ───────────────────────────────────────────
 echo ""
-echo "[5/6] Validating..."
+echo "[4/5] Validating..."
 BROKEN=0
 TOTAL=0
 for skill_dir in skills/*/; do
@@ -243,7 +209,7 @@ else
   exit 1
 fi
 
-# ── [6/6] RTK ────────────────────────────────────────────────
+# ── [5/5] RTK ────────────────────────────────────────────────
 if command -v rtk >/dev/null 2>&1; then
   echo "  ✓ rtk present ($(rtk --version 2>/dev/null | head -1 || echo unknown))"
 else

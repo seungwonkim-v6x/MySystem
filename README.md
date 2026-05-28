@@ -49,18 +49,6 @@ no API keys.
 | [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) | `frontend-design`, `context7`, `code-review` | Official starter plugins |
 | [DrCatHicks/learning-opportunities](https://github.com/DrCatHicks/learning-opportunities) (CC-BY-4.0) | `learning-opportunities`, `learning-opportunities-auto`, `orient` | Post-commit nudge for 10-15 min learning exercises (max 2/session) |
 
-### References (treasure trove — read-only knowledge bases)
-
-12 curated repos cloned into `references/<name>/`. Not skills; the agent
-greps them when a task touches the matching domain. Full catalog with
-"use when" hooks: [`references/INDEX.md`](./references/INDEX.md).
-
-Covers: system design (system-design-primer, awesome-scalability),
-CS classics (papers-we-love), schema-design hazards (awesome-falsehood),
-design patterns, engineering blogs by company, LLM/AI agents,
-design systems (awesome-design-md, awesome-design-systems),
-Tailwind, React components.
-
 All external repos are always pulled at latest default branch; never pinned.
 Managed via [`setup.sh`](./setup.sh) (no git submodules, no YAML manifest).
 The MySystem philosophy: **harness existing skills, don't build new ones.**
@@ -78,7 +66,6 @@ skill when no public alternative exists.
 - `scripts/` — ops helpers; `claude-md-budget.sh` itemizes the always-loaded chain and Codex CLI cap compliance
 - `skills/` — user-owned (tracked, currently just `verify-test/`) + external (symlinked by `setup.sh`)
 - `external-skills/` — cache for sparse cherry-picked repos (git-ignored)
-- `references/` — `INDEX.md` (tracked) + cloned read-only knowledge repos (git-ignored)
 - `hooks/` — tracked (includes a Stop hook that renders substantive assistant turns as kami-parchment HTML in your browser at `~/.claude/previews/latest.html`)
 - `setup.sh` — declares + fetches external skills; idempotent
 - `install.sh` — `curl | bash` bootstrap for fresh machines

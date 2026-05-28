@@ -12,6 +12,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [0.42.0] - 2026-05-28
+
+### Removed — references/ corpus (613MB, 12 read-only repos) plus the "grep references first" rule
+
+**Background**: 698 Claude Code session transcripts showed only 1-2 genuine `references/` activations (~0.3%). Both `/autoplan` dual voices (Codex + Claude subagent) independently flagged the corpus as a falsified portfolio — building harness infrastructure to surface low-value material is sunk-cost rescue. The user confirmed the cut after a reframing exercise made the actual pain visible (Claude's UI output quality, not references discoverability per se).
+
+**Removed**:
+- `references/` directory: 12 cloned repos (`system-design-primer`, `awesome-scalability`, `papers-we-love`, `awesome-falsehood`, `awesome-design-patterns`, `engineering-blogs`, `awesome-llm`, `awesome-ai-agents`, `awesome-design-md`, `awesome-design-systems`, `awesome-tailwindcss`, `awesome-react-components`) plus `INDEX.md`.
+- `setup.sh`: `REFERENCE_REPOS` array, the `[4/6]` clone loop, the `.git/info/exclude` inner loop for references. Setup step count renumbered 6 → 5.
+- `rules/operating-principles.md`: "Consult References Before Searching the Web" section (the prompt-only rule that was supposed to drive activation).
+- `README.md`: "References (treasure trove — read-only knowledge bases)" section and the `references/` line under Layout.
+- `.git/info/exclude`: 12 leftover `references/<name>/` entries.
+
+**Reversibility**: Specific references can be re-pulled from history (`git checkout HEAD^ -- references/INDEX.md` then `./setup.sh` after restoring the relevant `REFERENCE_REPOS` line) if a concrete need surfaces later. Restoring the whole corpus would re-enter the same sunk-cost trap.
+
+**Workflow note**: First time `/autoplan` Phase 1 dual voices (Codex + Claude subagent) successfully redirected an in-progress feature via the User Challenge mechanism. Both models agreed the original direction (build a `PreToolUse` hook to auto-surface references) was sunk-cost rescue; the user reframed twice and ultimately deleted instead of building. Validates the "Harness, not model" principle from `operating-principles.md` — applied to the workflow gate itself, not just runtime code.
+
 ## [0.41.0] - 2026-05-22
 
 ### Changed — CLAUDE.md trimmed 680 → 173 lines; detailed rules migrated to native `.claude/rules/` (ADR-0009)
