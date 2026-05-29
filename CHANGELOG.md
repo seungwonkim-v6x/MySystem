@@ -12,6 +12,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [0.42.1] - 2026-05-29
+
+### Added — ADR-0010: /deep-research free stack (exa-only; crawl4ai wrapper rejected)
+
+**What you get**: `/deep-research` runs for $0 with no firecrawl credits. exa is registered (free tier, 1,000 req/mo, no credit card) and pinned to `exa-mcp-server@3.2.1`; the provider-agnostic skill uses exa for both search (`web_search_exa`) and deep-read (`web_fetch_exa`). The firecrawl credit wall that was blocking `/deep-research` is gone. The exa MCP config lives in `~/.claude.json` (machine-local, outside this repo), so this release is the decision record only.
+
+**Decision record**: [ADR-0010](docs/adr/0010-deep-research-free-stack-exa-only.md) records why the richer crawl4ai-container wrapper (Approach B) was rejected. office-hours premise challenge + `/autoplan` dual voices (CEO 6/6 + Eng 6/6 consensus, Codex gpt-5.5 + Claude subagent) converged that B was over-scoped — it optimized an unmeasured exa cap (~50 → ~100 researches/mo for one solo user) — AND structurally unbuildable as a "thin wrapper": provider routing and the exa-budget guard are prose in a SKILL.md, not enforceable, which violates "harness, not model." B is only viable as a deterministic code proxy. The ADR records the revisit trigger (>700 exa req/mo, measured at dashboard.exa.ai) and the B-real shape so the dead end is not re-attempted.
+
+**Workflow note**: Second instance of `/autoplan` dual voices redirecting an in-progress feature via the User Challenge mechanism (after v0.42.0's references cut). This time the Eng phase additionally found the approved design structurally unbuildable, flipping the choice from B (crawl4ai wrapper) to A (exa-only) at the gate.
+
 ## [0.42.0] - 2026-05-28
 
 ### Removed — references/ corpus (613MB, 12 read-only repos) plus the "grep references first" rule
