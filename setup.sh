@@ -38,8 +38,8 @@ EXTERNAL_REPOS=(
 SPARSE_SKILLS=(
   # Step 7 — pre-v0.37.0 baseline (unpinned per ADR-0005 original convention)
   "requesting-code-review|https://github.com/obra/superpowers.git|main|skills/requesting-code-review"
-  # Step 2 — pre-v0.37.0 baseline (unpinned)
-  "deep-research|https://github.com/affaan-m/everything-claude-code.git|main|.agents/skills/deep-research"
+  # Step 2 — deep-research is now VENDORED (tracked at skills/deep-research/, ADR-0011),
+  # removed from sparse cherry-pick so it can be owned + customized locally (provider-pluggable).
 
   # v0.37.0 adds — obra/superpowers (Iron Law skills)
   # Autonomous (Step 5 augment) — pinned
@@ -147,6 +147,17 @@ for entry in "${SPARSE_SKILLS[@]}"; do
     exit 1
   fi
 
+  # Defense-in-depth (ADR-0011): never clobber a vendored (real-dir) skill. The real protection
+  # is removing a vendored skill's SPARSE_SKILLS entry (so this loop never iterates it) — this is
+  # clobber-defense for any FUTURE vendored-from-sparse skill, NOT a true idempotency promise.
+  # Require a real directory (-d && ! -L): a stray regular file at the target then gets re-linked
+  # rather than silently treated as vendored, and ! -L still excludes a valid symlink-to-dir
+  # (which should be re-linked normally).
+  if [ -d "$link_target" ] && [ ! -L "$link_target" ]; then
+    echo "  ✓ $skill_name vendored (real dir) — skipping symlink"
+    continue
+  fi
+
   # Replace any existing target (file, dir, or stale symlink)
   if [ -e "$link_target" ] || [ -L "$link_target" ]; then
     rm -rf "$link_target"
@@ -174,8 +185,9 @@ EXCLUDE_FILE=".git/info/exclude"
   for d in skills/*/; do
     name=$(basename "$d")
     case "$name" in
-      verify-test) continue ;;  # tracked user-owned skill
-      gstack) continue ;;       # already listed above
+      verify-test) continue ;;    # tracked user-owned skill
+      deep-research) continue ;;  # vendored user-owned skill (ADR-0011) — never re-exclude
+      gstack) continue ;;         # already listed above
     esac
     echo "skills/$name/"
   done

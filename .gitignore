@@ -45,6 +45,9 @@ hooks/**/*.pyc
 # public alternative exists.
 !skills/verify-test/
 !skills/verify-test/**
+# deep-research — vendored from ECC (was a sparse cherry-pick), now owned + customized. ADR-0011.
+!skills/deep-research/
+!skills/deep-research/**
 
 # Rules — tracked native `.claude/rules/*.md` path-scoped + always-loaded
 # rule files (v0.41.0+, ADR-0009).
