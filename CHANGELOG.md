@@ -30,9 +30,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 **What happened**: PGLite's WASM runtime fails to initialize on macOS 26.x (gbrain issue #223, `Aborted()`), silently killing auto-capture (stalled 2026-05-29), reads, search, and the MCP bridge at once. The user ran the documented teardown (`rollback-gbrain.sh` + launchd unload; corpus tarballed to `~/.gbrain-rollback-bak-*.tar.gz`): `rules/gbrain-protocol.md` and `scripts/gbrain-ingest-sessions.sh` deleted, ADR-0008 marked SUPERSEDED, CLAUDE.md persistent-recall section rewritten around file-based memory + the seungwon-wiki vault. This release completes the sweep by deleting the now-targetless `scripts/rollback-gbrain.sh` (its rollback target `~/.gbrain` no longer exists; recoverable from git history) and clearing the last tracked references that still told a fresh machine to set gbrain up: `README.md` and `SETUP.md` (the `/setup-gbrain` Path-3 post-install step is gone — exactly the PGLite-local path macOS 26 breaks) plus the ADR-0009 cross-reference to the deleted rule file. The K1-K4 rollback triggers in ADR-0008 fired as designed — the experiment captured 8 sessions (May 20–29) before dying.
 
+### Changed — safety-hook docs now match reality (dry-run, not "constitutional")
+
+The four defense-in-depth PreToolUse hooks were documented as "effectively constitutional, exit non-zero on violation," but `MYSYSTEM_HOOKS_ENFORCE` is unset by design — so outside the two hard-refuse tiers (force-push to main/master, private-key commit) they detect-and-log, they don't block. The decision stands (Auto Mode's permission gate already adjudicates command risk; enabling enforce would double-gate and only add false positives), so this aligns the prose to it instead of flipping the switch: the instruction-precedence entry (3a), `TESTING.md`, and `rules/operating-principles.md` now say dry-run-by-default with hard-refuse-always. The new `tests/hooks.bats` exercises both the enforce-mode block path and the default dry-run path so either regressing surfaces.
+
 ### Hook-enforcement candidates
 
 - Browser-layer routing rule ("browser verification goes through /aside-qa, fallback must be announced") — prompt-only; a PreToolUse hook on Bash could warn when gstack browse commands run while the aside MCP server is connected.
+- Flip `MYSYSTEM_HOOKS_ENFORCE=1` — deferred. Revisit after reviewing `~/.claude/logs/hook-dry-run.log` for false-positive rate; only promote if the soft-refuse tiers prove low-noise AND Auto Mode's gate is judged insufficient on its own.
 
 ## [0.43.0] - 2026-06-01
 

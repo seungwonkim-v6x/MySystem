@@ -1,8 +1,12 @@
 # Testing
 
-Tests let MySystem's harness-level guarantees stay guarantees. The prompt layer
-can rot under context pressure; the hooks must not. Every safety hook gets a
-behavioral test of its real process contract — JSON on stdin, exit code out.
+Tests pin the safety hooks' real process contract — JSON on stdin, exit code
+out — so the behavior can't silently rot under prompt-context pressure. Note
+the hooks run **dry-run by default** (`MYSYSTEM_HOOKS_ENFORCE` is unset on
+purpose; Auto Mode's permission gate is the live risk adjudicator). What
+always blocks regardless of mode is the two hard-refuse tiers (force-push to
+main/master, private-key commit). The tests exercise both the enforce-mode
+block path and the default dry-run path so a regression in either surfaces.
 
 ## Framework
 
@@ -23,9 +27,11 @@ with `CLAUDE_HOME` pointed at the checkout.
 
 - **Hook contract tests** (`tests/hooks.bats`) — drive each defense-in-depth
   hook (`hooks/*.py`, `hooks/*.sh`) as a real subprocess: enforce-mode blocks
-  exit 2, dry-run default exits 0, allow-paths exit 0. The hard-refuse cases
-  (force-push to main with the bypass env set; staged provider keys) are the
-  highest-value tests in the repo — they pin the prompt-injection defenses.
+  exit 2, dry-run default exits 0, allow-paths exit 0, malformed stdin fails
+  open. The highest-value cases are the two hard-refuse tiers — force-push to
+  main even with the bypass env set, and a staged private-key header — since
+  those block in any mode and are the parts that don't depend on enforce being
+  on.
 - **Script smoke tests** (`tests/scripts.bats`) — repo utility scripts run
   clean against a tracked-files-only tree (what CI sees).
 
