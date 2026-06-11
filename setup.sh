@@ -44,22 +44,12 @@ SPARSE_SKILLS=(
   # v0.37.0 adds — obra/superpowers (Iron Law skills)
   # Autonomous (Step 5 augment) — pinned
   "verification-before-completion|https://github.com/obra/superpowers.git|main|skills/verification-before-completion|f2cbfbefebbf"
-  # User-invoked only — unpinned (manual invocation = user sees content)
-  "test-driven-development|https://github.com/obra/superpowers.git|main|skills/test-driven-development"
 
-  # v0.37.0 adds — mattpocock/skills (engineering bucket)
-  # Autonomous (debug alternate) — pinned
-  "diagnose|https://github.com/mattpocock/skills.git|main|skills/engineering/diagnose|e74f0061bb67"
-  # Autonomous (pre-Step-3 option) — pinned
-  "grill-with-docs|https://github.com/mattpocock/skills.git|main|skills/engineering/grill-with-docs|e74f0061bb67"
-  # User-invoked only — unpinned
-  "prototype|https://github.com/mattpocock/skills.git|main|skills/engineering/prototype"
-  "triage|https://github.com/mattpocock/skills.git|main|skills/engineering/triage"
-  "zoom-out|https://github.com/mattpocock/skills.git|main|skills/engineering/zoom-out"
-
-  # v0.37.0 adds — mattpocock/skills (productivity bucket)
-  # Autonomous (cross-agent handoff after /context-save fails) — pinned
-  "handoff|https://github.com/mattpocock/skills.git|main|skills/productivity/handoff|e74f0061bb67"
+  # v0.44.0 prune: 7 of the 9 v0.37.0 sparse skills were removed after zero
+  # invocations across ~99 sessions / 1 month of transcripts (May 12 – Jun 11 2026):
+  #   test-driven-development, diagnose, grill-with-docs, prototype, triage,
+  #   zoom-out, handoff
+  # Re-adding any of them is one line here + ./setup.sh — upstream repos unchanged.
 )
 
 clone_or_pull() {

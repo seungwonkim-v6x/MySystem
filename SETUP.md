@@ -53,24 +53,13 @@ git pull
 
 `setup.sh` is idempotent — running it twice is safe.
 
-### Post-install on a fresh machine — recommended
+### Persistent memory on a fresh machine
 
-After `setup.sh` completes on a new Mac, also activate gbrain (v0.38.0+) so
-the gstack skill preambles take the "GBrain configured" branch instead of
-silently falling through:
-
-1. Start Claude Code in any directory.
-2. Type `/setup-gbrain` — pick **Path 3 (PGLite-local)** for solo machines.
-3. Activation is machine-local — `~/.gbrain/config.json` and the
-   `mcpServers.gbrain` entry in `~/.claude.json` are NOT tracked by this
-   repo (per [ADR-0008](./docs/adr/0008-gbrain-as-memory-layer.md)). Each
-   machine must run `/setup-gbrain` once.
-4. SHA pin: install gbrain CLI via the exact pinned commit recorded in
-   ADR-0008 (current pin: `bc9f7774bf85c14113d799af73bdb2234a203f3a`).
-   Refresh cadence is quarterly per ADR-0008.
-
-Skip this step if you intentionally want to stay on the dormant "not
-configured" branch (e.g., evaluation machine, ephemeral container).
+No setup step needed. gbrain was removed 2026-06-11 (PGLite WASM dead on
+macOS 26 — see [ADR-0008](./docs/adr/0008-gbrain-as-memory-layer.md) SUPERSEDED).
+Persistent recall is now two plain-file layers that need no activation:
+file-based memory at `~/.claude/projects/<proj>/memory/` (loaded every
+session) and the seungwon-wiki Obsidian vault. No MCP, no daemon, no SHA pin.
 
 ## Prerequisites
 
@@ -85,8 +74,8 @@ configured" branch (e.g., evaluation machine, ephemeral container).
 | Path | Purpose |
 |------|---------|
 | `CLAUDE.md`, `RTK.md` | Global rules auto-loaded every session (CLAUDE.md re-injected after `/compact`) |
-| `rules/*.md` | Native `.claude/rules/`: 3 always-loaded (operating-principles, trust-boundaries, gbrain-protocol) + 1 path-scoped to `~/.claude/**` (repo-self-management). See ADR-0009. |
-| `scripts/` | Ops helpers — `claude-md-budget.sh` (always-loaded chain + Codex CLI cap check), gbrain ingest, rollback scripts |
+| `rules/*.md` | Native `.claude/rules/`: 2 always-loaded (operating-principles, trust-boundaries) + 1 path-scoped to `~/.claude/**` (repo-self-management). See ADR-0009. |
+| `scripts/` | Ops helpers — `claude-md-budget.sh` (always-loaded chain + Codex CLI cap check) |
 | `CONTEXT.md` | Project glossary — who, why, vocabulary, install mechanisms |
 | `docs/adr/` | Architecture Decision Records for MySystem itself |
 | `.out-of-scope/` | "Considered, chose no" decision records |

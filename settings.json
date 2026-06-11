@@ -113,15 +113,7 @@
       "Bash(mv \"web/app/\\(marketing\\)/marketing/onboarding/flow.ts\" \"web/app/\\(marketing\\)/access/flow.ts\")",
       "Bash(mv \"web/app/\\(marketing\\)/marketing/onboarding/store.ts\" \"web/app/\\(marketing\\)/access/store.ts\")",
       "Read(//Users/seungwonkim/seungwon-wiki/bin/**)",
-      "Bash(bash -x ~/seungwon-wiki/bin/drop-cc-sessions.sh)",
-      "Read(//Users/seungwonkim/seungwon-wiki/.ingest-state/**)",
-      "Bash(python3 bin/redact-scan --self-test)",
-      "Bash(python3 bin/redact-scan --modality=smoke)",
-      "Bash(git check-ignore *)",
-      "Bash(python3 bin/capture-config validate)",
-      "Bash(python3 bin/capture-config enabled activity)",
-      "Bash(python3 bin/capture-config enabled web)",
-      "Bash(python3 bin/pseudonymize --self-test)"
+      "Read(//Users/seungwonkim/seungwon-wiki/.ingest-state/**)"
     ],
     "ask": [
       "Bash(chmod *)",
