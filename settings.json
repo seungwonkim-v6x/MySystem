@@ -111,7 +111,9 @@
       "Bash(mkdir -p \"web/app/\\(marketing\\)/access/ui\")",
       "Bash(mv \"web/app/\\(marketing\\)/marketing/onboarding/types.ts\" \"web/app/\\(marketing\\)/access/types.ts\")",
       "Bash(mv \"web/app/\\(marketing\\)/marketing/onboarding/flow.ts\" \"web/app/\\(marketing\\)/access/flow.ts\")",
-      "Bash(mv \"web/app/\\(marketing\\)/marketing/onboarding/store.ts\" \"web/app/\\(marketing\\)/access/store.ts\")"
+      "Bash(mv \"web/app/\\(marketing\\)/marketing/onboarding/store.ts\" \"web/app/\\(marketing\\)/access/store.ts\")",
+      "Read(//Users/seungwonkim/seungwon-wiki/bin/**)",
+      "Read(//Users/seungwonkim/seungwon-wiki/.ingest-state/**)"
     ],
     "ask": [
       "Bash(chmod *)",
@@ -156,7 +158,6 @@
       "/private/tmp/verify-test-vp553"
     ]
   },
-  "model": "opus[1m]",
   "hooks": {
     "SessionStart": [
       {
@@ -233,7 +234,8 @@
     "code-review@claude-plugins-official": true,
     "learning-opportunities@learning-opportunities": true,
     "learning-opportunities-auto@learning-opportunities": true,
-    "orient@learning-opportunities": true
+    "orient@learning-opportunities": true,
+    "figma@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "claude-plugins-official": {
@@ -251,5 +253,7 @@
   },
   "effortLevel": "xhigh",
   "autoCompactEnabled": false,
-  "remoteControlAtStartup": true
+  "remoteControlAtStartup": true,
+  "agentPushNotifEnabled": true,
+  "model": "claude-fable-5[1m]"
 }

@@ -1,6 +1,15 @@
 # ADR-0008: Activate gbrain as experimental retrieval sidecar
 
-**Status:** Accepted (2026-05-20)
+**Status:** SUPERSEDED (2026-06-11) — gbrain excised. PGLite's WASM runtime fails to
+initialize on macOS 26.x (gbrain issue #223, `Aborted()`), which silently broke
+auto-capture (stalled 2026-05-29), reads, search, and the MCP bridge all at once; the
+110 MB corpus became unreadable. The experiment captured only 8 sessions (May 20–29)
+before dying. Removed via `rollback-gbrain.sh` + launchd/ingest/rule teardown
+(corpus tarballed to `~/.gbrain-rollback-bak-*.tar.gz`). Persistent recall is now the
+**file-based memory** (`~/.claude/projects/<proj>/memory/`) + the **seungwon-wiki
+Obsidian vault** — both plain files, no WASM/MCP/daemon. The K1-K4 rollback triggers
+in this ADR fired as designed.
+**Original status:** Accepted (2026-05-20)
 **Context window:** v0.38.0 release
 **Related:**
 - ADR-0001 (gstack consolidation — gbrain is gstack's sibling tool, same maintainer)

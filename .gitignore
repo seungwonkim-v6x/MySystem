@@ -16,6 +16,7 @@
 !CONTEXT.md
 !README.md
 !SETUP.md
+!TESTING.md
 !RTK.md
 !VERSION
 !settings.json
@@ -37,6 +38,10 @@ hooks/**/*.pyc
 !docs/**
 !.out-of-scope/
 !.out-of-scope/**
+!tests/
+!tests/**
+!.github/
+!.github/**
 
 # User-owned skills — tracked. Add a new entry here when you create one.
 # Format: two lines per skill (directory + recursive contents).
@@ -48,6 +53,9 @@ hooks/**/*.pyc
 # deep-research — vendored from ECC (was a sparse cherry-pick), now owned + customized. ADR-0011.
 !skills/deep-research/
 !skills/deep-research/**
+# aside-qa — user-owned browser-verification layer over the aside MCP (no public alternative).
+!skills/aside-qa/
+!skills/aside-qa/**
 
 # Rules — tracked native `.claude/rules/*.md` path-scoped + always-loaded
 # rule files (v0.41.0+, ADR-0009).

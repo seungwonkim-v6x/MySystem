@@ -12,6 +12,52 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [0.44.0] - 2026-06-11
+
+**Browser QA stops fighting login cookies. The repo's safety hooks finally have tests.**
+
+The headline: a new `/aside-qa` skill routes every authenticated browser check through the user's real, logged-in Aside Browser, killing the recurring "gstack browse can't see my session, please re-run with Playwright" round-trip. Alongside it, a one-month transcript audit pruned 7 sparse skills that were never once invoked, the gbrain excision got its last tracked references swept, and the four defense-in-depth PreToolUse hooks went from zero tests to 24 — with CI to keep them green. One adversarial-review pass hardened the new browser skill's trust boundary and pruned 8 risky global permission grants before any of it shipped.
+
+The numbers that matter (from this branch's diff + `rtk gain` + the transcript grep):
+
+| Metric | Before | After | Δ |
+|---|---|---|---|
+| Sparse skills wired | 9 | 2 | −7 (all 0-use over 99 sessions) |
+| Safety-hook tests | 0 | 24 | +24 (bats, <5s, in CI) |
+| settings.json global grants | 142 (drifted) | 105 | −37 one-shot/overbroad |
+| Authenticated-QA cookie failures | every session | structural 0 | attach-to-live-tab |
+
+The aside skill was verified against a real logged-in `vprop.ai/admin` tab — snapshot in 118ms, no login redirect. That 118ms is the whole point: the agent reads the admin UI as the user, no cookie import, no Playwright detour.
+
+What this means for the daily workflow: browser verification (`/qa-only`, `/design-review`, Quick Visual Check) just works on logged-in apps, the workflow's skill list reflects what's actually used, and the security hooks have a regression net even though they stay dry-run (Auto Mode's permission gate remains the live risk adjudicator — see ADR note below). Run `bats tests/` before any hook edit.
+
+### Itemized changes
+
+### Added — /aside-qa: real-browser verification layer via aside MCP
+
+**What you get**: browser-driven verification (`/qa-only`, `/design-review` browser actions, Quick Visual Check) now drives the user's real Aside Browser instead of the gstack headless browse daemon. The recurring failure this kills: gstack browse can't reach login cookies, so every authenticated QA pass required the user to manually redirect the agent to Playwright. aside's MCP `repl` tool attaches to live browser tabs (sessions just work) and exposes the full Playwright API plus `snapshot()` diffs and `annotatedScreenshot()` — a functional superset of both the browse daemon and Playwright MCP for verification purposes.
+
+**Shape**: user-owned skill `skills/aside-qa/SKILL.md` (driver patterns: attach-before-open, console capture, snapshot/diff loop, 1440px evidence shots, 120s-per-call chunking) + CLAUDE.md "Browser layer (v0.44.0+)" paragraph routing browser verification through it (level-3 precedence over gstack skill internals). gstack `/browse` remains the announced fallback for public unauthenticated pages or when aside is down. aside MCP registered at user scope in `~/.claude.json` (machine-local). Stale `mcp__Playwright__browser_navigate` reference in Quick Visual Check (Playwright MCP no longer registered) replaced in the same edit.
+
+### Removed — 7 unused sparse skills pruned (evidence-based)
+
+**What you get**: `SPARSE_SKILLS` shrinks from 9 entries to 2, and CLAUDE.md's invocation policy stops documenting branches that never fire. Transcript audit (99 sessions, 2026-05-12 → 2026-06-11; grep pattern validated against known-used skills: autoplan 28, office-hours 25, requesting-code-review 20) found **zero invocations** for 7 of the 9 v0.37.0 sparse cherry-picks: `/test-driven-development`, `/diagnose`, `/grill-with-docs`, `/prototype`, `/triage`, `/zoom-out`, `/handoff` — all 4 user-invoked skills (never typed) and 3 autonomous alternates (trigger conditions never occurred; `/handoff` chained off `/context-save`, itself at 0 uses). Kept: `/requesting-code-review` (20 sessions) and `/verification-before-completion` (10).
+
+**Mechanics**: entries removed from `setup.sh` `SPARSE_SKILLS`, symlinks removed from `skills/`, clones removed from `external-skills/` (plus the orphaned `external-skills/deep-research` cache left behind by the v0.43.0 vendoring). Re-adding any skill is one `SPARSE_SKILLS` line + `./setup.sh`. The Vertical-Slice TDD principle in `rules/operating-principles.md` is untouched — only the opt-in skill wrapper was dropped. CLAUDE.md's "Debug Step 1 rule" keeps its diagnose-derived hypothesis discipline (the pattern was absorbed into prose; the skill was the unused part). Stale Step 2 source attribution ("sparse cherry-pick ECC, needs firecrawl") corrected to "vendored, provider-pluggable (ADR-0011)" in the same pass.
+
+### Removed — gbrain excised (ADR-0008 superseded; rollback triggers fired)
+
+**What happened**: PGLite's WASM runtime fails to initialize on macOS 26.x (gbrain issue #223, `Aborted()`), silently killing auto-capture (stalled 2026-05-29), reads, search, and the MCP bridge at once. The user ran the documented teardown (`rollback-gbrain.sh` + launchd unload; corpus tarballed to `~/.gbrain-rollback-bak-*.tar.gz`): `rules/gbrain-protocol.md` and `scripts/gbrain-ingest-sessions.sh` deleted, ADR-0008 marked SUPERSEDED, CLAUDE.md persistent-recall section rewritten around file-based memory + the seungwon-wiki vault. This release completes the sweep by deleting the now-targetless `scripts/rollback-gbrain.sh` (its rollback target `~/.gbrain` no longer exists; recoverable from git history) and clearing the last tracked references that still told a fresh machine to set gbrain up: `README.md` and `SETUP.md` (the `/setup-gbrain` Path-3 post-install step is gone — exactly the PGLite-local path macOS 26 breaks) plus the ADR-0009 cross-reference to the deleted rule file. The K1-K4 rollback triggers in ADR-0008 fired as designed — the experiment captured 8 sessions (May 20–29) before dying.
+
+### Changed — safety-hook docs now match reality (dry-run, not "constitutional")
+
+The four defense-in-depth PreToolUse hooks were documented as "effectively constitutional, exit non-zero on violation," but `MYSYSTEM_HOOKS_ENFORCE` is unset by design — so outside the two hard-refuse tiers (force-push to main/master, private-key commit) they detect-and-log, they don't block. The decision stands (Auto Mode's permission gate already adjudicates command risk; enabling enforce would double-gate and only add false positives), so this aligns the prose to it instead of flipping the switch: the instruction-precedence entry (3a), `TESTING.md`, and `rules/operating-principles.md` now say dry-run-by-default with hard-refuse-always. The new `tests/hooks.bats` exercises both the enforce-mode block path and the default dry-run path so either regressing surfaces.
+
+### Hook-enforcement candidates
+
+- Browser-layer routing rule ("browser verification goes through /aside-qa, fallback must be announced") — prompt-only; a PreToolUse hook on Bash could warn when gstack browse commands run while the aside MCP server is connected.
+- Flip `MYSYSTEM_HOOKS_ENFORCE=1` — deferred. Revisit after reviewing `~/.claude/logs/hook-dry-run.log` for false-positive rate; only promote if the soft-refuse tiers prove low-noise AND Auto Mode's gate is judged insufficient on its own.
+
 ## [0.43.0] - 2026-06-01
 
 ### Changed — /deep-research vendored + provider-pluggable (ADR-0011, supersedes ADR-0010)

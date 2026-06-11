@@ -50,7 +50,7 @@ Adopt Anthropic's native primitives rather than build parallel custom infrastruc
 - [code.claude.com/docs/en/best-practices](https://code.claude.com/docs/en/best-practices) — "Bloated CLAUDE.md files cause Claude to ignore your actual instructions"; "Hooks > prose for must-always-happen rules"; "Skills load on demand"
 - ADR-0006 — defense-in-depth PreToolUse hooks (this ADR strengthens that pattern by leaning further into native enforcement)
 - ADR-0007 — sparse cherry-pick SHA pinning (referenced by the v0.37.0 skill block that remains in CLAUDE.md)
-- ADR-0008 — gbrain as memory layer (referenced by `.claude/rules/gbrain-protocol.md`)
+- ADR-0008 — gbrain as memory layer (was referenced by `.claude/rules/gbrain-protocol.md`; rule file removed 2026-06-11 with the gbrain excision — see ADR-0008 SUPERSEDED note)
 - [memory `feedback-trigger-driven-shipping`](file://~/.claude/projects/-Users-seungwonkim--claude/memory/feedback-trigger-driven-shipping.md) — precedent for trigger-driven scope reduction
 - 12-factor-agents v0.40 abort (2026-05-20) — same pattern: cross-phase review consensus → abort rather than ship for workflow completion
 - Research reports under `~/.gstack/projects/seungwonkim-v6x-MySystem/` (rounds 1 and 2) — sources for the Cem Karaca case study, Anthropic compliance numbers (25-40% prose vs 95% hooks), community CLAUDE.md survey (median 88 lines), Anthropic roadmap forecast

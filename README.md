@@ -58,7 +58,7 @@ skill when no public alternative exists.
 ## Layout
 
 - `CLAUDE.md`, `RTK.md` — global rules loaded every session (CLAUDE.md re-injected by Claude Code natively after `/compact`)
-- `rules/*.md` — detailed rules loaded by Anthropic's native `.claude/rules/` mechanism. Three are always-loaded (`operating-principles.md`, `trust-boundaries.md`, `gbrain-protocol.md`). `repo-self-management.md` is path-scoped via absolute `~/.claude/` paths so it triggers only when editing MySystem itself, not when working in vProp/cc-guard/etc. See ADR-0009.
+- `rules/*.md` — detailed rules loaded by Anthropic's native `.claude/rules/` mechanism. Two are always-loaded (`operating-principles.md`, `trust-boundaries.md`). `repo-self-management.md` is path-scoped via absolute `~/.claude/` paths so it triggers only when editing MySystem itself, not when working in vProp/cc-guard/etc. See ADR-0009. (`gbrain-protocol.md` was removed 2026-06-11 with the gbrain excision — see ADR-0008 SUPERSEDED.)
 - `CONTEXT.md` — project glossary (who, why, vocabulary, install mechanisms)
 - `docs/adr/` — Architecture Decision Records for MySystem itself
 - `.out-of-scope/` — explicit "considered, chose no" rationales
