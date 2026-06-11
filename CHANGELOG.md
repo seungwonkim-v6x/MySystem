@@ -12,7 +12,26 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
-## [Unreleased]
+## [0.44.0] - 2026-06-11
+
+**Browser QA stops fighting login cookies. The repo's safety hooks finally have tests.**
+
+The headline: a new `/aside-qa` skill routes every authenticated browser check through the user's real, logged-in Aside Browser, killing the recurring "gstack browse can't see my session, please re-run with Playwright" round-trip. Alongside it, a one-month transcript audit pruned 7 sparse skills that were never once invoked, the gbrain excision got its last tracked references swept, and the four defense-in-depth PreToolUse hooks went from zero tests to 24 — with CI to keep them green. One adversarial-review pass hardened the new browser skill's trust boundary and pruned 8 risky global permission grants before any of it shipped.
+
+The numbers that matter (from this branch's diff + `rtk gain` + the transcript grep):
+
+| Metric | Before | After | Δ |
+|---|---|---|---|
+| Sparse skills wired | 9 | 2 | −7 (all 0-use over 99 sessions) |
+| Safety-hook tests | 0 | 24 | +24 (bats, <5s, in CI) |
+| settings.json global grants | 142 (drifted) | 105 | −37 one-shot/overbroad |
+| Authenticated-QA cookie failures | every session | structural 0 | attach-to-live-tab |
+
+The aside skill was verified against a real logged-in `vprop.ai/admin` tab — snapshot in 118ms, no login redirect. That 118ms is the whole point: the agent reads the admin UI as the user, no cookie import, no Playwright detour.
+
+What this means for the daily workflow: browser verification (`/qa-only`, `/design-review`, Quick Visual Check) just works on logged-in apps, the workflow's skill list reflects what's actually used, and the security hooks have a regression net even though they stay dry-run (Auto Mode's permission gate remains the live risk adjudicator — see ADR note below). Run `bats tests/` before any hook edit.
+
+### Itemized changes
 
 ### Added — /aside-qa: real-browser verification layer via aside MCP
 
