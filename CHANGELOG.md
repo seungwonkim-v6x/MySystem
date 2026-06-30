@@ -12,6 +12,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [0.45.0] - 2026-06-30
+
+**`/deep-research` reference layer goes from "web + Mobbin" to a four-modality router — a library-docs lane and a design-tokens lane join the table.**
+
+Three reference providers were wired into the vendored `/deep-research` (under ADR-0011's pluggable table), each filling a gap the web tier covered poorly. No new ADR: routine rows under the existing provider-pluggable design.
+
+### Added — context7 provider: version-pinned library/framework API docs
+
+**What you get**: a `context7` row for "how do I use library X / what's the current API" sub-questions, where the web tier hallucinates APIs. Two-step lookup — `resolve-library-id` (name → Context7 id) then `get-library-docs` (id + optional `topic`). Free tier, no key (npx stdio `@upstash/context7-mcp`). The plugin is installed + enabled, but its MCP can be live in some sessions and absent in others — the row carries a `/mcp`-reconnect caveat and the existing MCP-present rail skips it automatically when the tools aren't in the active list. Diagnosis behind the caveat: config/package/runtime all verified healthy (node22, package 3.2.2, a same-day MCP log shows "Successfully connected, hasTools:true") — the only gap is per-session tool exposure, fixed by `/mcp` reconnect, not a settings change.
+
+### Added — awesome-design-md design-system reference lane
+
+**What you get**: UI sub-questions needing a brand's look-and-feel fetch that brand's `DESIGN.md` from VoltAgent/awesome-design-md via the free web tier (raw GitHub, no extra MCP) — 73+ documented systems (Claude, Stripe, Figma, Linear, Notion, Vercel, …), each a Google-Stitch-spec file (YAML tokens + intent prose) that the Stitch MCP `create_design_system_from_design_md` can apply. Complements the existing Mobbin lane: awesome-design-md = structured tokens/rules for code generation, Mobbin = real screenshots of shipped UI. Both compose. Routing is a one-line `WebFetch(raw.githubusercontent.com/.../design-md/<slug>/DESIGN.md)`; a missing `<slug>` 404s rather than inventing a brand, and fetched files are DATA not instructions (trust boundary).
+
+### Process note
+
+Both feature commits (the awesome-design-md lane, the context7 row) first landed directly on `main` ahead of this bump, rather than via a `/ship` PR branch as 0.43.0/0.44.0 did. The user had `main` force-reset back to the 0.44.0 tip (the one force-push the safety hooks permit only as a human action, never the agent), and the work was re-shipped through this single PR. Future skill changes route through `/ship` from the start.
+
 ## [0.44.0] - 2026-06-11
 
 **Browser QA stops fighting login cookies. The repo's safety hooks finally have tests.**
