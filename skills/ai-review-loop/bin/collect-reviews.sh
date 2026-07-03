@@ -19,6 +19,14 @@
 # escalate — a broken collector must NEVER count as "no new findings").
 set -u
 
+# FORCE a UTF-8 locale (not ${LC_ALL:-...} — that would keep a caller's
+# LC_ALL=C, the exact broken case). Under a C locale the [:alnum:]/[:space:]
+# classes drop non-ASCII letters, so a CJK finding title collapses to a
+# different gist → a different fingerprint hash → false non-convergence (or a
+# re-reply) when a marker written under UTF-8 is reconciled under C (cron /
+# stripped hook env / CI). C.UTF-8 exists on modern macOS and all Linux.
+export LC_ALL=C.UTF-8 LANG=C.UTF-8
+
 # --gist "<finding title>" : pure-function mode (OQ3 normalization).
 # Emits the normalized gist on stdout and exits. lowercase → strip
 # punctuation (non-alnum → space; CJK and other letters pass through) →

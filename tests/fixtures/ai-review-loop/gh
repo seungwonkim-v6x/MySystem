@@ -4,7 +4,6 @@
 #   GH_AUTH_FAIL=1        gh auth status fails
 #   GH_PR_GONE=1          any pulls/<n> single-resource GET fails
 #   GH_PR_STATE=closed    PR state served to preflight
-#   GH_REVIEWS_304=1      reviews GET with If-None-Match returns 304
 #   GH_POST_FAIL_FIRST=1  first POST returns HTTP 403 (+retry-after), then ok
 #   GH_MALFORMED=1        paged endpoints emit invalid JSON
 #   GH_PAGED_FAIL=1       paged comment GETs exit 1 with empty stdout (network fail)
@@ -28,14 +27,12 @@ case "$cmd" in
 esac
 
 # ---- gh api ----
-METHOD=GET; ENDPOINT=""; JQ_FILTER=""; PAGINATE=0; INCLUDE=0; INM=""; BODY_FILE=""
+METHOD=GET; ENDPOINT=""; JQ_FILTER=""; PAGINATE=0; BODY_FILE=""
 while [ $# -gt 0 ]; do
   case "$1" in
     -X) METHOD="$2"; shift 2 ;;
     --jq) JQ_FILTER="$2"; shift 2 ;;
     --paginate) PAGINATE=1; shift ;;
-    --include) INCLUDE=1; shift ;;
-    -H) case "$2" in If-None-Match:*) INM="${2#If-None-Match: }";; esac; shift 2 ;;
     -F) case "$2" in body=@*) BODY_FILE="${2#body=@}";; esac; shift 2 ;;
     -f) shift 2 ;;
     -*) shift ;;
@@ -67,17 +64,6 @@ case "$ENDPOINT" in
       exit 0
     fi ;;
 esac
-
-# reviews surface with --include (ETag protocol)
-if [ "$INCLUDE" = "1" ]; then
-  if [ "${GH_REVIEWS_304:-}" = "1" ] && [ -n "$INM" ]; then
-    printf 'HTTP/2 304\r\n\r\n'
-    exit 0
-  fi
-  printf 'HTTP/2 200\r\netag: W/"stub-etag-v2"\r\n\r\n'
-  cat "$STUB/$NAME.json" 2>/dev/null || echo "[]"
-  exit 0
-fi
 
 # paged / plain GETs
 emit_pages() {

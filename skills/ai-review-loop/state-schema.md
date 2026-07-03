@@ -75,8 +75,11 @@ through recovery: rename to `pr-<N>.json.corrupt`, re-init, reconstruct
     "issue_comments":  { "last_id": 0 }
   },
 
-  // body sha256 per already-seen summary/issue comment id — edited-in-place
-  // detection (EA4). Inline review comments are NOT tracked here.
+  // body sha256 per already-seen ISSUE comment id — edited-in-place
+  // detection (EA4). v1 scope: issue comments only. Review-summary bodies
+  // and inline review comments are id-filtered only (see SKILL.md
+  // "Self-verification status"); a Copilot-style review summary edited in
+  // place is a known v1 blind spot.
   "comment_hashes": { "123456": "sha256hex" },
 
   // Finding ledger. Key = "<path>#<gist>" (fingerprint identity; line is
