@@ -18,6 +18,7 @@
 !SETUP.md
 !TESTING.md
 !RTK.md
+!TODOS.md
 !VERSION
 !settings.json
 !setup.sh
@@ -56,6 +57,9 @@ hooks/**/*.pyc
 # aside-qa — user-owned browser-verification layer over the aside MCP (no public alternative).
 !skills/aside-qa/
 !skills/aside-qa/**
+# ai-review-loop — Step 9 AI reviewer convergence loop (v0.46.0, ADR-0012; no public alternative).
+!skills/ai-review-loop/
+!skills/ai-review-loop/**
 
 # Rules — tracked native `.claude/rules/*.md` path-scoped + always-loaded
 # rule files (v0.41.0+, ADR-0009).

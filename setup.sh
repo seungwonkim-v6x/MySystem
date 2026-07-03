@@ -177,6 +177,8 @@ EXCLUDE_FILE=".git/info/exclude"
     case "$name" in
       verify-test) continue ;;    # tracked user-owned skill
       deep-research) continue ;;  # vendored user-owned skill (ADR-0011) — never re-exclude
+      aside-qa) continue ;;       # tracked user-owned skill (was missing — new files were vanishing from git status)
+      ai-review-loop) continue ;; # tracked user-owned skill (Step 9, v0.46.0)
       gstack) continue ;;         # already listed above
     esac
     echo "skills/$name/"

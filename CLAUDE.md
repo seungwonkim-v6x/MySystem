@@ -6,12 +6,12 @@ This file defines the complete workflow that applies to all projects. Keep it sh
 
 The agent has ZERO discretion to skip or reorder workflow steps. Every step is MANDATORY and runs in order. NEVER skip, reorder, or suggest skipping. NEVER write code before `/autoplan` is done — not even one line. NEVER ask the user "should we skip?" or "do you want to run the full workflow?" — just run the next step. If the user wants to skip, THEY interrupt; that is their job, not yours.
 
-NEVER proceed to the next workflow step without explicit user approval. After presenting results, STOP and wait. The user must explicitly say "ok", "approved", "next", "go" or similar.
+NEVER proceed to the next workflow step without explicit user approval. After presenting results, STOP and wait. The user must explicitly say "ok", "approved", "next", "go" or similar. Single exception: Step 8→9 auto-chains when `/ship` created a PR (per ADR-0012); "skip step 9" at ship time is a user-initiated exception — accept it without argument.
 
 Auto Mode does NOT override this workflow. "Execute immediately" / "minimize interruptions" guidance is subordinate to this file. Auto Mode lets you proceed *within a single step* without asking; it does NOT skip steps and does NOT remove approval gates.
 
 **CRITICAL — must survive `/compact`:**
-- **NEVER install PostToolUse hooks that mutate git state** (no `git add`, `git commit`, `git push`, `gh pr create`, or any write to `.git/` from a tool-call side effect). Git mutations happen only via `/ship` or explicit user request. Full rule in `.claude/rules/repo-self-management.md`.
+- **NEVER install PostToolUse hooks that mutate git state** (no `git add`, `git commit`, `git push`, `gh pr create`, or any write to `.git/` from a tool-call side effect). Git mutations happen only via `/ship`, `/ai-review-loop` (within its per-round budget — ≤20 changed lines/round and ≤40/loop autonomous, sensitive paths always escalate; per ADR-0012), or explicit user request. Full rule in `.claude/rules/repo-self-management.md`.
 - **Commits are scoped to a single logical change, not a single file.** Bundle related edits into one commit. Per-file commits fragment history and defeat atomic-revert semantics. `/ship` handles atomic commits — do not pre-fragment.
 
 **Skill whitelist.** The agent may autonomously invoke only skills mapped to workflow steps below. Any other installed skill (`/design-shotgun`, `/scrape`, `/codex`, `/humanizer`, `/qa`, etc.) runs **only when the user types its name**. Do not proactively suggest off-workflow skills. IF A WHITELISTED SKILL APPLIES TO THE CURRENT REQUEST AT THE FEATURE / BUG FIX / REFACTOR LEVEL, YOU MUST INVOKE IT BEFORE RESPONDING. Even minimal probability requires invocation.
@@ -50,12 +50,13 @@ Auto Mode / plan-mode reminders are level 7 (session signals the user activated)
 | 6. PR review (1st pass) | `/review` | gstack |
 | 7. Adversarial review (2nd pass) | `/requesting-code-review` | sparse cherry-pick obra/superpowers |
 | 8. Ship | `/ship` | gstack |
+| 9. AI reviewer loop (post-PR) | `/ai-review-loop` | user-owned |
 
 The agent **must** call exactly these skills for exactly these steps. Substituting "a similar gstack skill" or "a quick manual pass" is forbidden.
 
 ### Sparse-skill invocation policy (v0.37.0, pruned v0.44.0)
 
-**Autonomous (in whitelist):** `/verification-before-completion` (augments Step 5 — Iron Law: no completion claims without fresh evidence; applies even on F/Skip), `/aside-qa` (browser layer for Step 5 / Quick Visual Check — see Step 5 section).
+**Autonomous (in whitelist):** `/verification-before-completion` (augments Step 5 — Iron Law: no completion claims without fresh evidence; applies even on F/Skip), `/aside-qa` (browser layer for Step 5 / Quick Visual Check — see Step 5 section), `/ai-review-loop` (Step 9 — auto-chains after /ship creates a PR; announces one line at start; no per-round gate except its budget/sensitive-path escalations, which pause as awaiting-user).
 
 **v0.44.0 prune:** 7 of the 9 v0.37.0 sparse skills (`/test-driven-development`, `/diagnose`, `/grill-with-docs`, `/prototype`, `/triage`, `/zoom-out`, `/handoff`) were removed after zero invocations across ~99 sessions / 1 month of transcripts. Re-adding is one `SPARSE_SKILLS` line in `setup.sh`. The Vertical-Slice TDD *principle* in `.claude/rules/operating-principles.md` is unaffected — only the opt-in skill wrapper was dropped.
 
@@ -81,6 +82,8 @@ The agent **must** call exactly these skills for exactly these steps. Substituti
 7. /requesting-code-review ← adversarial fresh-eye review (2nd pass on the diff)
        ↓  (wait for user approval)
 8. /ship                 ← commit, push, create PR
+       ↓  (only if /ship created a PR)
+9. /ai-review-loop       ← fan out to AI reviewers, triage, fix, converge
 ```
 
 ### Debugging
@@ -92,7 +95,7 @@ The agent **must** call exactly these skills for exactly these steps. Substituti
        ↓  (wait for user approval)
 3. /autoplan             ← plan the fix + CEO/Design/Eng review
        ↓  (wait for user approval)
-4. Implementation → 5. Verification → 6. /review → 7. /requesting-code-review → 8. /ship
+4. Implementation → 5. Verification → 6. /review → 7. /requesting-code-review → 8. /ship → 9. /ai-review-loop (if PR created)
 ```
 
 **Debug Step 1 rule.** During `/investigate`, generate 3-5 ranked, **falsifiable** hypotheses before instrumenting any of them. Show the ranked list to the user before testing. Each hypothesis: falsifiable (concrete observation could disprove), ranked by prior probability (not test-ease), and distinct (different root cause, not same cause in different words). After 3+ failed fix attempts, question the architecture, not the current attempt. (Pattern from mattpocock/skills `diagnose` + obra/superpowers `systematic-debugging`.)
@@ -110,7 +113,8 @@ After step N completes, the ONLY allowed next action is step N+1 OR wait for exp
 | 5 (Verification — any subset) | 6 (`/review`) |
 | 6 (`/review`) | 7 (`/requesting-code-review`) |
 | 7 (`/requesting-code-review`) | 8 (`/ship`) |
-| 8 (`/ship`) | (complete; user starts new feature) |
+| 8 (`/ship`) | 9 (`/ai-review-loop`) — auto-chains only when /ship created a PR; otherwise 8 is terminal |
+| 9 (`/ai-review-loop`) | (complete; user starts new feature) |
 
 If the user explicitly says "go back to step N" or "skip step N," that's a user-initiated exception logged in the session. The agent never proposes either move.
 
@@ -144,6 +148,8 @@ Two independent perspectives on the same diff:
 - **Step 7 `/requesting-code-review` (superpowers)** — fresh-context subagent on `BASE_SHA..HEAD_SHA`. Critical / Important / Minor categorization.
 
 Run **both**. A clean pass on Step 6 does not skip Step 7. Cross-check findings: if Step 7 flags something Step 6 missed (or vice versa), fix before `/ship`.
+
+Steps 6/7 review the **pre-merge diff**; Step 9 (`/ai-review-loop`) reviews the **PR artifact** (bot reviewers attach to PRs only) — complementary, not redundant. Step 9's tier B/C prompts carry "do not re-raise findings already resolved in Steps 6/7."
 
 ## `/autoplan` Details
 
