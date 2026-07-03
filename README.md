@@ -64,7 +64,7 @@ skill when no public alternative exists.
 - `.out-of-scope/` — explicit "considered, chose no" rationales
 - `settings.json` — harness config (permissions, hooks, plugins)
 - `scripts/` — ops helpers; `claude-md-budget.sh` itemizes the always-loaded chain and Codex CLI cap compliance
-- `skills/` — user-owned (tracked, currently just `verify-test/`) + external (symlinked by `setup.sh`)
+- `skills/` — user-owned (tracked: `verify-test/`, `deep-research/`, `aside-qa/`, `ai-review-loop/`) + external (symlinked by `setup.sh`)
 - `external-skills/` — cache for sparse cherry-picked repos (git-ignored)
 - `hooks/` — tracked (includes a Stop hook that renders substantive assistant turns as kami-parchment HTML in your browser at `~/.claude/previews/latest.html`)
 - `setup.sh` — declares + fetches external skills; idempotent
