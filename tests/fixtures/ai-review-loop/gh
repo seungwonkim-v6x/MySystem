@@ -1,0 +1,102 @@
+#!/bin/bash
+# gh stub for tests/ai-review-loop.bats — serves canned responses from
+# $GH_STUB_DIR. Never touches the network. Behavior toggles via env:
+#   GH_AUTH_FAIL=1        gh auth status fails
+#   GH_PR_GONE=1          any pulls/<n> single-resource GET fails
+#   GH_PR_STATE=closed    PR state served to preflight
+#   GH_REVIEWS_304=1      reviews GET with If-None-Match returns 304
+#   GH_POST_FAIL_FIRST=1  first POST returns HTTP 403 (+retry-after), then ok
+#   GH_MALFORMED=1        paged endpoints emit invalid JSON
+#   GH_PAGED_FAIL=1       paged comment GETs exit 1 with empty stdout (network fail)
+# GET fixtures: $GH_STUB_DIR/<endpoint-sanitized>.json or .page1.json ...
+# POSTs are recorded to $GH_STUB_DIR/outbox.log as "<endpoint>\n<body>\n---".
+set -u
+STUB="${GH_STUB_DIR:?GH_STUB_DIR not set}"
+
+sanitize() { printf '%s' "${1%%\?*}" | tr '/' '_'; }
+
+cmd="${1:-}"; shift || true
+case "$cmd" in
+  auth)
+    [ "${GH_AUTH_FAIL:-}" = "1" ] && exit 1
+    exit 0 ;;
+  pr) # gh pr checks <n> --repo <r>
+    cat "$STUB/checks.txt" 2>/dev/null || true
+    exit 0 ;;
+  api) : ;;
+  *) echo "gh-stub: unhandled command $cmd" >&2; exit 1 ;;
+esac
+
+# ---- gh api ----
+METHOD=GET; ENDPOINT=""; JQ_FILTER=""; PAGINATE=0; INCLUDE=0; INM=""; BODY_FILE=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -X) METHOD="$2"; shift 2 ;;
+    --jq) JQ_FILTER="$2"; shift 2 ;;
+    --paginate) PAGINATE=1; shift ;;
+    --include) INCLUDE=1; shift ;;
+    -H) case "$2" in If-None-Match:*) INM="${2#If-None-Match: }";; esac; shift 2 ;;
+    -F) case "$2" in body=@*) BODY_FILE="${2#body=@}";; esac; shift 2 ;;
+    -f) shift 2 ;;
+    -*) shift ;;
+    *) [ -z "$ENDPOINT" ] && ENDPOINT="$1"; shift ;;
+  esac
+done
+
+if [ "$METHOD" = "POST" ]; then
+  COUNT_FILE="$STUB/.post-count"
+  N=$(cat "$COUNT_FILE" 2>/dev/null || echo 0); N=$((N+1)); echo "$N" > "$COUNT_FILE"
+  if [ "${GH_POST_FAIL_FIRST:-}" = "1" ] && [ "$N" -eq 1 ]; then
+    { echo "HTTP 403 rate limited"; echo "retry-after: 0"; } >&2
+    exit 1
+  fi
+  { echo "$ENDPOINT"; cat "${BODY_FILE:-/dev/null}"; echo "---"; } >> "$STUB/outbox.log"
+  echo '{"id": 999001}'
+  exit 0
+fi
+
+NAME=$(sanitize "$ENDPOINT")
+
+# single-resource PR GET (head sha / state)
+case "$ENDPOINT" in
+  repos/*/pulls/[0-9]*|repos/*/pulls/[0-9]*\?*)
+    if [[ "$ENDPOINT" != *"/reviews"* && "$ENDPOINT" != *"/comments"* ]]; then
+      [ "${GH_PR_GONE:-}" = "1" ] && { echo "gh-stub: HTTP 404" >&2; exit 1; }
+      OUT=$(jq -nc --arg st "${GH_PR_STATE:-open}" '{state:$st, head:{sha:"headsha123"}}')
+      if [ -n "$JQ_FILTER" ]; then jq -r "$JQ_FILTER" <<<"$OUT"; else echo "$OUT"; fi
+      exit 0
+    fi ;;
+esac
+
+# reviews surface with --include (ETag protocol)
+if [ "$INCLUDE" = "1" ]; then
+  if [ "${GH_REVIEWS_304:-}" = "1" ] && [ -n "$INM" ]; then
+    printf 'HTTP/2 304\r\n\r\n'
+    exit 0
+  fi
+  printf 'HTTP/2 200\r\netag: W/"stub-etag-v2"\r\n\r\n'
+  cat "$STUB/$NAME.json" 2>/dev/null || echo "[]"
+  exit 0
+fi
+
+# paged / plain GETs
+emit_pages() {
+  # Simulate a gh network failure on the paged COMMENT surfaces (not the
+  # single-resource PR GET, which is handled earlier): exit non-zero with no
+  # stdout. Exercises the pipefail-masking guard in collect-reviews.sh.
+  if [ "${GH_PAGED_FAIL:-}" = "1" ] && [ "$PAGINATE" = "1" ]; then exit 1; fi
+  if [ "${GH_MALFORMED:-}" = "1" ]; then echo '{not json'; return; fi
+  if ls "$STUB/$NAME".page*.json >/dev/null 2>&1; then
+    for p in "$STUB/$NAME".page*.json; do cat "$p"; done
+  else
+    cat "$STUB/$NAME.json" 2>/dev/null || echo "[]"
+  fi
+}
+
+if [ -n "$JQ_FILTER" ]; then
+  # apply the caller's filter across concatenated pages as one array
+  emit_pages | jq -s 'add // []' | jq -r "$JQ_FILTER" 2>/dev/null || exit 1
+else
+  emit_pages
+fi
+exit 0
