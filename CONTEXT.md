@@ -17,14 +17,16 @@ decision log; `.out-of-scope/` is the "explicitly not doing this" log.
 - **Audience**: primarily the user; secondarily a future contributor or
   curious reader who finds the repo and wonders how it's wired.
 
-## The 8-step workflow (the central thing this repo enforces)
+## The 9-step workflow (the central thing this repo enforces)
 
 ```
 1. /office-hours  →  2. /research  →  3. /autoplan
                 ↓                                ↓
 4. Implementation  ←  5. Verification (verify-test/qa-only/design-review)
                 ↓
-6. /review  →  7. /requesting-code-review  →  8. /ship
+6. /review  →  7. /requesting-code-review  →  8. /ship  →  9. /ai-review-loop
+                                                            (only when /ship
+                                                             created a PR)
 ```
 
 The full table with skill ownership lives in CLAUDE.md ("Step → Skill Mapping").
@@ -47,6 +49,19 @@ Debug paths swap step 1 for `/investigate`.
 - **See something, say something** — anytime the agent notices something
   wrong during any workflow step, surface it in one sentence; never silently
   pass.
+- **AI reviewer loop (Step 9)** — post-/ship convergence loop over every AI
+  reviewer reachable on the PR. **Tier A** = PR bots (Copilot, Greptile,
+  CodeRabbit — re-triggered per-reviewer: gh @copilot / push / comment
+  command), **tier B** = local cross-model CLIs (codex), **tier C** = fresh
+  Claude subagents. See `skills/ai-review-loop/`.
+- **Fingerprint** — a finding's state-tracking identity in the loop:
+  `<path>#<gist>` where gist = normalized first-8-significant-tokens of the
+  title (line number is metadata, survives fix-commit drift). Cross-source
+  clustering of differently-phrased duplicates stays a judgment call on top.
+- **Valid-finding convergence** — the loop's termination predicate: a round
+  with an empty untriaged queue and zero findings classified "valid".
+  Noise (misreadings, prior-decision re-raises) gets replies but cannot
+  extend the loop. Rounds are unbounded by user decision (ADR-0012).
 
 ## Install mechanisms (three, in `setup.sh`)
 

@@ -12,6 +12,39 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [0.46.0] - 2026-07-03
+
+**Step 9 ships: `/ai-review-loop` — every AI reviewer reachable on a PR becomes one converging review committee, with the user's prior decisions constitutionally senior to any model's re-litigation.**
+
+Pattern proven manually on Tapit PR #137 (2026-07-02, 3 rounds vs Copilot), generalized to a 3-tier fan-out and promoted to a formal workflow step. Full pipeline ran ahead of it: /office-hours design doc (adversarial-reviewed 9/10), /deep-research on GitHub API semantics (20 sources), /autoplan with dual Claude+Codex voices per phase (48 decisions, 11 cross-model overlapping findings folded in).
+
+### Added — `skills/ai-review-loop/` (user-owned, tracked)
+
+- **SKILL.md** — agent protocol: startup/resume, round protocol (re-trigger → wait → collect → triage → classify → fix → reply), canonical convergence predicate (empty untriaged queue + zero valid findings; rounds unbounded per user decision), escalation-as-awaiting-user model, idempotent resume by phase.
+- **bin/detect-reviewers.sh** — 3-tier registry detection; per-reviewer `retrigger` method (research finding: `requested_reviewers` re-POST is a silent no-op for Copilot — the working paths are `gh pr edit --add-reviewer @copilot` under a PAT, comment commands for Greptile/CodeRabbit, or push-triggered).
+- **bin/collect-reviews.sh** — three comment surfaces (reviews + inline + issue comments), no page-1-304 trust (per-page ETags can mask appended comments), edited-in-place detection via body hash, `--gist` deterministic fingerprint normalization (stopword-stripped 8-token, CJK-safe).
+- **bin/preflight.sh** — gh/PR hard stops, advisory-lock check, active-loop schema fail-closed, prettier-drift warning (the Tapit lint-staged pollution pitfall), CI baseline snapshot.
+- **bin/round-budget.sh** — staged-diff budget gate (≤20 lines/round; ≤40/loop cumulative tracked in the skill layer), binary-diff escalate, rename-normalized **sensitive-path matcher** (hooks/, settings.json, workflows, secret globs — always escalate).
+- **bin/post-reply.sh** — the only PR-posting path: body-file only (no shell interpolation of untrusted comment text), loop marker embedding, 403/429 backoff, 404 thread-root re-resolve.
+- **bin/loop-markers.sh** — reconstructs the replied-set from PR markers, filtered to the loop's own account BEFORE extraction (a triaged bot can't forge a marker to fake convergence — harness-enforced, not prompt-only).
+- **state-schema.md / escalation-templates.md / runbook.md** — frozen state schema (schema_version 1), fixed per-class escalation messages with resume commands, owner manual.
+- **tests/ai-review-loop.bats** — 42 offline contract tests against a stub `gh` (detection incl. suffix-login spoof rejection + expected-bot seeding + unknown-bot exclusion, all three surfaces paginated/id-filtered incl. appended-page reviews, edited-comment, gh-network-failure ≠ empty-increment, gist goldens incl. adversarial injection title, budget boundary 20/21 + sensitive/rename/binary + --range, reply marker + backoff, forged-marker rejection).
+
+### Changed — constitution (ADR-0012)
+
+- CLAUDE.md CRITICAL rule: git mutations only via `/ship`, **`/ai-review-loop` (within its per-round budget)**, or explicit user request; step table + successor map gain Step 9 (auto-chains only when /ship created a PR); whitelist gains `/ai-review-loop`; the "NEVER proceed without approval" paragraph gains the single 8→9 exception; Steps 6/7 vs 9 complementarity note (pre-merge diff vs PR artifact).
+- `rules/repo-self-management.md`: carve-out spelled out; explicitly non-precedential.
+- ADR-0012 records the rejected alternatives (per-fix approval, batched-per-round approval — both models' preference, declined twice by the user), the harness-enforced bounds, and a sunset trigger (vendor-native fix loops, or zero-invocation prune).
+- CONTEXT.md: workflow diagram 8→9 steps; glossary entries (AI reviewer loop, fingerprint, valid-finding convergence).
+
+### Fixed
+
+- `setup.sh` exclude-case: tracked `skills/aside-qa/` was missing from the whitelist, so its new files were being registered into `.git/info/exclude` and vanishing from `git status`; `ai-review-loop` added alongside.
+
+### Hook-enforcement candidates
+
+- **review-loop push discipline** — PreToolUse hook asserting that `git push` during an active ai-review-loop round only pushes commits whose messages match `review-loop(rN):` (defense-in-depth for the ADR-0012 budget gate).
+
 ## [0.45.0] - 2026-06-30
 
 **`/deep-research` reference layer goes from "web + Mobbin" to a four-modality router — a library-docs lane and a design-tokens lane join the table.**

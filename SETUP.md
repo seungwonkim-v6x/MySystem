@@ -80,7 +80,7 @@ session) and the seungwon-wiki Obsidian vault. No MCP, no daemon, no SHA pin.
 | `docs/adr/` | Architecture Decision Records for MySystem itself |
 | `.out-of-scope/` | "Considered, chose no" decision records |
 | `settings.json` | Claude Code harness config (permissions, hooks, plugins, model) |
-| `skills/` | User-owned (tracked, just `verify-test/`) + external skills (symlinked, ignored) |
+| `skills/` | User-owned (tracked: `verify-test/`, `deep-research/`, `aside-qa/`, `ai-review-loop/`) + external skills (symlinked, ignored) |
 | `external-skills/` | Cache for sparse cherry-picked repos; ignored |
 | `hooks/` | Tracked |
 | `setup.sh` | Declares + fetches external skills; idempotent |
