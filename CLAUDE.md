@@ -44,7 +44,7 @@ Auto Mode / plan-mode reminders are level 7 (session signals the user activated)
 |    (debug branch) `/investigate` | gstack |
 | 2. Research | `/deep-research` | vendored, provider-pluggable (ADR-0011) |
 | 3. Plan + multi-review | `/autoplan` | gstack |
-| 4. Implementation | direct (coordinator writes code) | — |
+| 4. Implementation | direct (coordinator writes code); on a **material UI change** also load `/frontend-design` + the project `DESIGN.md` rider | Anthropic plugin (frontend-design) + user rider |
 | 5. Verification | `/verify-test` and/or `/qa-only` and/or `/design-review` | user-owned (verify-test) + gstack |
 |    (Step 5 augment) `/verification-before-completion` | sparse cherry-pick obra/superpowers — Iron Law: no completion claims without evidence |
 | 6. PR review (1st pass) | `/review` | gstack |
@@ -56,7 +56,17 @@ The agent **must** call exactly these skills for exactly these steps. Substituti
 
 ### Sparse-skill invocation policy (v0.37.0, pruned v0.44.0)
 
-**Autonomous (in whitelist):** `/verification-before-completion` (augments Step 5 — Iron Law: no completion claims without fresh evidence; applies even on F/Skip), `/aside-qa` (browser layer for Step 5 / Quick Visual Check — see Step 5 section), `/ai-review-loop` (Step 9 — auto-chains after /ship creates a PR; announces one line at start; no per-round gate except its budget/sensitive-path escalations, which pause as awaiting-user).
+**Autonomous (in whitelist):** `/verification-before-completion` (augments Step 5 — Iron Law: no completion claims without fresh evidence; applies even on F/Skip), `/aside-qa` (browser layer for Step 5 / Quick Visual Check — see Step 5 section), `/ai-review-loop` (Step 9 — auto-chains after /ship creates a PR; announces one line at start; no per-round gate except its budget/sensitive-path escalations, which pause as awaiting-user), `/frontend-design` (Step 4 design discipline — see "Step 4 — design discipline" below; **materiality-gated**: fires only on a *new UI or reshaping of existing UI*, NOT on any UI file touched or a one-line CSS tweak).
+
+### Step 4 — design discipline (v0.47.0)
+
+On a **material UI change** (building a new screen/component/view or reshaping an existing one — not a one-line CSS tweak, not backend/config/docs), Step 4 loads two layers explicitly:
+- **`/frontend-design`** (Anthropic plugin; autonomous invocation uses the fully-qualified Skill-tool id `frontend-design:frontend-design`) — the *taste/judgment* layer (opinionated aesthetic direction, anti-templated).
+- **the project `DESIGN.md` rider** (template at `~/.claude/templates/DESIGN.md`) — *machine-checkable bans* (e.g. `h-screen`→`min-h-[100dvh]`, emoji-as-icon, flex-% math→grid, generic spinner→skeleton, missing loading/empty/error states) + named design presets per dial (e.g. calm/balanced/bold).
+
+Load **both explicitly** — `/frontend-design` does **not** read `DESIGN.md` (research-confirmed), so the rider will not be picked up on its own. **Precedence on conflict: `/frontend-design` wins on taste/aesthetics; the rider's bans are hard and always apply.** These don't actually collide — they cover different domains (taste vs objective bans). As placement: the per-project `DESIGN.md` rider is **workspace context (level 5, like CONTEXT.md)**, so on a genuine taste conflict it yields to `/frontend-design` (a running skill, level 4); its objective bans are a domain carve-out that always applies regardless.
+
+*Held (not built, v0.47.0):* a general "announce non-obvious implementation decisions inline" narration rule was reviewed and **deferred** — no real trigger yet, and it would be permanent prompt-only (unenforceable) config. Re-open once 2-3 real instances of a silent Step-4 decision causing rework are logged. See `operating-principles.md` → "Harness, Not Model".
 
 **v0.44.0 prune:** 7 of the 9 v0.37.0 sparse skills (`/test-driven-development`, `/diagnose`, `/grill-with-docs`, `/prototype`, `/triage`, `/zoom-out`, `/handoff`) were removed after zero invocations across ~99 sessions / 1 month of transcripts. Re-adding is one `SPARSE_SKILLS` line in `setup.sh`. The Vertical-Slice TDD *principle* in `.claude/rules/operating-principles.md` is unaffected — only the opt-in skill wrapper was dropped.
 
