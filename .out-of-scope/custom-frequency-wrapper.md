@@ -2,6 +2,10 @@
 
 **Decided:** 2026-05-17 during v0.33.0 /office-hours (rejected option C).
 
+**Status (2026-07-07): moot** — the learning-opportunities plugin family was
+removed from MySystem entirely (see CHANGELOG), so there is nothing left to
+wrap. Kept for the harness-philosophy rationale below.
+
 ## What it is
 
 Fork `learning-opportunities-auto`'s `post-tool-use.sh` and wrap it with

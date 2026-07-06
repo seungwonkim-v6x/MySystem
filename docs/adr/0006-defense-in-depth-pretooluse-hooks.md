@@ -1,6 +1,10 @@
 # ADR-0006: Defense-in-depth via hand-vendored PreToolUse harness hooks (dry-run first)
 
 **Status:** Accepted (2026-05-18)
+**Amendment (2026-07-07):** the `rtk hook claude` PreToolUse hook and `RTK.md`
+were removed from MySystem (see CHANGELOG). References to rtk hook ordering
+and RTK.md below are historical; the four defense-in-depth hooks are now the
+only PreToolUse hooks.
 **Context window:** v0.35.0 release
 **Supersedes:** none
 **Superseded by:** none

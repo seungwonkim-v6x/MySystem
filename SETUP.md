@@ -73,7 +73,7 @@ session) and the seungwon-wiki Obsidian vault. No MCP, no daemon, no SHA pin.
 
 | Path | Purpose |
 |------|---------|
-| `CLAUDE.md`, `RTK.md` | Global rules auto-loaded every session (CLAUDE.md re-injected after `/compact`) |
+| `CLAUDE.md` | Global rules auto-loaded every session (re-injected after `/compact`) |
 | `rules/*.md` | Native `.claude/rules/`: 2 always-loaded (operating-principles, trust-boundaries) + 1 path-scoped to `~/.claude/**` (repo-self-management). See ADR-0009. |
 | `scripts/` | Ops helpers — `claude-md-budget.sh` (always-loaded chain + Codex CLI cap check) |
 | `CONTEXT.md` | Project glossary — who, why, vocabulary, install mechanisms |
@@ -134,31 +134,23 @@ default branch.
 
 ### Claude Code plugins
 
-`settings.json` registers two marketplaces in `extraKnownMarketplaces` and
-enables six plugins in `enabledPlugins`:
+`settings.json` registers one marketplace in `extraKnownMarketplaces` and
+enables its plugins in `enabledPlugins`:
 
 | Marketplace | Plugins |
 |---|---|
-| `claude-plugins-official` (Anthropic) | `frontend-design`, `context7`, `code-review` |
-| `learning-opportunities` (DrCatHicks) | `learning-opportunities`, `learning-opportunities-auto`, `orient` |
+| `claude-plugins-official` (Anthropic) | `frontend-design`, `context7`, `code-review`, `figma` |
 
-Claude Code clones each marketplace on first session start after `git pull`,
+Claude Code clones the marketplace on first session start after `git pull`,
 then fetches and activates the enabled plugins. **No `setup.sh` re-run is
 required, and no API keys are needed.** To confirm activation in a fresh
-session, run `/plugin list` — the three `learning-opportunities` entries
-should appear as enabled alongside the official ones.
+session, run `/plugin list`.
 
 To disable any one plugin, flip its `enabledPlugins` entry to `false` in
 `settings.json` and commit. The change propagates on the next `git pull` on
 every machine.
 
-**Marketplace URLs are unpinned** (track upstream `main`). DrCatHicks is a
-single-maintainer repo; review its diff before pulling MySystem updates if
-the plugin's behavior matters to you. Anthropic's official marketplace is
-the same shape but a much smaller trust delta.
-
-`learning-opportunities` plugins are CC-BY-4.0; see CHANGELOG v0.33.0
-Attribution for the full notice.
+**The marketplace URL is unpinned** (tracks upstream `main`).
 
 ### MCP keys
 

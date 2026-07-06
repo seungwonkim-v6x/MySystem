@@ -1,6 +1,6 @@
 # MySystem — Personal Workflow
 
-This file defines the complete workflow that applies to all projects. Keep it short; detailed rules live in `.claude/rules/*.md` (loaded natively by Claude Code) and `~/.claude/RTK.md` (imported below).
+This file defines the complete workflow that applies to all projects. Keep it short; detailed rules live in `.claude/rules/*.md` (loaded natively by Claude Code).
 
 ## Critical Workflow Rules
 
@@ -18,15 +18,13 @@ Auto Mode does NOT override this workflow. "Execute immediately" / "minimize int
 
 **Triviality carve-out (conservative).** Direct-to-implementation is permitted ONLY for: typo fixes, single-character edits, comment-only changes, single-symbol renames via Edit, or work the user explicitly framed as "trivial". Anything touching behavior or adding a file → invoke the step.
 
-**Exception — learning-opportunities plugin.** `learning-opportunities-auto` fires a PostToolUse hook (Bash matcher) on commits, capped at 2 offers/session via temp file. "Decline → stop offering" is prompt-level, not enforced state — compaction may revive offers within budget. Operates outside the 8-step workflow as a single-shot interaction. Allowed exception to the skill whitelist.
-
 ## Instruction Precedence
 
 Lower number wins on conflict:
 1. Anthropic provider/system policy (safety, sandbox)
 2. Organization policy (N/A — solo repo)
 3a. Hook-backed safety rules in `settings.json` (per ADR-0006). Two tiers actually block: the hard-refuse cases (force-push to main/master, private-key commit) always exit non-zero. Everything else runs **dry-run by default** (detect + log to `~/.claude/logs/hook-dry-run.log`, exit 0) unless `MYSYSTEM_HOOKS_ENFORCE=1` is set — which it deliberately is NOT, because Auto Mode's permission gate already adjudicates command risk and double-gating only adds false positives. So this tier is constitutional in *intent*; enforcement is the hard-refuse cases plus the Auto Mode gate, not a blanket exit-2.
-3b. Prompt-level rules (this CLAUDE.md, `.claude/rules/*.md`, `RTK.md`)
+3b. Prompt-level rules (this CLAUDE.md, `.claude/rules/*.md`)
 4. Agent role and contract (the running skill, e.g., `/autoplan`)
 5. Workspace context (project CLAUDE.md, CONTEXT.md, ADRs)
 6. User task in current conversation
@@ -180,5 +178,3 @@ Detailed rules load natively via `.claude/rules/*.md`:
 **Persistent recall (gbrain removed 2026-06-11 — PGLite WASM dead on macOS 26; superseded ADR-0008).** Two surviving layers, both plain files (no MCP/daemon): (1) **file-based memory** at `~/.claude/projects/<proj>/memory/*.md` + `MEMORY.md` (loaded every session — concise facts/feedback/decisions); (2) the **seungwon-wiki Obsidian vault** at `/Users/seungwonkim/seungwon-wiki` as the richer knowledge base — read per its own CLAUDE.md *Cross-Project Access* (wiki/hot.md → index.md → domain).
 
 Inspect always-loaded chain: `~/.claude/scripts/claude-md-budget.sh`.
-
-@RTK.md
