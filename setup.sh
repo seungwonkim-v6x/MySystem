@@ -5,11 +5,10 @@
 # What this does:
 #   1. Clone or update full external skill repos (gstack)
 #   2. Run gstack's own setup (symlinks 20+ skills into ~/.claude/skills/)
-#   3. Sparse cherry-pick individual skills from other repos (cache + symlink)
-#   4. Register external skill dirs in .git/info/exclude so the tracked
+#   3. Sparse cherry-pick individual skills from other repos (cache + symlink),
+#      then register external skill dirs in .git/info/exclude so the tracked
 #      .gitignore stays small.
-#   5. Validate skill symlinks
-#   6. Verify RTK presence (voyagerx internal token-compression proxy)
+#   4. Validate skill symlinks
 
 set -euo pipefail
 
@@ -69,17 +68,17 @@ clone_or_pull() {
   fi
 }
 
-# ── [1/5] Full external repos ────────────────────────────────
-echo "[1/5] Syncing full external skill repos..."
+# ── [1/4] Full external repos ────────────────────────────────
+echo "[1/4] Syncing full external skill repos..."
 for entry in "${EXTERNAL_REPOS[@]}"; do
   IFS='|' read -r name url branch <<< "$entry"
   clone_or_pull "skills/$name" "$url" "$branch"
 done
 echo "  ✓ external repos ready"
 
-# ── [2/5] Run gstack's own setup ─────────────────────────────
+# ── [2/4] Run gstack's own setup ─────────────────────────────
 echo ""
-echo "[2/5] Running gstack setup..."
+echo "[2/4] Running gstack setup..."
 if [ -x "skills/gstack/setup" ]; then
   ( cd skills/gstack && ./setup 2>&1 | sed 's/^/  /' )
   echo "  ✓ gstack skills installed"
@@ -88,9 +87,9 @@ else
   exit 1
 fi
 
-# ── [3/5] Sparse cherry-pick skills ──────────────────────────
+# ── [3/4] Sparse cherry-pick skills ──────────────────────────
 echo ""
-echo "[3/5] Installing sparse cherry-pick skills..."
+echo "[3/4] Installing sparse cherry-pick skills..."
 mkdir -p external-skills
 for entry in "${SPARSE_SKILLS[@]}"; do
   IFS='|' read -r skill_name url branch subpath sha <<< "$entry"
@@ -185,9 +184,9 @@ EXCLUDE_FILE=".git/info/exclude"
   done
 } > "$EXCLUDE_FILE"
 
-# ── [4/5] Validate ───────────────────────────────────────────
+# ── [4/4] Validate ───────────────────────────────────────────
 echo ""
-echo "[4/5] Validating..."
+echo "[4/4] Validating..."
 BROKEN=0
 TOTAL=0
 for skill_dir in skills/*/; do
@@ -211,13 +210,6 @@ if [ "$BROKEN" -eq 0 ]; then
 else
   echo "  ✗ $BROKEN/$TOTAL skills broken — try re-running ./setup.sh"
   exit 1
-fi
-
-# ── [5/5] RTK ────────────────────────────────────────────────
-if command -v rtk >/dev/null 2>&1; then
-  echo "  ✓ rtk present ($(rtk --version 2>/dev/null | head -1 || echo unknown))"
-else
-  echo "  ⚠ rtk not on PATH — see RTK.md for install (token compression hook will no-op)"
 fi
 
 echo ""

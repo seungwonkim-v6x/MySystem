@@ -38,8 +38,7 @@ Debug paths swap step 1 for `/investigate`.
   don't write custom ones. See ADR-0001.
 - **Skill whitelist** — only skills mapped to one of the 8 workflow steps may
   be invoked autonomously by the coordinator. Everything else runs only when
-  the user types its name. One documented exception:
-  `learning-opportunities-auto` (see CLAUDE.md).
+  the user types its name.
 - **Boil the lake** — when AI makes the marginal cost of completeness near
   zero, prefer the complete implementation over the 80% shortcut. Originated
   in gstack's philosophy; absorbed by MySystem as a judgment criterion.
@@ -85,7 +84,6 @@ of the above; they go through Claude Code's marketplace mechanism
 |---|---|---|
 | `CLAUDE.md` | Operating rules — workflow, skill whitelist, repo mode | yes |
 | `CONTEXT.md` | This file | yes |
-| `RTK.md` | Notes on the internal `rtk` token-compression proxy | yes |
 | `settings.json` | Claude Code harness config + plugin enablement | yes |
 | `setup.sh` / `install.sh` | Bootstrap external repos + plugins | yes |
 | `hooks/` | SessionStart / PreToolUse / Stop hooks | yes |
@@ -106,10 +104,9 @@ of the above; they go through Claude Code's marketplace mechanism
 | [garrytan/gstack](https://github.com/garrytan/gstack) | EXTERNAL_REPOS (full clone) | workflow steps 1-3, 6, 8 |
 | [obra/superpowers](https://github.com/obra/superpowers) | SPARSE_SKILLS (one skill) | workflow step 7 |
 | [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code) | SPARSE_SKILLS (one skill) + firecrawl MCP | workflow step 2 |
-| [DrCatHicks/learning-opportunities](https://github.com/DrCatHicks/learning-opportunities) | Plugin marketplace | outside workflow (post-commit nudge) |
 | 12 reference repos | REFERENCE_REPOS (clone-only) | grepped on demand |
 | [nexu-io/html-anything](https://github.com/nexu-io/html-anything) | Visual system only (CSS adapted) | preview hook |
-| [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) | Plugin marketplace | frontend-design, context7, code-review |
+| [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) | Plugin marketplace | frontend-design, context7, code-review, figma |
 
 ## What to read first
 

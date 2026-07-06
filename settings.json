@@ -85,13 +85,9 @@
       "mcp__claude_ai_Slack__slack_search_channels",
       "mcp__claude_ai_Slack__slack_search_users",
       "mcp__pencil",
-      "Bash(rtk ls *)",
-      "Bash(rtk du *)",
       "Bash(find ~/Downloads/new-landing -type f \\\\\\( -name \"*.jpg\" -o -name \"*.jpeg\" -o -name \"*.png\" -o -name \"*.webp\" -o -name \"*.mp4\" -o -name \"*.webm\" -o -name \"*.mov\" -o -name \"*.svg\" \\\\\\) | head -40)",
       "Read(//Users/seungwonkim/Downloads/new-landing/**)",
-      "Bash(rtk grep *)",
       "Bash(awk '/<script>/,/<\\\\/script>/' /Users/seungwonkim/Downloads/new-landing/landing-sample.html)",
-      "Bash(rtk wc *)",
       "Bash(bash -n ~/.claude/hooks/render-md.sh)",
       "Bash(sed -e 's|PLACEHOLDER|__TRACKED_VAR__|' /tmp/template.txt)",
       "Bash(echo \"exit=$?\")",
@@ -100,8 +96,6 @@
       "Bash(git commit -m ' *)",
       "Bash(git push *)",
       "Bash(xcodegen generate *)",
-      "Bash(rtk find *)",
-      "Bash(rtk git *)",
       "Bash(ln -s \"/Users/seungwonkim/Documents/vprop/.claude/worktrees/VP-790-reva-marketing-v1/web/app/\\(marketing\\)\" \"/Users/seungwonkim/Documents/vprop/web/app/\\(marketing\\)\")",
       "Read(//Users/seungwonkim/Documents/vprop/web/app/**)",
       "Read(//Users/seungwonkim/Documents/vprop/web/**)",
@@ -195,15 +189,6 @@
             "command": "python3 ~/.claude/hooks/env-file-protection.py"
           }
         ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "rtk hook claude"
-          }
-        ]
       }
     ],
     "Stop": [
@@ -232,9 +217,6 @@
     "frontend-design@claude-plugins-official": true,
     "context7@claude-plugins-official": true,
     "code-review@claude-plugins-official": true,
-    "learning-opportunities@learning-opportunities": true,
-    "learning-opportunities-auto@learning-opportunities": true,
-    "orient@learning-opportunities": true,
     "figma@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
@@ -242,12 +224,6 @@
       "source": {
         "source": "git",
         "url": "https://github.com/anthropics/claude-plugins-official.git"
-      }
-    },
-    "learning-opportunities": {
-      "source": {
-        "source": "git",
-        "url": "https://github.com/DrCatHicks/learning-opportunities.git"
       }
     }
   },

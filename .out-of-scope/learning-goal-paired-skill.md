@@ -2,6 +2,10 @@
 
 **Decided:** 2026-05-17 during v0.33.0 /office-hours + /deep-research.
 
+**Status (2026-07-07): resolved against adoption** — the six-week check never
+ran; the learning-opportunities plugin family itself was removed from MySystem
+(hook noise, no observed value; see CHANGELOG). Do not adopt learning-goal.
+
 ## What it is
 
 [DrCatHicks/learning-goal](https://github.com/DrCatHicks/learning-goal) — the

@@ -142,6 +142,6 @@ Do NOT reopen because:
 - [ADR-0007](../docs/adr/0007-skill-cherry-pick-batch-v0.37.md) —
   SHA-pin amendment. Demonstrates the cost of per-skill pinning at 4
   autonomous skills; 12 hooks would 3× that cost.
-- `learning-opportunities` plugin (v0.33.0) — accepted; demonstrates
-  that we're not anti-plugin. Plugins fitting the workflow get adopted;
-  this one didn't fit.
+- `learning-opportunities` plugin (v0.33.0, since removed 2026-07-07) —
+  accepted at the time; demonstrates that we're not anti-plugin. Plugins
+  fitting the workflow get adopted; this one didn't fit.

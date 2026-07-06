@@ -46,8 +46,7 @@ no API keys.
 
 | Marketplace | Plugins | Role |
 |---|---|---|
-| [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) | `frontend-design`, `context7`, `code-review` | Official starter plugins |
-| [DrCatHicks/learning-opportunities](https://github.com/DrCatHicks/learning-opportunities) (CC-BY-4.0) | `learning-opportunities`, `learning-opportunities-auto`, `orient` | Post-commit nudge for 10-15 min learning exercises (max 2/session) |
+| [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) | `frontend-design`, `context7`, `code-review`, `figma` | Official starter plugins |
 
 All external repos are always pulled at latest default branch; never pinned.
 Managed via [`setup.sh`](./setup.sh) (no git submodules, no YAML manifest).
@@ -57,7 +56,7 @@ skill when no public alternative exists.
 
 ## Layout
 
-- `CLAUDE.md`, `RTK.md` — global rules loaded every session (CLAUDE.md re-injected by Claude Code natively after `/compact`)
+- `CLAUDE.md` — global rules loaded every session (re-injected by Claude Code natively after `/compact`)
 - `rules/*.md` — detailed rules loaded by Anthropic's native `.claude/rules/` mechanism. Two are always-loaded (`operating-principles.md`, `trust-boundaries.md`). `repo-self-management.md` is path-scoped via absolute `~/.claude/` paths so it triggers only when editing MySystem itself, not when working in vProp/cc-guard/etc. See ADR-0009. (`gbrain-protocol.md` was removed 2026-06-11 with the gbrain excision — see ADR-0008 SUPERSEDED.)
 - `CONTEXT.md` — project glossary (who, why, vocabulary, install mechanisms)
 - `docs/adr/` — Architecture Decision Records for MySystem itself
