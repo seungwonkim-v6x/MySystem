@@ -12,6 +12,26 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [0.47.0] - 2026-07-07
+
+**Step 4 gains a design-discipline layer: native `/frontend-design` (taste) + a machine-checkable `DESIGN.md` rider (bans), wired on material UI changes. The broader "narrate silent decisions" rule was reviewed and deliberately held — no real trigger yet.**
+
+Full pipeline ran: /office-hours (design doc, re-scoped twice — UI-taste → generation-time guardrail → domain-agnostic silent-decision surfacing), /deep-research (Anthropic docs + GitHub: frontend-design semantics, taste-skill MIT/extractable, decision-surfacing prior art, hook-enforceability), /autoplan with four adversarial voices (Codex + CEO/Eng/DX subagents) that converged on holding the narration half.
+
+### Added
+
+- **`templates/DESIGN.md`** — per-project design rider (copied in like CONTEXT.md.template). Machine-checkable bans only (h-screen→min-h-[100dvh], emoji-as-icon, flex-% math→grid, generic spinner→skeleton, mandatory loading/empty/error states, bold-variance no-centered-hero, packed-density no-card-in-card) + named design presets (calm/balanced/bold, never a raw number) + a human-facing "how to tune this" header. Adapted from `Leonxlnx/taste-skill` (MIT), stack-agnostic subset only — the whole SKILL.md was NOT vendored.
+- **`docs/adr/0013-taste-rider-and-held-narration.md`** — records native frontend-design + extracted rider vs vendored taste-skill, the domain-agnostic surfacing concept, and why narration was held.
+
+### Changed
+
+- **`CLAUDE.md`** — Step→Skill table Step 4 now loads `/frontend-design` + the `DESIGN.md` rider on a *material UI change*; `/frontend-design` added to the autonomous whitelist as a **materiality-gated carve-out** (new UI or reshaping, NOT any UI file touched); new "Step 4 — design discipline" subsection defines the two-layer load, the explicit-load requirement (frontend-design does not read DESIGN.md), and precedence (frontend-design wins on taste; rider bans are hard).
+- **`rules/operating-principles.md`** — "Harness, Not Model" records the narration rule as a resolved hook-enforcement candidate (negative result).
+
+### Hook-enforcement candidates
+
+- **inline-decision-narration** — HELD, not shipped. Investigated and found irreducibly prompt-level: no hook event fires on a model's judgment (`MessageDisplay` is display-only), so it cannot be enforced. Also lacked a real trigger. Documented negative result, not a TODO. Re-open only after 2-3 real silent-Step-4-decision incidents are logged; if built, pair with a `/retro` transcript-sampling audit + default-to-delete kill date.
+
 ## [0.46.0] - 2026-07-03
 
 **Step 9 ships: `/ai-review-loop` — every AI reviewer reachable on a PR becomes one converging review committee, with the user's prior decisions constitutionally senior to any model's re-litigation.**
