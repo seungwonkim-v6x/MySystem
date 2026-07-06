@@ -12,6 +12,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [0.47.1] - 2026-07-07
+
+**Two noisy integrations are gone: the rtk token-compression hook no longer rewrites every Bash command, and the learning-opportunities plugin family no longer fires post-commit learning nudges (it false-positive-triggered on non-commit git commands, including twice during this very removal session).**
+
+### Removed
+
+- **rtk PreToolUse hook** — the `rtk hook claude` Bash-matcher hook block, all six `rtk *` permission allowlist entries, `RTK.md` (and its `.gitignore` whitelist line + `CLAUDE.md` `@RTK.md` import), and setup.sh's RTK verification step (banners renumbered `[1/5]`→`[1/4]`). Direct `rtk` CLI use still works for anyone who has the binary; MySystem just no longer wires or documents it.
+- **learning-opportunities plugin family** — `learning-opportunities`, `learning-opportunities-auto`, and `orient` removed from `enabledPlugins`, and the DrCatHicks marketplace removed from `extraKnownMarketplaces`. The plugins were also uninstalled locally (`claude plugin uninstall` × 3 + marketplace remove); on any other machine, run the same uninstalls once after pulling — key removal alone does not clear machine-local installed state.
+
+### Changed
+
+- **`CLAUDE.md`** — dropped the "Exception — learning-opportunities plugin" whitelist carve-out and the `RTK.md` mention in precedence level 3b; the skill whitelist now has no exceptions.
+- **Docs consistency sweep** — README/SETUP/CONTEXT plugin tables now match `settings.json` exactly (including the previously undocumented `figma` plugin); `CONTEXT.md` drops the RTK.md and DrCatHicks rows; `operating-principles.md` "Harness, Not Model" example rewired after losing its rtk example; ADR-0006 gained an amendment note (rtk hook-ordering prose is now historical); two `.out-of-scope/` records (`custom-frequency-wrapper`, `learning-goal-paired-skill`) closed with status notes — their reconsider-triggers could never fire post-removal.
+
+### Hook-enforcement candidates
+
+- (none this release — this release deletes hooks rather than adding prompt-only rules)
+
 ## [0.47.0] - 2026-07-07
 
 **Step 4 gains a design-discipline layer: native `/frontend-design` (taste) + a machine-checkable `DESIGN.md` rider (bans), wired on material UI changes. The broader "narrate silent decisions" rule was reviewed and deliberately held — no real trigger yet.**
