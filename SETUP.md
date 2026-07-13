@@ -1,217 +1,322 @@
 # MySystem Setup Guide
 
-Personal Claude Code configuration — skills, agents, hooks, global rules —
-maintained at [seungwonkim-v6x/MySystem](https://github.com/seungwonkim-v6x/MySystem).
+This guide installs one versioned workflow for Claude Code and Codex. The Git
+checkout at `~/.claude` is canonical; generated Codex instructions and links are
+derived from it.
 
-This file is the single source of truth for setup. Claude Code can read it
-and execute every step; a human can read it and run the same commands.
+## Prerequisites
 
-## Setup on a new machine
+Required:
 
-### Option A — Ask Claude (recommended)
+- `git`
+- Bash 3.2 or newer
+- `jq`
+- `python3`
 
-Start `claude`, then paste:
+Optional but expected by specific workflows:
 
-> Read https://github.com/seungwonkim-v6x/MySystem/blob/main/SETUP.md and execute it on this machine.
+- `bun` for gstack browser tooling
+- `bats` for the local contract suite
+- Codex CLI for Codex sessions and conditional profile probes
+- Claude Code for Claude sessions and Claude plugin activation
 
-Claude will:
+On macOS with Homebrew:
 
-1. Check that `git` is available.
-2. If `~/.claude` already exists, move it to `~/.claude.backup.<timestamp>`.
-3. `git clone https://github.com/seungwonkim-v6x/MySystem.git ~/.claude`
-4. `cd ~/.claude && ./setup.sh`
-5. Remind you to install `bun` if missing (gstack's `browse` skill needs it).
+```bash
+brew install git jq python bats-core bun
+```
 
-### Option B — One-liner (curl | bash)
+## Fresh install
+
+One-liner:
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/seungwonkim-v6x/MySystem/main/install.sh)
 ```
 
-This runs [`install.sh`](./install.sh), which does exactly what Option A does.
-
-### Option C — Manual step-by-step
+Manual:
 
 ```bash
-# 1. Back up any existing ~/.claude
 [ -e ~/.claude ] && mv ~/.claude ~/.claude.backup.$(date +%Y%m%d-%H%M%S)
-
-# 2. Clone
 git clone https://github.com/seungwonkim-v6x/MySystem.git ~/.claude
-
-# 3. Bootstrap external skills + gstack setup
-cd ~/.claude && ./setup.sh
+cd ~/.claude
+./setup.sh
 ```
 
-## Updating an existing machine
+Setup updates gstack and sparse sources, validates Claude skills, renders Codex
+projections, safely migrates approved legacy Codex paths, installs links, then
+runs the structural doctor. The final line should resemble:
+
+```text
+SUMMARY profile=core PASS=<count> WARN=1 FAIL=0 exit=0
+```
+
+The normal warning says conditional profiles were intentionally not probed.
+Start a new Claude Code or Codex session after setup. For Orca, create a new
+Codex session so the host refreshes its merged hooks.
+
+## Update
 
 ```bash
 cd ~/.claude
 git pull
-./setup.sh    # re-pulls gstack and re-registers installed skill dirs
+./setup.sh
 ```
 
-`setup.sh` is idempotent — running it twice is safe.
+Warm local parity updates avoid network work:
 
-### Persistent memory on a fresh machine
+```bash
+./setup.sh --parity-only
+```
 
-No setup step needed. gbrain was removed 2026-06-11 (PGLite WASM dead on
-macOS 26 — see [ADR-0008](./docs/adr/0008-gbrain-as-memory-layer.md) SUPERSEDED).
-Persistent recall is now two plain-file layers that need no activation:
-file-based memory at `~/.claude/projects/<proj>/memory/` (loaded every
-session) and the seungwon-wiki Obsidian vault. No MCP, no daemon, no SHA pin.
+## Command reference
 
-## Prerequisites
+```text
+./setup.sh
+    Update external skills, render/install parity, and run core doctor.
 
-- **git** (required)
-- **bun** (required by gstack's `browse` skill — headless browser)
-  ```bash
-  curl -fsSL https://bun.sh/install | bash
-  ```
+./setup.sh --check
+    Read-only projection, link, skill, and hook check. No network or repair.
 
-## What's inside
+./setup.sh --parity-only
+    Render and install only parity-managed paths. No external repository update.
 
-| Path | Purpose |
-|------|---------|
-| `CLAUDE.md` | Global rules auto-loaded every session (re-injected after `/compact`) |
-| `rules/*.md` | Native `.claude/rules/`: 2 always-loaded (operating-principles, trust-boundaries) + 1 path-scoped to `~/.claude/**` (repo-self-management). See ADR-0009. |
-| `scripts/` | Ops helpers — `claude-md-budget.sh` (always-loaded chain + Codex CLI cap check) |
-| `CONTEXT.md` | Project glossary — who, why, vocabulary, install mechanisms |
-| `docs/adr/` | Architecture Decision Records for MySystem itself |
-| `.out-of-scope/` | "Considered, chose no" decision records |
-| `settings.json` | Claude Code harness config (permissions, hooks, plugins, model) |
-| `skills/` | User-owned (tracked: `verify-test/`, `deep-research/`, `aside-qa/`, `ai-review-loop/`) + external skills (symlinked, ignored) |
-| `external-skills/` | Cache for sparse cherry-picked repos; ignored |
-| `hooks/` | Tracked |
-| `setup.sh` | Declares + fetches external skills; idempotent |
-| `install.sh` | `curl | bash` entry point for fresh machines |
-| `VERSION`, `CHANGELOG.md` | Semver + history |
+./setup.sh doctor [--require PROFILE] [--json] [--verbose]
+    Read-only diagnostics. PROFILE is core, material-ui, browser, or figma.
 
-## External dependencies
+./setup.sh --recover
+    Restore the latest retained approved legacy backup if its destination still
+    points to the expected MySystem target. Repeat to restore earlier migrations.
 
-MySystem uses two install mechanisms in `setup.sh`:
+./setup.sh ... --codex-home PATH
+    Add an existing user-owned Codex home. Repeatable; spaces are supported.
+```
 
-### Full-repo install (`EXTERNAL_REPOS`)
+Invalid invocation exits `2`. Doctor exits `1` when any core check fails;
+warnings exit `0`.
 
-The external repo's own setup script installs 20+ skills.
+## Managed paths
 
-| Name | URL | Role |
-|------|-----|------|
-| gstack | https://github.com/garrytan/gstack.git | Workflow skills (autoplan, ship, review, office-hours, investigate, retro, …) |
+| Destination | Target | Behavior |
+|---|---|---|
+| `~/.claude/AGENTS.md` | `codex/AGENTS.project.md` | MySystem-only supplement |
+| `~/.codex/AGENTS.md` | `codex/AGENTS.global.md` | global Codex workflow |
+| alternate `CODEX_HOME/AGENTS.md` | same global projection | instructions only |
+| `~/.codex/hooks` | `~/.claude/hooks` | shared hook implementations |
+| `~/.codex/hooks.json` | `~/.claude/codex/hooks.json` | default Codex registration |
+| portable `~/.agents/skills/<name>` | canonical complete skill directory | required skills |
 
-### Sparse cherry-pick (`SPARSE_SKILLS`)
+Alternate-home config, auth, history, sessions, databases, plugins, MCP state,
+and host metadata are read-only. Orca's `hooks.json` is inspected as a semantic
+superset and never rewritten by MySystem.
 
-Clone repo, symlink **one subpath** as a single skill. Use when you want a
-specific skill from a larger collection without inheriting siblings.
+Destination classification is fail-closed:
 
-Format: `"skill-name|url|branch|subpath[|optional-commit-SHA]"`. Optional 5th
-field pins to a specific commit (autonomous skills only — see ADR-0007).
+- absent, correct/wrong/broken symlink, or empty placeholder: safe link install
+- exact approved legacy file/tree: move to a named backup, then link
+- unknown real file, non-empty directory, special file, unsafe parent: preserve
+  it and fail before any managed link mutation
 
-| Skill | URL | Subpath | Pin? | Notes |
-|-------|-----|---------|------|-------|
-| requesting-code-review | https://github.com/obra/superpowers.git | `skills/requesting-code-review` | unpinned | Adversarial 2nd-pass review (Step 7) |
-| deep-research | https://github.com/affaan-m/everything-claude-code.git | `.agents/skills/deep-research` | unpinned | Step 2. Requires firecrawl MCP. |
-| **verification-before-completion** | https://github.com/obra/superpowers.git | `skills/verification-before-completion` | pinned `f2cbfbefebbf` | Step 5 augment (Iron Law: no completion claims without evidence) |
-| **test-driven-development** | https://github.com/obra/superpowers.git | `skills/test-driven-development` | unpinned | User-invoked Step 4 modifier (Iron Law: no prod code without failing test) |
-| **diagnose** | https://github.com/mattpocock/skills.git | `skills/engineering/diagnose` | pinned `e74f0061bb67` | Debug Step 1 alternate (feedback-loop-first) |
-| **grill-with-docs** | https://github.com/mattpocock/skills.git | `skills/engineering/grill-with-docs` | pinned `e74f0061bb67` | Pre-Step-3 (interview vs CONTEXT.md/ADRs) |
-| **prototype** | https://github.com/mattpocock/skills.git | `skills/engineering/prototype` | unpinned | User-invoked throwaway runnable code |
-| **triage** | https://github.com/mattpocock/skills.git | `skills/engineering/triage` | unpinned | User-invoked (collaborative-repo issues) |
-| **zoom-out** | https://github.com/mattpocock/skills.git | `skills/engineering/zoom-out` | unpinned | User-invoked navigation aid |
-| **handoff** | https://github.com/mattpocock/skills.git | `skills/productivity/handoff` | pinned `e74f0061bb67` | Cross-agent continuation doc (distinct from `/context-save`) |
+## Capability profiles
 
-### Reference repos (`REFERENCE_REPOS`)
+Run the matching preflight immediately before a conditional workflow:
 
-Plain `git clone` into `references/<name>/`. **No symlinks, no skill behaviour** —
-these are read-only knowledge bases for human + agent lookup. Curated entry
-point: [`references/INDEX.md`](./references/INDEX.md). Twelve seed repos cover
-system design, distributed systems papers, CS hazards (falsehoods), design
-patterns, engineering blogs, LLM / AI agents, design systems + Tailwind +
-React components.
+```bash
+./setup.sh doctor --require material-ui
+./setup.sh doctor --require browser
+./setup.sh doctor --require figma
+```
 
-All sources are **cloned, not pinned** — `setup.sh` always pulls each repo's
-default branch.
+`material-ui` requires the enabled `frontend-design` Codex plugin. `browser`
+requires the local `aside-qa` skill and an enabled Aside MCP registration in
+ordinary Codex. Supported Orca homes may report the declared `aside` CLI
+fallback because Orca regenerates its host-owned MCP inventory on launch.
+`figma` requires the enabled Figma plugin and MCP registration. Structural
+success does not prove authentication or a live tool. The active coordinator
+must perform one documented non-mutating tool call before relying on it.
 
-### Claude Code plugins
+On a machine where the `aside` CLI is already installed but Codex has no Aside
+MCP entry, the explicit runtime-owned registration is:
 
-`settings.json` registers one marketplace in `extraKnownMarketplaces` and
-enables its plugins in `enabledPlugins`:
+```bash
+codex mcp add aside -- "$(command -v aside)" mcp
+```
 
-| Marketplace | Plugins |
-|---|---|
-| `claude-plugins-official` (Anthropic) | `frontend-design`, `context7`, `code-review`, `figma` |
+Start a new Codex session afterward. MySystem diagnoses this state but does not
+write runtime-owned MCP configuration automatically.
 
-Claude Code clones the marketplace on first session start after `git pull`,
-then fetches and activates the enabled plugins. **No `setup.sh` re-run is
-required, and no API keys are needed.** To confirm activation in a fresh
-session, run `/plugin list`.
+## Recovery and rollback
 
-To disable any one plugin, flip its `enabledPlugins` entry to `false` in
-`settings.json` and commit. The change propagates on the next `git pull` on
-every machine.
+### Restore an approved legacy path
 
-**The marketplace URL is unpinned** (tracks upstream `main`).
+```bash
+cd ~/.claude
+./setup.sh --recover
+```
 
-### MCP keys
+Recovery stops if the managed destination or retained backup differs from its
+recorded content identity. A missing backup is treated as a completed atomic
+restore only when the destination matches that identity; otherwise the migration
+record is retained as a conflict. Backups are named beside their former
+destination as `*.mysystem-backup.<UTC>.<pid>.<counter>` and are retained with
+user-only permissions until deliberately removed after release verification.
 
-The `deep-research` skill needs a firecrawl API key. Stored as plain text in
-`~/.claude.json` under `mcpServers.firecrawl.env.FIRECRAWL_API_KEY` — that
-file is outside the tracked repo and never committed. On a new machine, you
-must add your own key after running `setup.sh`.
+### Roll back generated parity
 
-### Adding another external skill repo
+1. Check out the prior reviewed MySystem tag.
+2. Run `./setup.sh --parity-only`.
+3. Run `./setup.sh --check`.
 
-1. Pick a mechanism: full-repo (sibling skills come along) or sparse cherry-pick
-   (single skill only).
-2. Append to the right list in [`setup.sh`](./setup.sh):
-   - Full repo: `EXTERNAL_REPOS+=( "name|url|main" )`
-   - Sparse: `SPARSE_SKILLS+=( "skill-name|url|main|subpath" )` (unpinned) OR `SPARSE_SKILLS+=( "skill-name|url|main|subpath|commit-SHA" )` (pinned per ADR-0007 — required for autonomous skills)
-3. Add a row to the table above.
-4. Never use git submodules — MySystem moved away from them in v0.27.0.
+This restores direct links to the selected checkout. The guarantee is
+recoverability per managed path, not release-wide atomic rollback. Gstack and
+unpinned sparse upstream contents are restored exactly only when their source
+SHA is separately recorded and checked out.
 
-### Adding another reference repo
+### Interrupted migration
 
-1. Append to `REFERENCE_REPOS` in `setup.sh`:
-   ```
-   "local-name|https://github.com/org/repo.git|branch"
-   ```
-2. Add a row to `references/INDEX.md` under the right category with a
-   one-line "Use when" hook.
-3. Run `./setup.sh` — clones into `references/<local-name>/`.
+The installer writes a durable transaction before moving an approved legacy
+path. On the next run it either restores the prior path or completes the exact
+recorded link transition. Lock, transaction, and migration leaves are validated
+without following symlinks. Backup type and mode-independent content identity
+are recorded so concurrent replacement cannot be mistaken for completed
+recovery. A conflict is preserved and reported.
 
-## Troubleshooting
+## Host refresh
 
-- **`skills/gstack` has uncommitted local changes → pull fails**
-  ```bash
-  cd ~/.claude/skills/gstack
-  git stash              # or: git reset --hard origin/main
-  cd ~/.claude && ./setup.sh
-  ```
+Orca owns its merged runtime `hooks.json`. After default hook registration
+changes, start a new Codex session from Orca and rerun:
 
-- **`bun: command not found`** — install bun (see Prerequisites).
+```bash
+cd ~/.claude
+./setup.sh --check
+```
 
-- **SessionStart hook complains about submodules** — the old submodule
-  config was removed in v0.27.0. Restart Claude Code (the error comes
-  from a cached process); if it persists, verify `.gitmodules` is gone.
+If `HOST_REFRESH_REQUIRED` remains, inspect the reported runtime path and Orca
+hook UI. Do not replace the host file with `~/.codex/hooks.json`.
 
-- **A gstack skill disappeared after `./setup.sh`** — gstack dropped it
-  upstream. Check gstack's CHANGELOG at https://github.com/garrytan/gstack.
+## External skills
 
-- **`git status` shows all 20+ gstack skills as untracked** — `.git/info/exclude`
-  hasn't been written yet. Run `./setup.sh` once; they'll stop showing.
+`setup.sh` has two external source mechanisms:
 
-- **`/deep-research` fails: "firecrawl tool not found"** — firecrawl MCP isn't
-  configured. Add an entry to `~/.claude.json`:
-  ```json
-  "firecrawl": { "command": "npx", "args": ["-y", "firecrawl-mcp"],
-                 "env": { "FIRECRAWL_API_KEY": "fc-..." }, "type": "stdio" }
-  ```
-  Restart Claude Code. Get a key at https://firecrawl.dev.
+| Mechanism | Current source | Ownership |
+|---|---|---|
+| `EXTERNAL_REPOS` | gstack | upstream setup generates Claude and Codex-native skills |
+| `SPARSE_SKILLS` | obra/superpowers | one complete skill subdirectory; autonomous source pinned where required |
+
+Tracked local skills are `verify-test`, `deep-research`, `aside-qa`, and
+`ai-review-loop`. `deep-research` is vendored and provider-adapted; it is no
+longer a sparse install. Seven unused sparse skills were removed in v0.44.0.
+
+To add a workflow skill:
+
+1. Follow the canonical workflow and update `CLAUDE.md` mapping/declarations.
+2. Add exactly one typed source entry to `codex/parity-contract.json`.
+3. Add an external source to `setup.sh` only when it is not tracked locally or
+   generated by gstack.
+4. Add installer/doctor fixture coverage and update this table.
+5. Run the deterministic suite and the mandatory behavioral release scenarios.
+
+Never use git submodules. Unexpected cache or skill paths are preserved rather
+than deleted.
+
+## Diagnostics
+
+Every warning/failure includes `STATUS`, stable `CHECK_ID`, subject, Problem,
+Cause, Fix, and one of the anchors below. `--json` emits the same fields plus a
+summary.
+
+### Parity contract
+
+`CONTRACT_INVALID` means the tracked manifest is absent, malformed, incomplete,
+or disagrees with the canonical hook registration. Budget types, digest lists,
+the exact safety/convenience tuples, and hook command argv are validated before
+contract-derived paths are read. Restore the contract and registration from the
+reviewed release.
+
+### Generated projections
+
+`STALE_PROJECTION` or a render failure means canonical sources, markers, skill
+declarations, source closure, or byte budgets no longer match generated files.
+Run `./setup.sh --parity-only`; do not edit generated files.
+
+### Codex home unsafe
+
+Explicit homes must be existing absolute user-owned paths without control
+characters, unsafe symlink components, world-writable ownership, or overlap
+with protected paths.
+
+### Default Codex home missing
+
+Run `./setup.sh --parity-only` to initialize the default managed directory.
+
+### Managed links
+
+A required link is absent or resolves outside the canonical checkout. Run the
+parity installer. Unknown real content must be inspected and moved manually.
+
+### Hook registration
+
+Default `hooks.json` is malformed or lacks a semantic event/matcher/script
+tuple. Run the parity installer, then review/trust hooks in the Codex UI.
+
+### Hook safety missing
+
+A required safety tuple is missing from default Codex. Do not continue with
+mutating tool use until `./setup.sh --parity-only` passes.
+
+### Host hooks
+
+The alternate host does not expose an inspectable hook registration. Confirm
+its hook support manually; MySystem will not create host-owned state.
+
+### Host refresh required
+
+Start a new Orca Codex session, rerun doctor, and inspect the host integration
+if the safety tuple remains absent.
+
+### Host convenience degraded
+
+Rendering, preview, or update convenience behavior is missing. Safety may still
+be intact; refresh the host or continue without that convenience.
+
+### Core skill missing
+
+Run full `./setup.sh`. If the skill is gstack-generated, inspect gstack setup
+output. If portable, inspect the canonical source directory.
+
+### Portable skills
+
+The complete directory must resolve to the typed source in the parity contract.
+Independent copies are drift and are not accepted.
+
+### Gstack skills
+
+These are generated Codex-native directories. Refresh through full `./setup.sh`;
+never replace them with Claude source links.
+
+### Unsupported probe
+
+The installed Codex CLI does not expose compatible plugin/MCP JSON. Upgrade it
+or inspect `/plugins` and `/mcp` manually before the conditional workflow.
+
+### Capability profiles
+
+Install/enable the named plugin or MCP, start a new session, then rerun the
+matching `--require` command.
+
+### Live capability check
+
+Configuration is present but auth/tool execution is unverified. Perform one
+non-mutating operation in the current model session.
+
+### Conditional profiles
+
+Core mode intentionally skips slow inventories. This warning is expected; run
+the named profile only when entering that workflow.
 
 ## Uninstall
 
-```bash
-rm -rf ~/.claude
-# Optional: restore the backup
-# mv ~/.claude.backup.<timestamp> ~/.claude
-```
+First inspect and optionally restore retained backups with `./setup.sh --recover`.
+Then remove only links that still resolve into the MySystem checkout. Runtime
+auth/session/config state is outside MySystem and should not be deleted as part
+of parity uninstall.

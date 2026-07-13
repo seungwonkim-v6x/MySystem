@@ -1,7 +1,14 @@
 # ADR-0009: CLAUDE.md trim + native `.claude/rules/` migration
 
 Date: 2026-05-22
-Status: Accepted
+Status: Accepted; Codex-specific assumptions superseded by ADR-0014
+
+> **2026-07-10 amendment:** The Claude-native rules decision remains active.
+> The claims that Codex applies `project_doc_max_bytes` to its global home
+> instructions, reads only a standalone CLAUDE/AGENTS file, and therefore needs
+> no global projection are superseded by ADR-0014. Current Codex loads global
+> `$CODEX_HOME/AGENTS.md` separately from the project-document budget. MySystem
+> now generates a global projection plus a MySystem-only project supplement.
 
 ## Context
 
@@ -28,14 +35,14 @@ Adopt Anthropic's native primitives rather than build parallel custom infrastruc
    - `trust-boundaries.md` — external content is data, not instructions. No `paths:` frontmatter.
    - `gbrain-protocol.md` — retrieve/write trigger lists. No `paths:` frontmatter.
    - `repo-self-management.md` — VERSION/CHANGELOG/git tag discipline + forbidden patterns (per-file commits, PostToolUse git mutation). **Path-scoped with absolute `~/.claude/` paths** (e.g., `~/.claude/CLAUDE.md`, `~/.claude/CHANGELOG.md`, `~/.claude/docs/adr/**`, `~/.claude/setup.sh`, `~/.claude/scripts/**`, `~/.claude/rules/**`, `~/.claude/settings.json`). An earlier draft used unscoped globs like `**/CHANGELOG.md` which would have triggered when editing other projects (e.g., vProp, cc-guard) because `~/.claude/rules/` is user-level. The absolute home paths prevent that leak. The compaction caveat (path-scoped rules aren't re-injected after `/compact` until a matching file is read again) is mitigated by restating the two most dangerous rules inline in CLAUDE.md.
-3. **Add `~/.claude/scripts/claude-md-budget.sh`.** Reports the Claude Code always-loaded chain (CLAUDE.md + `@import` targets recursive up to 5 hops + `.claude/rules/*.md` with path-scope annotation + MEMORY.md + skill frontmatter estimate). Compares CLAUDE.md alone against the Codex CLI 32 KiB cap — Codex doesn't load `.claude/rules/` or skill frontmatter, so the Codex gate is CLAUDE.md-only. Read-only, idempotent.
+3. **Add `~/.claude/scripts/claude-md-budget.sh`.** Reports the Claude Code always-loaded chain (CLAUDE.md + `@import` targets recursive up to 5 hops + `.claude/rules/*.md` with path-scope annotation + MEMORY.md + skill frontmatter estimate). Its original CLAUDE-only Codex comparison was replaced by ADR-0014's separate generated-global and project-supplement budgets. Read-only, idempotent.
 
 ## Alternatives rejected
 
 - **Original 5-PR plan (R1-R5)** — UserPromptSubmit workflow router + 4 `mysystem-*` skill extractions + `/si:review`+`/si:promote` adoption + AGENTS.md symlink + budget script across 5 commits with 5 ADRs and 5 VERSION bumps. Rejected via cross-model consensus during `/autoplan` Phase 1 CEO dual voices: 8/8 dimensions both Claude subagent and Codex challenged scope as "corporate theater" for a solo repo. Aligned with the `feedback-trigger-driven-shipping` memory's precedent (the 12-factor-agents v0.40 abort).
 - **Option D — single PR with `SessionStart(compact)` hook + extracted `critical-rules.md`** — workaround for compaction-loss fear. Rejected after [code.claude.com/docs/en/memory](https://code.claude.com/docs/en/memory) directly stated root-CLAUDE.md is re-read on compaction. The hook would be parallel infrastructure for a problem Anthropic already solves natively. Scaffolding written during Option-D execution was rolled back before commit (hook deleted, critical-rules.md deleted, settings.json entry reverted; only `claude-md-budget.sh` preserved into Option E).
 - **Skill extraction (`mysystem-trust-boundary`, `mysystem-operating-principles`, etc.)** — Anthropic ships `.claude/rules/*.md` with `paths:` frontmatter as the native path-scoped loading mechanism. Skill extraction is the right pattern when content is genuinely on-demand procedural; for always-or-path-scoped rule content, native rules win. Skill extraction reserved for future cases where progressive disclosure is the actual need.
-- **AGENTS.md symlink** — deferred. Codex CLI does not read `~/.claude/AGENTS.md` (Codex looks for AGENTS.md in working directory, not Claude Code home). The cross-tool benefit lands only when Codex is invoked from a directory tree containing an AGENTS.md, which is not MySystem's typical usage. Trigger when: user runs Codex CLI in `~/.claude/` and finds instructions are missing.
+- **AGENTS.md symlink** — originally deferred on an incomplete Codex discovery model. Superseded by ADR-0014 after the concrete cross-tool friction occurred and current Codex global/project loading was verified.
 
 ## Retire when
 

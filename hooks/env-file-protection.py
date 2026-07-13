@@ -41,6 +41,13 @@ def log_dry_run(file_path: str) -> None:
 
 def main() -> int:
     payload = json.load(sys.stdin)
+    canary_log = os.environ.get("MYSYSTEM_HOOK_CANARY_LOG")
+    if canary_log:
+        try:
+            with open(canary_log, "a", encoding="utf-8") as target:
+                target.write(f"{HOOK_NAME}\n")
+        except OSError:
+            pass
     tool_input = payload.get("tool_input", {})
     file_path = tool_input.get("file_path", "")
     if not file_path:

@@ -1,80 +1,128 @@
 # MySystem
 
-Personal Claude Code setup — skills, agents, hooks, global rules — synced
-across all my machines as `~/.claude/`.
+Personal Claude Code and Codex workflow configuration, versioned once at
+`~/.claude/` and projected into each runtime's native discovery paths.
 
-## Setup on a new machine
+`CLAUDE.md` is the only human-authored workflow. Codex receives generated,
+byte-stable `AGENTS.md` projections of the same marked canonical sections.
+Authentication, history, sessions, model selection, plugins, MCP credentials,
+and host metadata remain owned by each runtime.
 
-**With Claude Code (recommended):**
-
-Start `claude`, then paste:
-
-> Read https://github.com/seungwonkim-v6x/MySystem/blob/main/SETUP.md and execute it.
-
-**One-liner:**
+## Quick start
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/seungwonkim-v6x/MySystem/main/install.sh)
 ```
 
-**Step-by-step / troubleshooting:** see [SETUP.md](./SETUP.md).
-
-## Update an existing machine
+Or install manually:
 
 ```bash
-cd ~/.claude && git pull && ./setup.sh
+git clone https://github.com/seungwonkim-v6x/MySystem.git ~/.claude
+cd ~/.claude
+./setup.sh
 ```
+
+The final summary should contain `FAIL=0`. Start a new Claude Code or Codex
+session after setup. See [SETUP.md](./SETUP.md) for prerequisites, host refresh,
+capability profiles, and recovery.
+
+## Daily commands
+
+```bash
+./setup.sh                         # update skills + install Codex parity
+./setup.sh --parity-only           # local parity install; no network updates
+./setup.sh --check                 # read-only structural check
+./setup.sh doctor --json           # machine-readable diagnostics
+./setup.sh doctor --require browser
+./setup.sh --recover               # restore the latest approved legacy backup
+```
+
+Additional Codex homes are explicit and repeatable:
+
+```bash
+./setup.sh --parity-only --codex-home "/absolute/path/with spaces"
+```
+
+## Ownership model
+
+```text
+CLAUDE.md + rules/*.md
+          |
+          v
+codex/parity-contract.json + scripts/render-codex-agents.sh
+          |
+          +--> codex/AGENTS.global.md  --> ~/.codex/AGENTS.md
+          |                              --> alternate CODEX_HOME/AGENTS.md
+          |
+          `--> codex/AGENTS.project.md --> ~/.claude/AGENTS.md
+
+hooks/ -----------------------------> ~/.codex/hooks
+codex/hooks.json -------------------> ~/.codex/hooks.json
+portable workflow skills ----------> ~/.agents/skills/<name>
+```
+
+The MySystem project supplement is separate so repository release rules do not
+leak into unrelated projects. Gstack skills keep their generated Codex-native
+directories; portable local and sparse skills are linked as complete folders.
+
+## Behavioral parity
+
+Structural parity means the projections, links, required skills, and safety-hook
+registrations are current. Behavioral parity additionally requires the bounded
+manual release scenarios in [TESTING.md](./TESTING.md): feature/debug routing,
+one-step approval advancement, Step 5 verification behavior, Step 9 chaining,
+and project-rule isolation. Tests assert observable state transitions, not exact
+model wording.
+
+Conditional capabilities are closed profiles:
+
+| Profile | Adds | Preflight |
+|---|---|---|
+| `core` | workflow skills and safety hooks | `./setup.sh --check` |
+| `material-ui` | `frontend-design` plugin | `./setup.sh doctor --require material-ui` |
+| `browser` | Aside skill plus MCP registration, or the declared Orca CLI fallback | `./setup.sh doctor --require browser` |
+| `figma` | Figma plugin plus MCP registration | `./setup.sh doctor --require figma` |
+
+A structural MCP result never claims that the current session is authenticated
+or that a live tool call works. The coordinator performs a non-mutating live
+check immediately before relying on that capability.
+
+Parity state rejects linked or unsafe lock/transaction leaves. Approved legacy
+backups retain a mode-independent content identity, so recovery finalizes a
+crash window only when the restored destination still matches that identity.
 
 ## External dependencies
 
-### Skills (workflow)
-
-| Type | Source | Skills adopted |
-|------|--------|----------------|
-| Full repo | [gstack](https://github.com/garrytan/gstack) | workflow skills (autoplan, ship, review, office-hours, investigate, retro, …) |
-| Sparse cherry-pick | [obra/superpowers](https://github.com/obra/superpowers) | `requesting-code-review` (Step 7), `verification-before-completion` (Step 5 augment, SHA-pinned), `test-driven-development` (user-invoked) |
-| Sparse cherry-pick | [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code) | `deep-research` (Step 2, needs firecrawl MCP key) |
-| Sparse cherry-pick | [mattpocock/skills](https://github.com/mattpocock/skills) | `diagnose` (debug alternate, SHA-pinned), `grill-with-docs` (pre-Step-3, SHA-pinned), `handoff` (cross-agent, SHA-pinned), `prototype`, `triage`, `zoom-out` (user-invoked) |
-
-**SHA pinning**: autonomous (workflow-whitelisted) sparse skills are pinned to specific commit SHAs in [`setup.sh`](setup.sh) per [ADR-0007](docs/adr/0007-skill-cherry-pick-batch-v0.37.md). User-invoked skills remain unpinned.
-
-### Claude Code plugins (auto-fetched)
-
-Registered in `settings.json` via `extraKnownMarketplaces` + `enabledPlugins`.
-Claude Code fetches them on the next session start — no extra setup script,
-no API keys.
-
-| Marketplace | Plugins | Role |
+| Type | Source | Adopted behavior |
 |---|---|---|
-| [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) | `frontend-design`, `context7`, `code-review`, `figma` | Official starter plugins |
+| Full repo | [gstack](https://github.com/garrytan/gstack) | Steps 1, 3, 5, 6, 8 and supporting workflows |
+| Sparse | [obra/superpowers](https://github.com/obra/superpowers) | Step 7 plus the Step 5 completion gate |
+| Vendored local | `skills/deep-research/` | Step 2 provider-pluggable research |
+| User-owned local | `verify-test`, `aside-qa`, `ai-review-loop` | Steps 5 and 9 |
+| Claude plugins | `settings.json` | Claude-native conditional capabilities |
+| Codex plugins/MCP | Codex runtime state | Profile-probed, never copied from Claude state |
 
-All external repos are always pulled at latest default branch; never pinned.
-Managed via [`setup.sh`](./setup.sh) (no git submodules, no YAML manifest).
-The MySystem philosophy: **harness existing skills, don't build new ones.**
-New workflow needs → hunt for a public skill first, only add a user-owned
-skill when no public alternative exists.
+Autonomous sparse skills are SHA-pinned where declared in `setup.sh`.
+`requesting-code-review` remains unpinned by the existing ADR policy. Gstack
+owns its generated Codex outputs; MySystem does not replace them with Claude
+source directories.
 
 ## Layout
 
-- `CLAUDE.md` — global rules loaded every session (re-injected by Claude Code natively after `/compact`)
-- `rules/*.md` — detailed rules loaded by Anthropic's native `.claude/rules/` mechanism. Two are always-loaded (`operating-principles.md`, `trust-boundaries.md`). `repo-self-management.md` is path-scoped via absolute `~/.claude/` paths so it triggers only when editing MySystem itself, not when working in vProp/cc-guard/etc. See ADR-0009. (`gbrain-protocol.md` was removed 2026-06-11 with the gbrain excision — see ADR-0008 SUPERSEDED.)
-- `CONTEXT.md` — project glossary (who, why, vocabulary, install mechanisms)
-- `docs/adr/` — Architecture Decision Records for MySystem itself
-- `.out-of-scope/` — explicit "considered, chose no" rationales
-- `settings.json` — harness config (permissions, hooks, plugins)
-- `scripts/` — ops helpers; `claude-md-budget.sh` itemizes the always-loaded chain and Codex CLI cap compliance
-- `skills/` — user-owned (tracked: `verify-test/`, `deep-research/`, `aside-qa/`, `ai-review-loop/`) + external (symlinked by `setup.sh`)
-- `external-skills/` — cache for sparse cherry-picked repos (git-ignored)
-- `hooks/` — tracked (includes a Stop hook that renders substantive assistant turns as kami-parchment HTML in your browser at `~/.claude/previews/latest.html`)
-- `setup.sh` — declares + fetches external skills; idempotent
-- `install.sh` — `curl | bash` bootstrap for fresh machines
-
-## Versioning
-
-Semver. `VERSION` + [`CHANGELOG.md`](./CHANGELOG.md) + `git tag v<X.Y.Z>` per
-release. Workflow-level changes bump minor; breaking changes bump major.
+- `CLAUDE.md` - canonical global workflow prose
+- `rules/` - canonical detailed rules
+- `codex/` - narrow contract, adapter header, generated projections, hook registration
+- `scripts/render-codex-agents.sh` - deterministic projection generator/checker
+- `scripts/install-codex-parity.sh` - isolated safe link installer and recovery boundary
+- `scripts/codex-parity-doctor.sh` - read-only diagnostics and profile probes
+- `skills/` - tracked user-owned skills plus setup-managed external sources
+- `hooks/` - shared safety and convenience hook scripts
+- `tests/` - hook, installer, projection, profile, and workflow-helper contracts
+- `docs/adr/` - architecture decisions
 
 ## Trust
 
-`install.sh` and everything under `setup.sh` runs on your machine with your
-shell privileges. Read them before executing on an unfamiliar host.
+`install.sh`, `setup.sh`, external repository setup scripts, and hooks execute
+with user privileges. The parity installer preflights every managed destination,
+backs up only approved legacy states, and refuses unknown real content. It never
+modifies alternate-home auth, config, session, database, plugin, or MCP state.

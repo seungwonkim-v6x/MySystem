@@ -1,3 +1,4 @@
+<!-- mysystem:section operating-principles:start -->
 # Operating Principles
 
 Always-loaded principles that shape how MySystem work gets done. Loaded by Claude Code's native `.claude/rules/` mechanism (no `paths:` frontmatter = applies to all sessions).
@@ -53,3 +54,4 @@ Behavior adapts to who owns issues:
 ## Harness, Don't Build
 
 Prefer adopting existing public skills over writing custom ones. New workflow needs → first hunt for a public skill, then sparse cherry-pick via `setup.sh` `SPARSE_SKILLS`. Only add to `skills/<name>/` as a tracked user-owned skill when no public alternative exists.
+<!-- mysystem:section operating-principles:end -->

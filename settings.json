@@ -13,7 +13,6 @@
       "WebFetch(domain:github.com)",
       "WebSearch",
       "Read(//private/tmp/**)",
-      "Bash(pnpm run:*)",
       "Bash(git submodule:*)",
       "Bash(python3 -c ':*)",
       "Bash(~/.claude/skills/gstack/bin/gstack-review-read)",
@@ -45,7 +44,6 @@
       "Skill(ship)",
       "Skill(ship:*)",
       "mcp__atlassian__editJiraIssue",
-      "Read(//Users/seungwonkim/Documents/vprop/libs/src/image/**)",
       "mcp__plugin_stripe_stripe__list_subscriptions",
       "mcp__plugin_context7_context7__resolve-library-id",
       "mcp__plugin_context7_context7__query-docs",
@@ -66,7 +64,6 @@
       "mcp__atlassian__addCommentToJiraIssue",
       "Read(//tmp/**)",
       "mcp__claude_ai_Slack__slack_read_channel",
-      "Read(//Users/seungwonkim/Documents/vprop-beatsync/**)",
       "mcp__Playwright__browser_network_requests",
       "mcp__Playwright__browser_close",
       "mcp__notion__notion-update-page",
@@ -91,67 +88,33 @@
       "Bash(bash -n ~/.claude/hooks/render-md.sh)",
       "Bash(sed -e 's|PLACEHOLDER|__TRACKED_VAR__|' /tmp/template.txt)",
       "Bash(echo \"exit=$?\")",
-      "Bash(pnpm --filter @vprop/trigger exec vitest run src/services/hookreelVideo/templates/__tests__/VP782_bugbot2.test.ts)",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
       "Bash(git push *)",
       "Bash(xcodegen generate *)",
-      "Bash(ln -s \"/Users/seungwonkim/Documents/vprop/.claude/worktrees/VP-790-reva-marketing-v1/web/app/\\(marketing\\)\" \"/Users/seungwonkim/Documents/vprop/web/app/\\(marketing\\)\")",
-      "Read(//Users/seungwonkim/Documents/vprop/web/app/**)",
-      "Read(//Users/seungwonkim/Documents/vprop/web/**)",
-      "Bash(/Users/seungwonkim/Documents/vprop/web/node_modules/.bin/tsc --noEmit --jsx preserve --module esnext --moduleResolution bundler --target es2022 --skipLibCheck --strict --esModuleInterop --resolveJsonModule --isolatedModules --types \"node,react\" \"app/\\(marketing\\)/marketing/MarketingInteractions.tsx\" \"app/\\(marketing\\)/marketing/page.tsx\" \"app/\\(marketing\\)/layout.tsx\")",
-      "Bash(/Users/seungwonkim/Documents/vprop/web/node_modules/.bin/tsc --noEmit -p .)",
-      "Bash(mkdir -p \"web/app/\\(marketing\\)/access/steps\")",
-      "Bash(mkdir -p \"web/app/\\(marketing\\)/access/ui\")",
-      "Bash(mv \"web/app/\\(marketing\\)/marketing/onboarding/types.ts\" \"web/app/\\(marketing\\)/access/types.ts\")",
-      "Bash(mv \"web/app/\\(marketing\\)/marketing/onboarding/flow.ts\" \"web/app/\\(marketing\\)/access/flow.ts\")",
-      "Bash(mv \"web/app/\\(marketing\\)/marketing/onboarding/store.ts\" \"web/app/\\(marketing\\)/access/store.ts\")",
       "Read(//Users/seungwonkim/seungwon-wiki/bin/**)",
-      "Read(//Users/seungwonkim/seungwon-wiki/.ingest-state/**)"
+      "Read(//Users/seungwonkim/seungwon-wiki/.ingest-state/**)",
+      "Bash(node ./_probe_tmp.mjs)"
     ],
     "ask": [
-      "Bash(chmod *)",
-      "Bash(chown *)",
       "Bash(dd *)",
-      "Bash(kill *)",
-      "Bash(killall *)",
       "Bash(mkfs *)",
-      "Bash(pkill *)",
       "Bash(rm *)",
-      "Bash(rmdir *)",
       "Bash(shred *)"
     ],
+    "defaultMode": "bypassPermissions",
     "additionalDirectories": [
       "/Users/seungwonkim/.claude",
-      "/tmp/verify-test-1776238005",
-      "/private/tmp/verify-test-1776238005",
-      "/Users/seungwonkim/.gstack/projects/v6x-vprop",
       "/Users/seungwonkim/Documents/cc-guard/src",
       "/private/tmp/claude-501",
       "/Users/seungwonkim/Documents/cc-guard/.github/workflows",
       "/Users/seungwonkim/Documents/cc-guard/.github/ISSUE_TEMPLATE",
       "/Users/seungwonkim/Documents/cc-guard/.github",
       "/Users/seungwonkim/Documents/cc-guard",
-      "/Users/seungwonkim/.gstack/projects/goosull-cc-guard",
-      "/tmp/verify-test-1776322996",
-      "/private/tmp/verify-test-1776322996",
-      "/tmp/verify-test-20260416-182500",
-      "/private/tmp/verify-test-20260416-182500",
-      "/tmp/verify-test-20260416-185546",
-      "/private/tmp/verify-test-20260416-185546",
-      "/Users/seungwonkim/Documents/vprop-beatsync/web/app/dashboard/[team_id]/create-video/components",
-      "/Users/seungwonkim/Documents/vprop-beatsync/web/app/dashboard/[team_id]/create-video/types",
-      "/Users/seungwonkim/Documents/vprop-beatsync/web",
-      "/tmp/verify-test-vp486",
-      "/private/tmp/verify-test-vp486",
-      "/tmp/verify-test-1776763063",
-      "/private/tmp/verify-test-1776763063",
-      "/tmp/verify-test-1776821779",
-      "/private/tmp/verify-test-1776821779",
-      "/tmp/verify-test-vp553",
-      "/private/tmp/verify-test-vp553"
+      "/Users/seungwonkim/.gstack/projects/goosull-cc-guard"
     ]
   },
+  "model": "claude-fable-5[1m]",
   "hooks": {
     "SessionStart": [
       {
@@ -189,6 +152,16 @@
             "command": "python3 ~/.claude/hooks/env-file-protection.py"
           }
         ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -x '/Users/seungwonkim/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/seungwonkim/.orca/agent-hooks/claude-hook.sh'; fi",
+            "timeout": 10
+          }
+        ]
       }
     ],
     "Stop": [
@@ -197,6 +170,15 @@
           {
             "type": "command",
             "command": "bash ~/.claude/hooks/preview-stop.sh"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -x '/Users/seungwonkim/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/seungwonkim/.orca/agent-hooks/claude-hook.sh'; fi",
+            "timeout": 10
           }
         ]
       }
@@ -208,6 +190,95 @@
           {
             "type": "command",
             "command": "bash ~/.claude/hooks/render-md.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -x '/Users/seungwonkim/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/seungwonkim/.orca/agent-hooks/claude-hook.sh'; fi",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -x '/Users/seungwonkim/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/seungwonkim/.orca/agent-hooks/claude-hook.sh'; fi",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "StopFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -x '/Users/seungwonkim/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/seungwonkim/.orca/agent-hooks/claude-hook.sh'; fi",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -x '/Users/seungwonkim/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/seungwonkim/.orca/agent-hooks/claude-hook.sh'; fi",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -x '/Users/seungwonkim/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/seungwonkim/.orca/agent-hooks/claude-hook.sh'; fi",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -x '/Users/seungwonkim/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/seungwonkim/.orca/agent-hooks/claude-hook.sh'; fi",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -x '/Users/seungwonkim/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/seungwonkim/.orca/agent-hooks/claude-hook.sh'; fi",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "TeammateIdle": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -x '/Users/seungwonkim/.orca/agent-hooks/claude-hook.sh' ]; then /bin/sh '/Users/seungwonkim/.orca/agent-hooks/claude-hook.sh'; fi",
+            "timeout": 10
           }
         ]
       }
@@ -225,11 +296,19 @@
         "source": "git",
         "url": "https://github.com/anthropics/claude-plugins-official.git"
       }
+    },
+    "claude-video": {
+      "source": {
+        "source": "github",
+        "repo": "bradautomates/claude-video"
+      }
     }
   },
-  "effortLevel": "xhigh",
+  "effortLevel": "medium",
+  "tui": "fullscreen",
+  "skipDangerousModePermissionPrompt": true,
   "autoCompactEnabled": false,
+  "switchModelsOnFlag": true,
   "remoteControlAtStartup": true,
-  "agentPushNotifEnabled": true,
-  "model": "claude-fable-5[1m]"
+  "agentPushNotifEnabled": true
 }
