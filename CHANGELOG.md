@@ -12,6 +12,35 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [0.48.0] - 2026-07-10
+
+**Codex now consumes a native, generated projection of the same canonical 9-step workflow as Claude Code, with safe links, typed skill ownership, shared hooks, structural diagnostics, and an explicit live behavioral release gate.**
+
+### Added
+
+- `codex/parity-contract.json`, Codex adapter header, deterministic global/project `AGENTS.md` projections, and tracked default hook registration.
+- Isolated renderer, recoverable parity installer, shared portable shell library, and read-only doctor with `core`, `material-ui`, `browser`, and `figma` profiles.
+- Safe migration of the recorded legacy project/default Codex instructions, hook copies, and user skill copies into canonical links; unknown real content fails closed.
+- Thirty Bats parity contracts, opt-in real-dispatch hook canaries, macOS CI coverage, and ADR-0014.
+
+### Changed
+
+- `setup.sh` is now one public Claude/Codex command family with `--check`, `--parity-only`, `doctor`, `--recover`, and repeatable `--codex-home`.
+- SessionStart keeps external refresh behavior but runs the parity phase read-only and promotes its log atomically.
+- `deep-research`, `aside-qa`, and `ai-review-loop` now state their provider adapters; portable workflow skills link into `~/.agents/skills` while gstack-generated Codex skills remain gstack-owned.
+- Budget reporting separates the generated global compatibility guardrail from the project-document budget. README, SETUP, CONTEXT, TESTING, and ADR-0009 now describe the current architecture.
+- Review hardening binds durable migration state to the exact managed write set and backup content identity, rejects linked state/lock leaves, hashes every tree entry type/mode/target, fsyncs transaction boundaries, makes recovery retry-safe, closes the hook contract against its exact argv registration, confines renderer outputs, validates gstack ownership, preserves malformed-contract JSON diagnostics, and prints local stage timings.
+
+### Safety and release boundary
+
+- Default and alternate runtime auth, histories, sessions, config, databases, plugins, MCP credentials, and host metadata remain provider-owned and are never copied.
+- Structural parity does not claim live model adherence or MCP authentication. Ordinary and Orca Codex must pass the bounded scenarios in `TESTING.md` before release completion.
+- The 2026-07-10 release gate passed in ordinary and Orca Codex for workflow routing, approval succession, Step 5/9 policy, profile preflight, project isolation, Bash/Edit hook dispatch, and the Aside live browser fallback.
+
+### Hook-enforcement candidates
+
+- None. Existing safety scripts are shared by link and verified structurally plus harmless dispatch canaries; no new git-mutating hook was introduced.
+
 ## [0.47.1] - 2026-07-07
 
 **Two noisy integrations are gone: the rtk token-compression hook no longer rewrites every Bash command, and the learning-opportunities plugin family no longer fires post-commit learning nudges (it false-positive-triggered on non-commit git commands, including twice during this very removal session).**

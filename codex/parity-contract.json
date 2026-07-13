@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "generator_version": "1",
+  "compatibility": {
+    "codex_cli_observed": "0.144.1",
+    "orca_observed": "1.4.128",
+    "global_agents_symlink": "source-backed-and-observed",
+    "alternate_home_hooks": "host-owned-read-only"
+  },
+  "budgets": {
+    "global_max_bytes": 32768,
+    "global_reserve_bytes": 4096,
+    "project_max_bytes": 32768
+  },
+  "projections": {
+    "global": {
+      "output": "codex/AGENTS.global.md",
+      "header": "codex/AGENTS.header.md",
+      "sections": [
+        {"source": "CLAUDE.md", "id": "claude-workflow"},
+        {"source": "rules/operating-principles.md", "id": "operating-principles"},
+        {"source": "rules/trust-boundaries.md", "id": "trust-boundaries"}
+      ]
+    },
+    "project": {
+      "output": "codex/AGENTS.project.md",
+      "sections": [
+        {"source": "rules/repo-self-management.md", "id": "repo-self-management"}
+      ]
+    }
+  },
+  "skills": [
+    {"name": "office-hours", "mode": "gstack-generated", "profiles": ["core"]},
+    {"name": "investigate", "mode": "gstack-generated", "profiles": ["core"]},
+    {"name": "autoplan", "mode": "gstack-generated", "profiles": ["core"]},
+    {"name": "qa-only", "mode": "gstack-generated", "profiles": ["core"]},
+    {"name": "design-review", "mode": "gstack-generated", "profiles": ["core"]},
+    {"name": "review", "mode": "gstack-generated", "profiles": ["core"]},
+    {"name": "ship", "mode": "gstack-generated", "profiles": ["core"]},
+    {"name": "deep-research", "mode": "portable-local", "source": "skills/deep-research", "profiles": ["core"]},
+    {"name": "verify-test", "mode": "portable-local", "source": "skills/verify-test", "profiles": ["core"]},
+    {"name": "aside-qa", "mode": "portable-local", "source": "skills/aside-qa", "profiles": ["core", "browser"]},
+    {"name": "ai-review-loop", "mode": "portable-local", "source": "skills/ai-review-loop", "profiles": ["core"]},
+    {"name": "requesting-code-review", "mode": "portable-sparse", "source": "skills/requesting-code-review", "profiles": ["core"]},
+    {"name": "verification-before-completion", "mode": "portable-sparse", "source": "skills/verification-before-completion", "profiles": ["core"]},
+    {"name": "frontend-design", "mode": "plugin-profile", "plugin": "frontend-design", "profiles": ["material-ui"]},
+    {"name": "figma", "mode": "plugin-profile", "plugin": "figma", "profiles": ["figma"]}
+  ],
+  "profiles": {
+    "core": {
+      "skills": ["office-hours", "investigate", "deep-research", "autoplan", "verify-test", "qa-only", "design-review", "verification-before-completion", "review", "requesting-code-review", "ship", "ai-review-loop", "aside-qa"]
+    },
+    "material-ui": {"plugins": ["frontend-design"]},
+    "browser": {"skills": ["aside-qa"], "mcps": ["aside"], "orca_cli_fallbacks": {"aside": "aside"}},
+    "figma": {"plugins": ["figma"], "mcps": ["figma"]}
+  },
+  "hooks": [
+    {"event": "PreToolUse", "matcher": "Bash", "script": "dangerous-command-blocker.py", "requiredness": "safety"},
+    {"event": "PreToolUse", "matcher": "Bash", "script": "secret-scanner.py", "requiredness": "safety"},
+    {"event": "PreToolUse", "matcher": "Bash", "script": "block-dangerous-git.sh", "requiredness": "safety"},
+    {"event": "PreToolUse", "matcher": "Write|Edit|MultiEdit", "script": "env-file-protection.py", "requiredness": "safety"},
+    {"event": "PostToolUse", "matcher": "Write|Edit|MultiEdit", "script": "render-md.sh", "requiredness": "convenience"},
+    {"event": "SessionStart", "matcher": "", "script": "update-skills.sh", "requiredness": "convenience"},
+    {"event": "Stop", "matcher": "", "script": "preview-stop.sh", "requiredness": "convenience"}
+  ],
+  "managed_paths": {
+    "project_agents": "AGENTS.md",
+    "default_agents": "$HOME/.codex/AGENTS.md",
+    "default_hooks": "$HOME/.codex/hooks",
+    "default_hook_registration": "$HOME/.codex/hooks.json",
+    "user_skills": "$HOME/.agents/skills"
+  },
+  "approved_migrations": {
+    "files": {
+      "project_agents": ["6d399e848511bcc465dbf87a86254c76f469ff4fe2bbd12c083eb51f2b52af0f"],
+      "default_agents": ["fbe8572a8a8491d3e31fbf0c3a6259454b4f0c7f445b8b91132f6c924525fd35"],
+      "default_hook_registration": ["f3ff159ebefc25d8b42244fcc83e7dde2ef3515ab91dd611721953b4f67b8dea"]
+    },
+    "trees": {
+      "default_hooks": ["8e2a819a5deb9b6d2c132bfed847a20874e7bcae1c4aef0203c9c3c8c45774fb"],
+      "skill:deep-research": ["1a8e631f6eb7fddaa27187c7a6b2f997f5ba550067ae111d56aebaf73f3db8e4"],
+      "skill:verify-test": ["ca86d9572aad95cb3acd23fd7342804ff7a4fdac3a90bb0c64a47b973fc47ef1"],
+      "skill:aside-qa": ["91cfc485fbc09b33172823fe3b7034966f40e140546ba17b2a6d00791be32d0c"]
+    },
+    "identities": {
+      "project_agents": ["6d399e848511bcc465dbf87a86254c76f469ff4fe2bbd12c083eb51f2b52af0f"],
+      "default_agents": ["fbe8572a8a8491d3e31fbf0c3a6259454b4f0c7f445b8b91132f6c924525fd35"],
+      "default_hooks": ["bfc2df243772750514e3697e6749fd24d78e30052f66086505f340fe40cd6a03"],
+      "default_hook_registration": ["f3ff159ebefc25d8b42244fcc83e7dde2ef3515ab91dd611721953b4f67b8dea"],
+      "skill:deep-research": ["d0785325ed6618c5a3ddcd71bc231888ba27927c70cecf8c0fc3f4fe4ef8df3f"],
+      "skill:verify-test": ["d74bb560022346ab2f9efb3813c1e6d5a2cf934944a1ef3bafa983f9b1e07c23"],
+      "skill:aside-qa": ["a904f5cd6ff972b0fe2fcea6a7d788b90a011aed4fa345cbd3ad5f7b4fdf0e95"]
+    }
+  }
+}

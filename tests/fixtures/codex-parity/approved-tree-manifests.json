@@ -1,0 +1,38 @@
+{
+  "default_hooks": {
+    "digest": "8e2a819a5deb9b6d2c132bfed847a20874e7bcae1c4aef0203c9c3c8c45774fb",
+    "identity_digest": "bfc2df243772750514e3697e6749fd24d78e30052f66086505f340fe40cd6a03",
+    "entries": [
+      {"path": "block-dangerous-git.sh", "type": "file", "mode": 493, "sha256": "3805530daeae19de3ac3cba7a644b844a05d24a8f6bf4efad93d2c8975ff42f1"},
+      {"path": "dangerous-command-blocker.py", "type": "file", "mode": 493, "sha256": "2dd0259a7a6721976ff1ebc8145ace74593c25fba05e56bd9f853e996d8e850d"},
+      {"path": "env-file-protection.py", "type": "file", "mode": 493, "sha256": "8f15bf8dcac994093ad390339dfafab5fcf737d7764ac9d760bf572812af1304"},
+      {"path": "preview-stop.sh", "type": "file", "mode": 493, "sha256": "2e193a36f25e04241afc1446ef1921247534a1f11e387facbb96d7c85eac1ee1"},
+      {"path": "preview-template.html", "type": "file", "mode": 420, "sha256": "e9d964fc7bcb5999435cb42449fcdf7269bcc2148a64983553bcd9cc3090c41c"},
+      {"path": "render-md.sh", "type": "file", "mode": 493, "sha256": "5b53c3eb53334c378df39ef3ac285565a3c2a267874cdbd58501ce164a703ba8"},
+      {"path": "secret-scanner.py", "type": "file", "mode": 493, "sha256": "27b943ac259a4d7241013aa6fab1a4ab7388ca4fceb1aa4c4070cf149b93f4e7"},
+      {"path": "statusline-usage.sh", "type": "file", "mode": 493, "sha256": "94fcfc50225a4dc1937d26a0e2a05e723cb995ef6aa74add255ec2162b1f8324"},
+      {"path": "update-skills.sh", "type": "file", "mode": 493, "sha256": "aff507a1fe88ec923af549261316d61c1f1eaa4febcc2f0d11ec482d4424e860"}
+    ]
+  },
+  "skill:deep-research": {
+    "digest": "1a8e631f6eb7fddaa27187c7a6b2f997f5ba550067ae111d56aebaf73f3db8e4",
+    "identity_digest": "d0785325ed6618c5a3ddcd71bc231888ba27927c70cecf8c0fc3f4fe4ef8df3f",
+    "entries": [
+      {"path": "SKILL.md", "type": "file", "mode": 420, "sha256": "e55a32a900f63215efde5a043df080fe1d4aa88ff489a30bb88dd4c9803429a2"}
+    ]
+  },
+  "skill:verify-test": {
+    "digest": "ca86d9572aad95cb3acd23fd7342804ff7a4fdac3a90bb0c64a47b973fc47ef1",
+    "identity_digest": "d74bb560022346ab2f9efb3813c1e6d5a2cf934944a1ef3bafa983f9b1e07c23",
+    "entries": [
+      {"path": "SKILL.md", "type": "file", "mode": 420, "sha256": "0a9dd5693d28d6512ad4e5b2410652f38ac3655b088ccb59bdb2598d1b7c7bda"}
+    ]
+  },
+  "skill:aside-qa": {
+    "digest": "91cfc485fbc09b33172823fe3b7034966f40e140546ba17b2a6d00791be32d0c",
+    "identity_digest": "a904f5cd6ff972b0fe2fcea6a7d788b90a011aed4fa345cbd3ad5f7b4fdf0e95",
+    "entries": [
+      {"path": "SKILL.md", "type": "file", "mode": 420, "sha256": "07fd30d21ce40938f2378fd860875babbc6149d6e3fac22cfc2b11a0442887a5"}
+    ]
+  }
+}

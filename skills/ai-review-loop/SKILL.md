@@ -11,6 +11,14 @@ description: >
 
 # /ai-review-loop — AI Reviewer Convergence Loop
 
+## Provider adapter
+
+References to a "Claude subagent" in this skill and its helper output mean a
+fresh, provider-native reviewer with no inherited conversation history. Claude
+Code dispatches its normal subagent; Codex dispatches a fresh collaboration
+subagent with the same bounded prompt and review contract. Stable reviewer IDs
+remain unchanged for state-file compatibility.
+
 Companion references in this directory (read on demand, they are part of
 this skill): `state-schema.md` (frozen state file schema — the single
 source of truth for every field and enum), `escalation-templates.md`

@@ -87,6 +87,13 @@ def log_dry_run(command: str, reasons: list) -> None:
 
 def main() -> int:
     payload = json.load(sys.stdin)
+    canary_log = os.environ.get("MYSYSTEM_HOOK_CANARY_LOG")
+    if canary_log:
+        try:
+            with open(canary_log, "a", encoding="utf-8") as target:
+                target.write(f"{HOOK_NAME}\n")
+        except OSError:
+            pass
     command = payload.get("tool_input", {}).get("command", "")
     if not command:
         return 0

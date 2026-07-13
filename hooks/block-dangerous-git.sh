@@ -49,6 +49,10 @@ COMMAND=$(printf '%s' "$PAYLOAD" | jq -r '.tool_input.command // ""' 2>/dev/null
   exit 0
 }
 
+if [ -n "${MYSYSTEM_HOOK_CANARY_LOG:-}" ]; then
+  printf '%s\n' "$HOOK_NAME" >> "$MYSYSTEM_HOOK_CANARY_LOG" 2>/dev/null
+fi
+
 if [ -z "$COMMAND" ]; then
   exit 0
 fi

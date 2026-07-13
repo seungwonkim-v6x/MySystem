@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+case "$*" in
+  "--version")
+    printf 'codex-cli %s\n' "${CODEX_STUB_VERSION:-0.144.1}"
+    ;;
+  "plugin list --json")
+    cat <<'JSON'
+{"installed":[{"name":"frontend-design","installed":true,"enabled":true},{"name":"figma","installed":true,"enabled":true}],"available":[]}
+JSON
+    ;;
+  "mcp list --json")
+    if [ "${CODEX_STUB_ASIDE:-0}" = 1 ] || [ -f "${CODEX_HOME:-$HOME/.codex}/.aside-present" ]; then
+      printf '%s\n' '[{"name":"aside","enabled":true,"auth_status":"unsupported"},{"name":"figma","enabled":true,"auth_status":"not_logged_in"}]'
+    else
+      printf '%s\n' '[{"name":"figma","enabled":true,"auth_status":"not_logged_in"}]'
+    fi
+    ;;
+  *)
+    exit 2
+    ;;
+esac

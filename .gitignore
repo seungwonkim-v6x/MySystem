@@ -12,6 +12,7 @@
 !.gitignore
 !.gitattributes
 !CLAUDE.md
+!AGENTS.md
 !CHANGELOG.md
 !CONTEXT.md
 !README.md
@@ -68,6 +69,10 @@ hooks/**/*.pyc
 # Scripts — tracked rollback/ops helpers (v0.38.0+).
 !scripts/
 !scripts/**
+
+# Generated Codex-native workflow projection and its narrow contract.
+!codex/
+!codex/**
 
 # OS / editor noise
 .DS_Store
