@@ -56,11 +56,15 @@ PATTERNS = [
     # Writes to .git/ internals (corrupts repo)
     (r"(>|>>)\s*\.git/", "redirect into .git/"),
     (r"\brm\s+.*\.git/(HEAD|index|refs|objects)", "delete git internals"),
-    # Writes to .claude/ (corrupts harness config) — covers ~, $HOME, AND absolute
-    (r"(>|>>)\s*~/\.claude/", "redirect into ~/.claude/"),
-    (r"(>|>>)\s*\$HOME/\.claude/", "redirect into $HOME/.claude/"),
-    (rf"(>|>>)\s*{re.escape(_HOME)}/\.claude/", "redirect into ~/.claude/ (absolute path)"),
-    (r"(>|>>)\s*/Users/[^/\s]+/\.claude/", "redirect into another user's .claude/ (absolute path)"),
+    # Writes to .claude/ (corrupts harness config) — covers ~, $HOME, AND absolute.
+    # ~/.claude/logs/ is whitelisted: hooks write telemetry there by design
+    # (hook-dry-run.log, hook-errors.log, hook-blocks.log — ADR-0015). The
+    # lookahead rejects any logs/ path containing ".." so traversal can't
+    # re-open the rest of ~/.claude/.
+    (r"(>|>>)\s*~/\.claude/(?!logs/(?![^\s]*\.\.))", "redirect into ~/.claude/"),
+    (r"(>|>>)\s*\$HOME/\.claude/(?!logs/(?![^\s]*\.\.))", "redirect into $HOME/.claude/"),
+    (rf"(>|>>)\s*{re.escape(_HOME)}/\.claude/(?!logs/(?![^\s]*\.\.))", "redirect into ~/.claude/ (absolute path)"),
+    (r"(>|>>)\s*/Users/[^/\s]+/\.claude/(?!logs/(?![^\s]*\.\.))", "redirect into another user's .claude/ (absolute path)"),
     # Fork bomb
     (r":\(\)\s*\{\s*:\|:", "fork bomb"),
     # Curl piped to shell from unknown URL (only block if not a known-good domain)
