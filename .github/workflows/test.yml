@@ -27,3 +27,15 @@ jobs:
         run: brew install bats-core jq
       - name: Run test suite
         run: bats tests/
+
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Install shellcheck
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
+      - name: Lint repo shell scripts
+        # Hooks and scripts are the enforcement layer (ADR-0015) — lint them.
+        # error-level for now; pre-existing warnings are a follow-up (TODOS).
+        run: |
+          shellcheck -S error hooks/*.sh scripts/*.sh setup.sh install.sh

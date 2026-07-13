@@ -13,7 +13,7 @@ This rule is **path-scoped** with the absolute `~/.claude/**` path so it only tr
 ## Required steps when modifying MySystem
 
 1. **Bump VERSION** — follow semver:
-   - major: breaking workflow change (e.g., changing the canonical Step → Skill mapping)
+   - major: breaking harness change (e.g., removing a safety hook or changing the working-agreement contract)
    - minor: new skill / new step / new rule
    - patch: fix or tweak
 2. **Update CHANGELOG.md** — add an entry under the new version with date and description
@@ -29,7 +29,7 @@ This rule is **path-scoped** with the absolute `~/.claude/**` path so it only tr
 
 **NEVER install PostToolUse hooks that mutate git state.** This includes `git add` / staging, `git commit`, `git commit --amend`, `git push`, `git pr create`, and any other write to `.git/` or the remote. Git state changes are produced only by `/ship`, by `/ai-review-loop` within its budget carve-out (below), or by explicit user request, never as a side effect of a tool call. Such hooks poison history with garbage messages, defeat atomic-commit discipline, silently bypass pre-commit hooks elsewhere, and undermine the "review before commit" gate. If a PostToolUse hook auto-stages, auto-commits, auto-pushes, or auto-PRs, REMOVE IT.
 
-**`/ai-review-loop` carve-out (ADR-0012).** Workflow Step 9 may autonomously commit and push fix commits (`review-loop(rN):` prefix) on the PR branch it is looping, bounded by: ≤20 changed lines per round and ≤40 per loop without user approval (measured on the staged diff by `skills/ai-review-loop/bin/round-budget.sh`), sensitive paths (`hooks/**`, `settings.json`, `.github/workflows/**`, secret/credential/env globs, `install.sh`, `setup.sh`) always escalate regardless of size, fixes are staged-never-committed until the gate passes, and every escalation pauses the loop as awaiting-user. This is the ONLY autonomous git-mutation grant besides `/ship`; it does not generalize — new grants require their own ADR.
+**`/ai-review-loop` carve-out (ADR-0012, on-demand tool per ADR-0015).** The /ai-review-loop skill may autonomously commit and push fix commits (`review-loop(rN):` prefix) on the PR branch it is looping, bounded by: ≤20 changed lines per round and ≤40 per loop without user approval (measured on the staged diff by `skills/ai-review-loop/bin/round-budget.sh`), sensitive paths (`hooks/**`, `settings.json`, `.github/workflows/**`, secret/credential/env globs, `install.sh`, `setup.sh`) always escalate regardless of size, fixes are staged-never-committed until the gate passes, and every escalation pauses the loop as awaiting-user. This is the ONLY autonomous git-mutation grant besides `/ship`; it does not generalize — new grants require their own ADR.
 
 (Anti-patterns from shanraisshan/claude-code-best-practice and davila7/claude-code-templates `git-workflow/smart-commit.json`, generalized — the failure mode applies to every git-mutating side effect, not just commits.)
 <!-- mysystem:section repo-self-management:end -->

@@ -55,6 +55,12 @@ runtime directories.
 
 ## Manual behavioral release gate
 
+> Historical note (ADR-0015): scenarios 1-6 below encode the pre-v0.49.0 gated
+> 9-step workflow and were the v0.48.0 parity release evidence. Post-ADR-0015,
+> behavioral parity means working-agreement conformance (safety rails,
+> evidence-before-completion, skills-as-tools); re-derive the scenario list
+> from CLAUDE.md when the next parity release gate runs.
+
 A release cannot claim Claude/Codex parity until both ordinary Codex and
 Orca-hosted Codex pass these bounded scenarios in an unrelated temporary repo:
 
@@ -136,6 +142,34 @@ fallback after host refresh. Both browser profiles passed, and a non-mutating
 live `listBrowserTabs()` call succeeded through Aside CLI.
 Figma remains structurally configured but live authentication is intentionally
 reported as unverifiable until an explicit Figma workflow authenticates it.
+
+## Hard-refuse contract (ADR-0015)
+
+The hard-refuse tier in `hooks/block-dangerous-git.sh` (force-push to
+main/master, `git commit --no-verify`/`-n`, `git reset --hard` on
+main/master) exits 2 unconditionally —
+`MYSYSTEM_HOOKS_ENFORCE` does not gate it — and fails CLOSED (exit 2, naming
+the environment cause) when the payload cannot be parsed. The soft tier keeps
+the dry-run default. Rules match only at command-start positions after
+commit-message/heredoc/quote-character normalization, so tests, docs, and
+commit messages that mention a blocked phrase never trip it while quoted
+arguments, newlines, `VAR=x` prefixes, and `bash -c` wrappers cannot dodge it;
+`tests/hooks.bats` carries both the false-positive and the adversarial-bypass
+suites that pin this. The private-key hard refuse lives in
+`hooks/secret-scanner.py` and keeps its fail-open behavior on malformed
+payloads (pinned by its own bats case).
+
+**Accepted over-block edges** (safe direction, documented not fixed):
+escaped quotes inside `-m "…\"--no-verify\"…"` and an `echo ";git push
+--force origin main"` body can still block, because quote-character dropping
+cannot see shell escape semantics. Hooks are defense-in-depth, not a shell
+parser — the arms race stops where the failure direction is over-blocking.
+
+**Human-only bypass:** a hard refuse has no env-var escape. If a hard rule
+must be bypassed (rare, deliberate), the human operator edits the hook or the
+tests locally and reverts after. This remedy is intentionally absent from the
+hook's stderr — agents are told to fix what the hook reports, never to modify
+safety hooks.
 
 ## Conventions
 
