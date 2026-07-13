@@ -12,6 +12,33 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [0.49.0] - 2026-07-13
+
+**The gated 9-step workflow is gone (ADR-0015): CLAUDE.md is a ~55-line working agreement, skills are on-demand tools, the PR merge is the only human gate — and the safety hooks got strictly harder to compensate.**
+
+### Removed
+
+- Mandatory 9-step pipeline, per-step approval gates, workflow successor map, Step-5 verification menu, skill whitelist / mandatory-invocation rule, and the /ship→/ai-review-loop auto-chain. All skills remain installed as user/agent-invoked tools.
+- The tiered-triage machinery (tier-guard hook, declare-tier CLI, tier-repos, tier-sensitive-paths) that was built earlier on this branch per the /autoplan review, then removed when the user chose the review's stronger "full deletion" alternative. Code retrievable from branch history; re-add only on the ADR-0015 kill criterion.
+
+### Changed
+
+- `hooks/block-dangerous-git.sh`: hard-refuse tier now exits 2 UNCONDITIONALLY (fixes the latent prose/code mismatch where "always non-zero" actually dry-ran without MYSYSTEM_HOOKS_ENFORCE=1); fails closed with an environment-naming message on unparseable payloads (jq → python3 fallback); rules anchored to command-start with quoted-segment stripping (echoed/grepped/heredoc/commit-message mentions can no longer false-positive); block messages are agent-actionable (problem + cause + fix; hook-edit bypass is human-only, documented in TESTING.md, never printed to the agent).
+- New hard refuses: `git commit --no-verify` / bundled `-n` (defense for repos carrying pre-commit hooks — NOT a secret-scanner bypass, which is a PreToolUse hook unaffected by --no-verify) and `git reset --hard` while on main/master (runtime branch check, fail-open soft on detached/undeterminable).
+- The git hook's enforced blocks now log to `~/.claude/logs/hook-blocks.log` (real-friction signal for /retro); `~/.claude/logs/` whitelisted in dangerous-command-blocker (traversal-proof lookahead).
+- `settings.json`: broad git allows narrowed (`git push *` → `git push origin HEAD` / `-u origin *`; `git add *` → `git add -- *`).
+- `rules/operating-principles.md`: Conditional Clarification rewritten without step/gate references.
+- CLAUDE.md rewritten as a working agreement (judgment defaults, one-sentence pause rule, evidence-before-completion, skills-as-tools); Codex parity markers preserved; projections regenerated.
+
+### Added
+
+- ADR-0015 (remove workflow gates; supersedes ADR-0001's pipeline aspect, amends ADR-0006), with coverage-delta acceptance, durable-vs-Fable-5-contingent tags, kill criterion (2-3 same-class incidents → re-add ONE targeted rail), and rollback procedure.
+- 30 new bats contracts: hard refuse with ENFORCE unset (regression class), --no-verify/-n/-anm blocks with a false-positive suite (quoted mentions, echo/grep/heredoc, `-am`, `push -n`), an adversarial-bypass suite from the pre-landing review (quoted arguments, newline separation, `VAR=x` prefixes, `bash -c` wrappers, exec-prefix words sudo/command/xargs/nohup/time/then, reordered force flags, brace groups, `bash -lc`, `--git-dir=`, heredoc-tag edge cases, `logs/../` traversal), fail-closed malformed payload, deterministic jq-absent/no-tools stubs, hook-blocks.log assertion, reset --hard branch fixtures, blocker logs-whitelist cases.
+
+### Hook-enforcement candidates
+
+- "Evidence before completion claims" is now prompt-level only (was backed by the Step-5 gate). Candidate: a Stop-hook verifier or /goal-style check; promote if /retro logs unverified completion claims.
+
 ## [0.48.0] - 2026-07-10
 
 **Codex now consumes a native, generated projection of the same canonical 9-step workflow as Claude Code, with safe links, typed skill ownership, shared hooks, structural diagnostics, and an explicit live behavioral release gate.**
