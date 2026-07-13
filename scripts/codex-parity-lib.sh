@@ -16,7 +16,9 @@ parity_hash_file() {
 }
 
 parity_file_mode() {
-  stat -f '%Lp' "$1" 2>/dev/null || stat -c '%a' "$1"
+  # GNU stat first: BSD stat -f exits 0 with garbage under GNU coreutils,
+  # so the BSD form must be the fallback, never the probe.
+  stat -c '%a' "$1" 2>/dev/null || stat -f '%Lp' "$1"
 }
 
 parity_tree_digest() {
