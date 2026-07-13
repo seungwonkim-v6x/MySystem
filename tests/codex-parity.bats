@@ -442,7 +442,7 @@ PY
   run install_parity
   [ "$status" -eq 1 ]
   [[ "$output" == *"STATE_DIR_UNSAFE"* ]]
-  [ "$(stat -f '%Lp' "$TEST_ROOT/state-target" 2>/dev/null || stat -c '%a' "$TEST_ROOT/state-target")" = 755 ]
+  [ "$(stat -c '%a' "$TEST_ROOT/state-target" 2>/dev/null || stat -f '%Lp' "$TEST_ROOT/state-target")" = 755 ]
 
   rm "$MYSYSTEM_STATE_DIR"
   mkdir -p "$MYSYSTEM_STATE_DIR" "$TEST_ROOT/redirected-agents"
@@ -606,7 +606,7 @@ with open(sys.argv[1], "wb") as target:
     plistlib.dump({"CFBundleShortVersionString": "1.4.128"}, target)
 PY
 
-  run "$TEST_REPO/scripts/codex-parity-doctor.sh"
+  run "$TEST_REPO/scripts/codex-parity-doctor.sh" --verbose
   [ "$status" -eq 0 ]
   [[ "$output" == *"ORCA_VERSION_OBSERVED"* ]]
 
