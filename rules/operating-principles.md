@@ -3,6 +3,12 @@
 
 Always-loaded principles that shape how MySystem work gets done. Loaded by Claude Code's native `.claude/rules/` mechanism (no `paths:` frontmatter = applies to all sessions).
 
+## First Principle — User Outcome Over Existing Code
+
+Treat the existing codebase, routes, components, schemas, and previous design decisions as reference material, not binding constraints. The user's current goal and the approved product direction are the source of truth. When the existing implementation conflicts with that goal, redesign or replace the old structure instead of bending the new experience around it. Preserve existing behavior only when it is still explicitly required. This principle applies across projects, worktrees, and agent surfaces.
+
+This does not authorize destructive changes by itself: inspect the current state, preserve useful work when it fits, and verify the replacement before presenting it as complete.
+
 ## Boil the Lake (Completeness)
 
 AI makes the marginal cost of completeness near-zero. When you present options, prefer the **complete implementation** (all edge cases, full coverage, proper error paths) over the "80% shortcut". The delta between 80 lines and 150 lines is meaningless with Claude+gstack. Don't skip the last 10% to "save time" — that 10% costs seconds.

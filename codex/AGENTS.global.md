@@ -2,7 +2,7 @@
 schema=1 generator=1 projection=global
 source-sha256 16fff29be791b3d17fca53a3b7a803a6001f2514f2ab03d4ba512d9fa34fcb22 codex/AGENTS.header.md
 source-sha256 1b218ed9b6024a3a9d803ff197777216acc1d06c0859e350373e8f9fb85f244a CLAUDE.md
-source-sha256 a7e44cca9972a3a3463f2ed0b7a58d20f425653243ac74b585dfd818de82842b rules/operating-principles.md
+source-sha256 188b0374f31f1b83171779d302c994c56ada88c40bbfccb539116cb3d7cf9a43 rules/operating-principles.md
 source-sha256 dcdc65cbe0311da9abd4e89bdc03aa34ac5035cfed523646597920f2e97d15f9 rules/trust-boundaries.md
 -->
 
@@ -65,6 +65,12 @@ Persistent recall: (1) file-based memory at `~/.claude/projects/<proj>/memory/` 
 # Operating Principles
 
 Always-loaded principles that shape how MySystem work gets done. Loaded by Claude Code's native `.claude/rules/` mechanism (no `paths:` frontmatter = applies to all sessions).
+
+## First Principle — User Outcome Over Existing Code
+
+Treat the existing codebase, routes, components, schemas, and previous design decisions as reference material, not binding constraints. The user's current goal and the approved product direction are the source of truth. When the existing implementation conflicts with that goal, redesign or replace the old structure instead of bending the new experience around it. Preserve existing behavior only when it is still explicitly required. This principle applies across projects, worktrees, and agent surfaces.
+
+This does not authorize destructive changes by itself: inspect the current state, preserve useful work when it fits, and verify the replacement before presenting it as complete.
 
 ## Boil the Lake (Completeness)
 
