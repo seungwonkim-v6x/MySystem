@@ -8,6 +8,8 @@
 #   3. Sparse cherry-pick individual skills from other repos (cache + symlink),
 #      then register external skill dirs in .git/info/exclude so the tracked
 #      .gitignore stays small.
+#   3.5. Apply skill model overrides (scripts/apply-model-overrides.sh —
+#      wraps designated external skills with a pinned `model:` frontmatter)
 #   4. Validate skill symlinks
 #   5. Install and diagnose Codex behavioral-parity links
 
@@ -124,7 +126,9 @@ EXTERNAL_REPOS=(
 # Pin autonomous (workflow-whitelisted) skills; leave user-invoked skills
 # unpinned per ADR-0005 amendment in ADR-0007 (v0.37.0).
 SPARSE_SKILLS=(
-  # Step 7 — pre-v0.37.0 baseline (unpinned per ADR-0005 original convention)
+  # Step 7 — pre-v0.37.0 baseline (unpinned per ADR-0005 original convention).
+  # Entry kept even though stage 3.5 converts the install to a model-override
+  # wrapper dir: the cache refresh below is what keeps the wrapped body fresh.
   "requesting-code-review|https://github.com/obra/superpowers.git|main|skills/requesting-code-review"
   # Step 2 — deep-research is now VENDORED (tracked at skills/deep-research/, ADR-0011),
   # removed from sparse cherry-pick so it can be owned + customized locally (provider-pluggable).
@@ -242,9 +246,11 @@ for entry in "${SPARSE_SKILLS[@]}"; do
     exit 1
   fi
 
-  # Defense-in-depth (ADR-0011): never clobber a vendored (real-dir) skill. The real protection
-  # is removing a vendored skill's SPARSE_SKILLS entry (so this loop never iterates it) — this is
-  # clobber-defense for any FUTURE vendored-from-sparse skill, NOT a true idempotency promise.
+  # Defense-in-depth (ADR-0011): never clobber a vendored (real-dir) skill. For most skills the
+  # real protection is removing the SPARSE_SKILLS entry (so this loop never iterates it). Since
+  # v0.51.0 this guard is ALSO load-bearing for model-override skills (requesting-code-review):
+  # they keep their SPARSE_SKILLS entry so the external cache refreshes, and stage 3.5's
+  # dir-symlink→real-dir conversion relies on this skip every subsequent run.
   # Require a real directory (-d && ! -L): a stray regular file at the target then gets re-linked
   # rather than silently treated as vendored, and ! -L still excludes a valid symlink-to-dir
   # (which should be re-linked normally).
@@ -293,6 +299,17 @@ EXCLUDE_FILE=".git/info/exclude"
     echo "skills/$name/"
   done
 } > "$EXCLUDE_FILE"
+
+# ── [3.5/5] Skill model overrides ────────────────────────────
+# Wrapper generation lives in scripts/apply-model-overrides.sh (the
+# MODEL_OVERRIDES table is declared there; contract tests in
+# tests/model-overrides.bats). Runs AFTER the external installers so it can
+# re-wrap whatever they re-linked this session (self-healing by design).
+echo ""
+echo "[3.5/5] Applying skill model overrides..."
+STAGE_STARTED=$SECONDS
+bash scripts/apply-model-overrides.sh
+print_timing model-overrides "$((SECONDS - STAGE_STARTED))"
 
 # ── [4/5] Validate ───────────────────────────────────────────
 echo ""
