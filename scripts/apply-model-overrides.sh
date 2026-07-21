@@ -28,13 +28,18 @@ MODEL_OVERRIDES=(
   "requesting-code-review|opus"
 )
 
-# Resolve a (possibly relative) symlink target against the link's parent dir.
+# Resolve a (possibly relative) symlink target against the link's parent dir
+# to a physical, ..-free path. Falls back to a textual join when the parent
+# can't be entered (the caller's -f check then fails cleanly).
 canonicalize() {
-  local base=$1 path=$2
+  local base=$1 path=$2 joined
   case "$path" in
-    /*) printf '%s\n' "$path" ;;
-    *)  printf '%s/%s\n' "$(CDPATH= cd -- "$base" && pwd -P)" "$path" ;;
+    /*) joined=$path ;;
+    *)  joined=$base/$path ;;
   esac
+  ( CDPATH= cd -- "$(dirname "$joined")" 2>/dev/null \
+      && printf '%s/%s\n' "$(pwd -P)" "$(basename "$joined")" ) \
+    || printf '%s\n' "$joined"
 }
 
 for entry in "${MODEL_OVERRIDES[@]}"; do
@@ -42,9 +47,16 @@ for entry in "${MODEL_OVERRIDES[@]}"; do
   target="skills/$skill"
 
   # Sweep temp files stranded by an interrupted earlier run (real dirs only —
-  # never reach through a dir symlink into an external checkout).
+  # never reach through a dir symlink into an external checkout), and recover
+  # from an interrupted dir-symlink conversion: a real dir left with no
+  # SKILL.md would otherwise be skipped as vendored by the sparse installer
+  # forever. Removing it (empty-only) restores installer-managed re-linking.
   if [ -d "$target" ] && [ ! -L "$target" ]; then
     rm -f "$target"/.SKILL.md.* 2>/dev/null || true
+    if [ ! -e "$target/SKILL.md" ]; then
+      rmdir "$target" 2>/dev/null || true
+      [ -e "$target" ] || echo "  ✗ $skill — empty override dir removed (installer re-links next run)"
+    fi
   fi
 
   # Resolve the source SKILL.md this wrapper defers to. No mutation yet.
@@ -62,8 +74,11 @@ for entry in "${MODEL_OVERRIDES[@]}"; do
        && grep -q '^<!-- mysystem-model-override source=' "$target/SKILL.md" 2>/dev/null; then
       # Stale wrapper whose recorded source vanished (upstream rename/removal):
       # remove it so the installer restores link-managed state on its next run,
-      # instead of leaving a wrapper that defers to a nonexistent path.
+      # instead of leaving a wrapper that defers to a nonexistent path. Also
+      # remove the now-empty dir — for sparse installs the dir itself must go,
+      # or the sparse installer's vendored-dir guard skips re-linking forever.
       rm -f "$target/SKILL.md"
+      rmdir "$target" 2>/dev/null || true
       echo "  ✗ $skill — recorded source missing; stale wrapper removed (installer re-links next run)"
     else
       echo "  ✗ $skill — source SKILL.md not found (override skipped, original state untouched)"
@@ -71,8 +86,12 @@ for entry in "${MODEL_OVERRIDES[@]}"; do
     continue
   fi
 
-  if [ "$(head -1 "$real")" != "---" ]; then
-    echo "  ✗ $skill — source has no frontmatter (override skipped, original state untouched)"
+  # Frontmatter must open on line 1 AND close before mutation — an
+  # unterminated block would stream the whole body into the wrapper's
+  # frontmatter and produce an unparseable skill.
+  if [ "$(head -1 "$real")" != "---" ] \
+     || ! awk 'NR>1 && /^---$/ {found=1; exit} END {exit !found}' "$real"; then
+    echo "  ✗ $skill — source frontmatter missing or unterminated (override skipped, original state untouched)"
     continue
   fi
 

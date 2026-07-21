@@ -68,7 +68,8 @@ run_overrides() {
   # Source's own model: line is dropped from the wrapper, exactly one pin remains.
   [ "$(grep -c '^model:' "$w")" -eq 1 ]
   src=$(sed -n 's/^<!-- mysystem-model-override source=\(.*\) -->$/\1/p' "$w")
-  [ "$src" = "$SANDBOX/external/gstack-ship/SKILL.md" ]
+  expected="$(cd "$SANDBOX/external/gstack-ship" && pwd -P)/SKILL.md"
+  [ "$src" = "$expected" ]
   # Deferral body names the source path; the source file itself is unmodified.
   grep -qF "$src" <(sed -n '/^<!--/,$p' "$w")
   grep -q '^model: haiku$' "$SANDBOX/external/gstack-ship/SKILL.md"
@@ -127,14 +128,42 @@ run_overrides() {
   [ ! -e "$SANDBOX/repo/skills/ship/SKILL.md" ]
 }
 
-@test "relative symlink targets are canonicalized before embedding" {
+@test "relative symlink targets are canonicalized before embedding (absolute, ..-free)" {
   rm "$SANDBOX/repo/skills/ship/SKILL.md"
   (cd "$SANDBOX/repo/skills/ship" && ln -s ../../../external/gstack-ship/SKILL.md SKILL.md)
   run_overrides
   [ "$status" -eq 0 ]
   src=$(sed -n 's/^<!-- mysystem-model-override source=\(.*\) -->$/\1/p' "$SANDBOX/repo/skills/ship/SKILL.md")
   [[ "$src" == /* ]]
+  [[ "$src" != *".."* ]]
   [ -f "$src" ]
+}
+
+@test "stale sparse wrapper removal also removes the dir so the sparse installer can re-link" {
+  run_overrides
+  [ "$status" -eq 0 ]
+  rm "$SANDBOX/external/sparse-rcr/SKILL.md"
+  run_overrides
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"requesting-code-review — recorded source missing; stale wrapper removed"* ]]
+  [ ! -e "$SANDBOX/repo/skills/requesting-code-review" ]
+}
+
+@test "interrupted conversion (real dir, no SKILL.md) is recovered by removing the empty dir" {
+  rm "$SANDBOX/repo/skills/requesting-code-review"
+  mkdir "$SANDBOX/repo/skills/requesting-code-review"
+  run_overrides
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"requesting-code-review — empty override dir removed"* ]]
+  [ ! -e "$SANDBOX/repo/skills/requesting-code-review" ]
+}
+
+@test "unterminated source frontmatter skips without mutating the symlink" {
+  printf -- '---\nname: ship\ndescription: never closes\n' > "$SANDBOX/external/gstack-ship/SKILL.md"
+  run_overrides
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"ship — source frontmatter missing or unterminated"* ]]
+  [ -L "$SANDBOX/repo/skills/ship/SKILL.md" ]
 }
 
 @test "interrupted-run temp files are swept on the next run" {
