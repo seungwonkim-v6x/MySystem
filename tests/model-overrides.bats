@@ -87,7 +87,7 @@ run_overrides() {
 @test "missing source skips with exit 0 and leaves installer state untouched" {
   run_overrides
   [ "$status" -eq 0 ]
-  [[ "$output" == *"review — source SKILL.md not found"* ]]
+  [[ "$output" == *"review — source SKILL.md not found"* ]] || false
   [ ! -e "$SANDBOX/repo/skills/review" ]
 }
 
@@ -114,7 +114,7 @@ run_overrides() {
   printf '# no frontmatter here\nbody\n' > "$SANDBOX/external/gstack-ship/SKILL.md"
   run_overrides
   [ "$status" -eq 0 ]
-  [[ "$output" == *"ship — source has no frontmatter"* ]]
+  [[ "$output" == *"ship — source frontmatter missing or unterminated"* ]] || false
   [ -L "$SANDBOX/repo/skills/ship/SKILL.md" ]
 }
 
@@ -124,7 +124,7 @@ run_overrides() {
   rm "$SANDBOX/external/gstack-ship/SKILL.md"
   run_overrides
   [ "$status" -eq 0 ]
-  [[ "$output" == *"ship — recorded source missing; stale wrapper removed"* ]]
+  [[ "$output" == *"ship — recorded source missing; stale wrapper removed"* ]] || false
   [ ! -e "$SANDBOX/repo/skills/ship/SKILL.md" ]
 }
 
@@ -134,8 +134,8 @@ run_overrides() {
   run_overrides
   [ "$status" -eq 0 ]
   src=$(sed -n 's/^<!-- mysystem-model-override source=\(.*\) -->$/\1/p' "$SANDBOX/repo/skills/ship/SKILL.md")
-  [[ "$src" == /* ]]
-  [[ "$src" != *".."* ]]
+  [[ "$src" == /* ]] || false
+  [[ "$src" != *".."* ]] || false
   [ -f "$src" ]
 }
 
@@ -145,7 +145,7 @@ run_overrides() {
   rm "$SANDBOX/external/sparse-rcr/SKILL.md"
   run_overrides
   [ "$status" -eq 0 ]
-  [[ "$output" == *"requesting-code-review — recorded source missing; stale wrapper removed"* ]]
+  [[ "$output" == *"requesting-code-review — recorded source missing; stale wrapper removed"* ]] || false
   [ ! -e "$SANDBOX/repo/skills/requesting-code-review" ]
 }
 
@@ -154,7 +154,7 @@ run_overrides() {
   mkdir "$SANDBOX/repo/skills/requesting-code-review"
   run_overrides
   [ "$status" -eq 0 ]
-  [[ "$output" == *"requesting-code-review — empty override dir removed"* ]]
+  [[ "$output" == *"requesting-code-review — empty override dir removed"* ]] || false
   [ ! -e "$SANDBOX/repo/skills/requesting-code-review" ]
 }
 
@@ -162,7 +162,7 @@ run_overrides() {
   printf -- '---\nname: ship\ndescription: never closes\n' > "$SANDBOX/external/gstack-ship/SKILL.md"
   run_overrides
   [ "$status" -eq 0 ]
-  [[ "$output" == *"ship — source frontmatter missing or unterminated"* ]]
+  [[ "$output" == *"ship — source frontmatter missing or unterminated"* ]] || false
   [ -L "$SANDBOX/repo/skills/ship/SKILL.md" ]
 }
 
