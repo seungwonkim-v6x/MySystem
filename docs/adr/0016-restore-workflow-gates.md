@@ -44,7 +44,9 @@ everything ADR-0015 shipped that is independent of the gates:
   rollback section required exactly this separation.
 - **Contract change**: `budgets.global_max_bytes` 32768 → 36864 in
   `codex/parity-contract.json`. The gated projection plus the First Principle
-  is 29849 bytes, over the old 28672-byte effective limit (max − reserve);
+  exceeds the old 28672-byte effective limit (max − reserve; ~30KB at
+  restore time — the exact figure moves with each regeneration and the
+  renderer's PROJECTIONS_CURRENT check is the live measurement);
   reserve stays 4096.
 
 ## Consequences

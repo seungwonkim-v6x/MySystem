@@ -45,7 +45,7 @@ Auto Mode / plan-mode reminders are level 7 (session signals the user activated)
 | 3. Plan + multi-review | `/autoplan` | gstack |
 | 4. Implementation | direct (coordinator writes code); on a **material UI change** also load `/frontend-design` + the project `DESIGN.md` rider | Anthropic plugin (frontend-design) + user rider |
 | 5. Verification | `/verify-test` and/or `/qa-only` and/or `/design-review` | user-owned (verify-test) + gstack |
-|    (Step 5 augment) `/verification-before-completion` | sparse cherry-pick obra/superpowers — Iron Law: no completion claims without evidence |
+|    (Step 5 augment) | `/verification-before-completion` | sparse cherry-pick obra/superpowers — Iron Law: no completion claims without evidence |
 | 6. PR review (1st pass) | `/review` | gstack |
 | 7. Adversarial review (2nd pass) | `/requesting-code-review` | sparse cherry-pick obra/superpowers |
 | 8. Ship | `/ship` | gstack |
