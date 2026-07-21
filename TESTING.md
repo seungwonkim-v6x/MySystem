@@ -55,11 +55,10 @@ runtime directories.
 
 ## Manual behavioral release gate
 
-> Historical note (ADR-0015): scenarios 1-6 below encode the pre-v0.49.0 gated
-> 9-step workflow and were the v0.48.0 parity release evidence. Post-ADR-0015,
-> behavioral parity means working-agreement conformance (safety rails,
-> evidence-before-completion, skills-as-tools); re-derive the scenario list
-> from CLAUDE.md when the next parity release gate runs.
+> Note (ADR-0016): scenarios 1-6 below encode the gated 9-step workflow and
+> are the live parity release gate again — ADR-0016 (v0.50.0) restored the
+> gates after their brief removal in v0.49.0 (ADR-0015). During v0.49.0 only,
+> parity meant working-agreement conformance instead.
 
 A release cannot claim Claude/Codex parity until both ordinary Codex and
 Orca-hosted Codex pass these bounded scenarios in an unrelated temporary repo:
@@ -143,7 +142,7 @@ live `listBrowserTabs()` call succeeded through Aside CLI.
 Figma remains structurally configured but live authentication is intentionally
 reported as unverifiable until an explicit Figma workflow authenticates it.
 
-## Hard-refuse contract (ADR-0015)
+## Hard-refuse contract (ADR-0015; survives ADR-0016)
 
 The hard-refuse tier in `hooks/block-dangerous-git.sh` (force-push to
 main/master, `git commit --no-verify`/`-n`, `git reset --hard` on
