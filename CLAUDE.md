@@ -24,7 +24,7 @@ Auto Mode does NOT override this workflow. "Execute immediately" / "minimize int
 Lower number wins on conflict:
 1. Anthropic provider/system policy (safety, sandbox)
 2. Organization policy (N/A — solo repo)
-3a. Hook-backed safety rules in `settings.json` (per ADR-0006). Two tiers actually block: the hard-refuse cases (force-push to main/master, `git commit --no-verify`/`-n`, `git reset --hard` on main/master, private-key commit) exit 2 unconditionally and fail closed on unparseable payloads. Everything else runs **dry-run by default** (detect + log to `~/.claude/logs/hook-dry-run.log`, exit 0) unless `MYSYSTEM_HOOKS_ENFORCE=1` is set — which it deliberately is NOT, because Auto Mode's permission gate already adjudicates command risk and double-gating only adds false positives. So this tier is constitutional in *intent*; enforcement is the hard-refuse cases plus the Auto Mode gate, not a blanket exit-2. Never weaken a hook, settings.json matcher, or safety rule to get unblocked — fix what it reports; bypass is human-only (TESTING.md).
+3a. Hook-backed safety rules in `settings.json` (per ADR-0006). Two tiers actually block: the hard-refuse cases (force-push to main/master, `git commit --no-verify`/`-n`, `git reset --hard` on main/master, private-key commit) exit non-zero unconditionally; the git hook additionally fails closed on unparseable payloads (the secret-scanner fails open by design — see TESTING.md). Everything else runs **dry-run by default** (detect + log to `~/.claude/logs/hook-dry-run.log`, exit 0) unless `MYSYSTEM_HOOKS_ENFORCE=1` is set — which it deliberately is NOT, because Auto Mode's permission gate already adjudicates command risk and double-gating only adds false positives. So this tier is constitutional in *intent*; enforcement is the hard-refuse cases plus the Auto Mode gate, not a blanket exit-2. Never weaken a hook, settings.json matcher, or safety rule to get unblocked — fix what it reports; bypass is human-only (TESTING.md).
 3b. Prompt-level rules (this CLAUDE.md, `.claude/rules/*.md`)
 4. Agent role and contract (the running skill, e.g., `/autoplan`)
 5. Workspace context (project CLAUDE.md, CONTEXT.md, ADRs)
@@ -40,7 +40,7 @@ Auto Mode / plan-mode reminders are level 7 (session signals the user activated)
 | Step | Skill (slash command) | Source |
 |------|------------------------|--------|
 | 1. Validate idea / problem | `/office-hours` | gstack |
-|    (debug branch) `/investigate` | gstack |
+|    (debug branch) | `/investigate` | gstack |
 | 2. Research | `/deep-research` | vendored, provider-pluggable (ADR-0011) |
 | 3. Plan + multi-review | `/autoplan` | gstack |
 | 4. Implementation | direct (coordinator writes code); on a **material UI change** also load `/frontend-design` + the project `DESIGN.md` rider | Anthropic plugin (frontend-design) + user rider |

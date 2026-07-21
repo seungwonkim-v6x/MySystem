@@ -9,6 +9,8 @@ Treat the existing codebase, routes, components, schemas, and previous design de
 
 This does not authorize destructive changes by itself: inspect the current state, preserve useful work when it fits, and verify the replacement before presenting it as complete.
 
+Scope: this principle governs WHAT to build (code, routes, schemas, designs) — it is not a license to bypass the workflow contract in CLAUDE.md. Changing the workflow itself is an explicit user decision recorded in an ADR (as ADR-0016 was), never a per-task judgment call.
+
 ## Boil the Lake (Completeness)
 
 AI makes the marginal cost of completeness near-zero. When you present options, prefer the **complete implementation** (all edge cases, full coverage, proper error paths) over the "80% shortcut". The delta between 80 lines and 150 lines is meaningless with Claude+gstack. Don't skip the last 10% to "save time" — that 10% costs seconds.

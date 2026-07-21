@@ -1,8 +1,8 @@
-# 0016 — Restore the gated 9-step workflow (reverses ADR-0015)
+# ADR-0016: Restore the gated 9-step workflow (reverses ADR-0015)
 
-- Status: Accepted
-- Date: 2026-07-21
-- Supersedes: ADR-0015 (remove workflow gates)
+Date: 2026-07-21
+Status: Accepted
+Supersedes: ADR-0015 (remove workflow gates)
 
 ## Context
 
