@@ -8,7 +8,7 @@
     "alternate_home_hooks": "host-owned-read-only"
   },
   "budgets": {
-    "global_max_bytes": 32768,
+    "global_max_bytes": 36864,
     "global_reserve_bytes": 4096,
     "project_max_bytes": 32768
   },

@@ -12,6 +12,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [0.50.0] - 2026-07-21
+
+**The gated 9-step workflow is back (ADR-0016, reversing ADR-0015): one week of the gate-less working agreement made Codex — the user's daily driver via the generated projection — noticeably worse, and the owner called the restore. Hook hardening from v0.49.0 stays.**
+
+### Restored
+
+- `CLAUDE.md` at its v0.48.0 gated form: mandatory 9-step pipeline, per-step approval gates, instruction precedence, Step → Skill mapping, skill whitelist / mandatory-invocation rule, triviality carve-out, Step-4 design discipline, /ship→/ai-review-loop auto-chain.
+- `codex/AGENTS.header.md` gated adapter header; projections regenerated (`AGENTS.global.md`, `AGENTS.project.md`) so Codex consumes the gated workflow again.
+- Gate-era language in `rules/operating-principles.md` (Conditional Clarification "Inside a Step", Step-4 references, "during ANY workflow step") and `rules/repo-self-management.md` (workflow-era semver wording).
+
+### Changed
+
+- `codex/parity-contract.json`: `budgets.global_max_bytes` 32768 → 36864 — the gated projection plus the post-v0.48 First Principle section (2ec9213, preserved) exceeds the old effective limit; reserve unchanged at 4096.
+- Restored CLAUDE.md updated where v0.48 text had gone stale against kept v0.49.0 reality: precedence tier 3a now lists the full unconditional hard-refuse set (`--no-verify`, `reset --hard` on main, fail-closed parsing), the Testing section names the Codex-parity and ai-review-loop suites, the Detailed-rules index lists the preserved First Principle, and the v0.49.0 "never weaken a hook to get unblocked" rail is re-added to CLAUDE.md and the Codex adapter header (it had lived only in the deleted working agreement).
+- Cross-reference cleanup: ADR-0015 marked Superseded by ADR-0016 (including its ADR-0012 auto-chain amendment, now reversed), TESTING.md's parity-scenario note re-inverted (scenarios 1-6 are the live release gate again), and the obsolete ADR-0015 kill-criterion review TODO closed in TODOS.md.
+- `settings.json` (local machine state riding this branch): Orca agent-hook guards hardened (`-f`/`-r`/`-x` checks + stdin drain when the script is absent) and `effortLevel` raised medium → high.
+
+### Kept from v0.49.0
+
+- All hook hardening (unconditional hard-refuse tier, fail-closed parsing, bypass-resistant matching), shellcheck CI, narrowed git allows, and their bats coverage — per ADR-0015's own rollback contract. 136/136 bats green after the restore.
+
 ## [0.49.0] - 2026-07-13
 
 **The gated 9-step workflow is gone (ADR-0015): CLAUDE.md is a ~55-line working agreement, skills are on-demand tools, the PR merge is the only human gate — and the safety hooks got strictly harder to compensate.**

@@ -1,8 +1,13 @@
 # ADR-0015: Remove the gated workflow; keep hardened safety hooks
 
 Date: 2026-07-13
-Status: Accepted
+Status: Superseded by ADR-0016 (2026-07-21)
 Supersedes: the mandatory-pipeline aspect of ADR-0001; amends ADR-0006 (hard-refuse tier is now unconditional). ADR-0012 (/ai-review-loop) survives as a user-invoked tool; its auto-chain after /ship is removed.
+
+> **Superseded (2026-07-21):** ADR-0016 restores the gated workflow; the gate
+> removal below no longer describes the live system. The hook hardening this
+> ADR shipped survives. This ADR's ADR-0012 amendment (auto-chain removed) is
+> also reversed — the /ship→/ai-review-loop auto-chain is live again.
 
 ## Context
 
