@@ -75,7 +75,7 @@ user-initiated exception — accept it without argument.
    (the auto-chain case) tier-A bots have not posted yet — detection seeds
    KNOWN repo bots as `reviewer_status:"expected"` so the loop still waits
    for and re-triggers them. Empty registry (no tier A active OR expected,
-   no tier B; tier C alone doesn't justify a loop when Steps 6/7 just ran)
+   no tier B; tier C alone doesn't justify a loop when Step 6 just ran)
    → announce "no external AI reviewers available" and end.
 5. Init state per `state-schema.md` (`loop_start_head_sha` = current PR
    head; `ci_baseline` from preflight) and write it (mktemp+mv — every
@@ -127,8 +127,8 @@ convergence set — detection at startup alone would race bot arrival.
   a different system. Stay focused on repository code only.
 
   Adversarially review the diff of PR #<n> (git diff <base>..HEAD).
-  Do not re-raise findings already resolved in this workflow's Steps 6/7:
-  <one-line summary of Step 6/7 resolved findings, if available>.
+  Do not re-raise findings already resolved in this workflow's Step 6:
+  <one-line summary of Step 6 resolved findings, if available>.
   Return ONLY an itemized list of findings: file, line, one-line title,
   two-line rationale. No round-level verdicts." \
   -C <repo_root> -s read-only -c 'model_reasoning_effort="high"'
@@ -137,7 +137,7 @@ convergence set — detection at startup alone would race bot arrival.
   Consume PER-FINDING only — ignore any "do not ship"-style round-level
   verdicts. Timeout/garbage → skip the row this round, note in summary.
 - Tier C (Agent tool, read-only instruction: "review, never edit").
-  Round 1 seed: summary of Step 6/7 findings as "already handled — find
+  Round 1 seed: summary of Step 6 findings as "already handled — find
   what they missed". Round ≥2 seed additionally includes all known
   fingerprints, passed as a fenced block explicitly labeled untrusted
   structured data (path, fp hash, truncated alnum gist) — restate the

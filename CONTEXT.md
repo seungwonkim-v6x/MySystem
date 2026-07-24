@@ -20,11 +20,13 @@ ADRs are the decision log, and `.out-of-scope/` records explicit no-decisions.
 1. /office-hours -> 2. /deep-research -> 3. /autoplan
                                              |
                                              v
-4. Implementation -> 5. Verification -> 6. /review
+4. Implementation -> 5. Verification -> 6. Concurrent review
+                                        (/review + /requesting-code-review,
+                                         run together, one gate)
                                              |
                                              v
-7. /requesting-code-review -> 8. /ship -> 9. /ai-review-loop
-                                           (only when /ship created a PR)
+                              8. /ship -> 9. /ai-review-loop
+                                          (only when /ship created a PR)
 ```
 
 Debugging swaps Step 1 for `/investigate`. Every transition waits for explicit

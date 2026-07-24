@@ -96,7 +96,7 @@ crash window only when the restored destination still matches that identity.
 | Type | Source | Adopted behavior |
 |---|---|---|
 | Full repo | [gstack](https://github.com/garrytan/gstack) | Steps 1, 3, 5, 6, 8 and supporting workflows |
-| Sparse | [obra/superpowers](https://github.com/obra/superpowers) | Step 7 plus the Step 5 completion gate |
+| Sparse | [obra/superpowers](https://github.com/obra/superpowers) | Step 6 fresh-context review pass plus the Step 5 completion gate |
 | Vendored local | `skills/deep-research/` | Step 2 provider-pluggable research |
 | User-owned local | `verify-test`, `aside-qa`, `ai-review-loop` | Steps 5 and 9 |
 | Claude plugins | `settings.json` | Claude-native conditional capabilities |
