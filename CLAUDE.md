@@ -46,8 +46,7 @@ Auto Mode / plan-mode reminders are level 7 (session signals the user activated)
 | 4. Implementation | direct (coordinator writes code); on a **material UI change** also load `/frontend-design` + the project `DESIGN.md` rider | Anthropic plugin (frontend-design) + user rider |
 | 5. Verification | `/verify-test` and/or `/qa-only` and/or `/design-review` | user-owned (verify-test) + gstack |
 |    (Step 5 augment) | `/verification-before-completion` | sparse cherry-pick obra/superpowers — Iron Law: no completion claims without evidence |
-| 6. PR review (1st pass) | `/review` | gstack |
-| 7. Adversarial review (2nd pass) | `/requesting-code-review` | sparse cherry-pick obra/superpowers |
+| 6. Concurrent two-pass review (one gate) | `/review` (in-session, context-rich structural) **+** `/requesting-code-review` (parallel fresh-context subagent) — run concurrently, findings merged into a single approval gate | gstack + sparse cherry-pick obra/superpowers |
 | 8. Ship | `/ship` | gstack |
 | 9. AI reviewer loop (post-PR) | `/ai-review-loop` | user-owned |
 
@@ -96,9 +95,7 @@ Load **both explicitly** — `/frontend-design` does **not** read `DESIGN.md` (r
        ↓  (wait for user approval)
 5. Verification          ← ask user which verification to run (see below)
        ↓  (wait for user approval)
-6. /review               ← PR code review: security, SQL safety, structure
-       ↓  (wait for user approval)
-7. /requesting-code-review ← adversarial fresh-eye review (2nd pass on the diff)
+6. Concurrent review     ← /review (in-session, context-rich) + /requesting-code-review (parallel fresh subagent), findings merged into ONE gate  [step 7 folded in — see "Step 6" below]
        ↓  (wait for user approval)
 8. /ship                 ← commit, push, create PR
        ↓  (only if /ship created a PR)
@@ -114,14 +111,14 @@ Load **both explicitly** — `/frontend-design` does **not** read `DESIGN.md` (r
        ↓  (wait for user approval)
 3. /autoplan             ← plan the fix + CEO/Design/Eng review
        ↓  (wait for user approval)
-4. Implementation → 5. Verification → 6. /review → 7. /requesting-code-review → 8. /ship → 9. /ai-review-loop (if PR created)
+4. Implementation → 5. Verification → 6. Concurrent review (/review + /requesting-code-review, one gate) → 8. /ship → 9. /ai-review-loop (if PR created)
 ```
 
 **Debug Step 1 rule.** During `/investigate`, generate 3-5 ranked, **falsifiable** hypotheses before instrumenting any of them. Show the ranked list to the user before testing. Each hypothesis: falsifiable (concrete observation could disprove), ranked by prior probability (not test-ease), and distinct (different root cause, not same cause in different words). After 3+ failed fix attempts, question the architecture, not the current attempt. (Pattern from mattpocock/skills `diagnose` + obra/superpowers `systematic-debugging`.)
 
 ## Workflow Successor Map
 
-After step N completes, the ONLY allowed next action is step N+1 OR wait for explicit user approval. Backtracking, jumping ahead, or branching to an off-workflow skill is forbidden inside an active workflow.
+After a step completes, the ONLY allowed next action is the next step in the successor map below OR wait for explicit user approval. Backtracking, jumping ahead, or branching to an off-workflow skill is forbidden inside an active workflow.
 
 | Completed step | Permitted next step |
 |---|---|
@@ -129,9 +126,8 @@ After step N completes, the ONLY allowed next action is step N+1 OR wait for exp
 | 2 (`/deep-research`) | 3 (`/autoplan`) |
 | 3 (`/autoplan`) | 4 (Implementation) |
 | 4 (Implementation) | 5 (Verification) |
-| 5 (Verification — any subset) | 6 (`/review`) |
-| 6 (`/review`) | 7 (`/requesting-code-review`) |
-| 7 (`/requesting-code-review`) | 8 (`/ship`) |
+| 5 (Verification — any subset) | 6 (concurrent `/review` + `/requesting-code-review`) |
+| 6 (concurrent review — both passes run together, one gate) | 8 (`/ship`) — step 7 is folded into 6; there is no separate step 7 |
 | 8 (`/ship`) | 9 (`/ai-review-loop`) — auto-chains only when /ship created a PR; otherwise 8 is terminal |
 | 9 (`/ai-review-loop`) | (complete; user starts new feature) |
 
@@ -150,7 +146,7 @@ After implementation, present these options:
 > **C) `/qa-only` only** — browser-driven flow check
 > **D) `/design-review` only** — designer's-eye visual QA
 > **E) Both functional** — `/verify-test` + `/qa-only`
-> **F) Skip** — proceed directly to `/review`
+> **F) Skip** — proceed directly to Step 6 (concurrent review)
 
 Drop `/design-review` from A and D automatically when the change has no UI surface (pure backend, refactor, infra). Wait for the user's choice, then execute.
 
@@ -160,15 +156,16 @@ Drop `/design-review` from A and D automatically when the change has no UI surfa
 
 **Quick Visual Check (pre-Step-5, when UI changed).** Before presenting the menu: (1) `git diff --name-only` filtered to UI files, (2) navigate to affected pages via `/aside-qa` (attach to an open tab first; `openTab` only when none matches), (3) verify project design constraints (DESIGN.md / `context/design-principles.md`), (4) full-page screenshot at 1440px desktop, (5) capture console messages. Screenshot + console become inputs for the user's choice. Skip entirely on pure backend/docs/config changes. (Pattern from awesome-claude-code Design-Review-Workflow.)
 
-## Steps 6 + 7: Adversarial Two-Pass Review
+## Step 6: Concurrent Two-Pass Review (one gate)
 
-Two independent perspectives on the same diff:
-- **Step 6 `/review` (gstack)** — pre-landing analysis: SQL safety, LLM trust boundaries, conditional side effects, structural issues.
-- **Step 7 `/requesting-code-review` (superpowers)** — fresh-context subagent on `BASE_SHA..HEAD_SHA`. Critical / Important / Minor categorization.
+Both passes still run — the former Steps 6 and 7 are **merged into a single step that runs them concurrently and presents one approval gate** (ADR-0017, supersedes the sequential two-gate design in ADR-0016). This preserves both perspectives (zero coverage loss) while removing the second sequential approval wait. The two passes catch different bug classes and MUST both run:
 
-Run **both**. A clean pass on Step 6 does not skip Step 7. Cross-check findings: if Step 7 flags something Step 6 missed (or vice versa), fix before `/ship`.
+- **`/review` (gstack)** — runs **in-session** (context-rich): knows the plan and repo invariants. Targeted structural analysis: SQL safety, LLM trust boundaries, conditional side effects. Catches "violates a known invariant / unsafe against our schema / diverges from the plan."
+- **`/requesting-code-review` (superpowers)** — dispatched as a **parallel fresh-context subagent** on `BASE_SHA..HEAD_SHA` (never the session history). Open adversarial re-read: Critical / Important / Minor. Catches what the author (and a context-sharing reviewer) is blind to.
 
-Steps 6/7 review the **pre-merge diff**; Step 9 (`/ai-review-loop`) reviews the **PR artifact** (bot reviewers attach to PRs only) — complementary, not redundant. Step 9's tier B/C prompts carry "do not re-raise findings already resolved in Steps 6/7."
+**Execution:** launch both concurrently — `/review` in-session while `/requesting-code-review`'s fresh subagent runs in the background. When both complete, **merge and dedupe findings into one table, then present ONE approval gate.** A clean `/review` does not excuse skipping the fresh pass; both must complete before the gate.
+
+Step 6 reviews the **pre-merge diff**; Step 9 (`/ai-review-loop`) reviews the **PR artifact** (bot reviewers attach to PRs only) — complementary, not redundant. Step 9's tier B/C prompts carry "do not re-raise findings already resolved in Step 6."
 
 ## `/autoplan` Details
 

@@ -35,7 +35,7 @@ Open `.pre-commit-config.yaml` in your repo and:
 
 ## Workflow integration
 
-Once pre-commit is installed in a project, MySystem Step 7 `/review` is allowed to skip:
+Once pre-commit is installed in a project, MySystem Step 6 `/review` is allowed to skip:
 - Lint findings (oxlint/ruff already ran)
 - Format issues (prettier already ran)
 - Secrets (gitleaks already ran)

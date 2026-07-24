@@ -12,6 +12,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [0.52.0] - 2026-07-24
+
+**Steps 6 and 7 merged into one concurrent two-pass review gate (ADR-0017, amends ADR-0016). Both passes still run — `/review` in-session (context-rich structural) and `/requesting-code-review` as a parallel fresh-context subagent — but concurrently, with findings merged into a single approval gate instead of two sequential gates. No coverage loss; one fewer approval wait. This started as an investigation into adopting `alibaba/open-code-review` (OCR) to do the merge and rejected it: in delegation mode OCR adds no review intelligence (only deterministic file selection + rule-doc injection — the review is still done by a fresh Claude subagent), while dragging in a version-pinned third-party binary, a re-audit-on-bump tax, and an untrusted-rule-injection surface on team repos. OCR's real fit is a Step-9 CI bot, which the owner cannot install anyway.**
+
+> Version note: 0.51.0 is claimed by the open skill-model-routing PR (#11); this change branched off main@0.50.0 and advances to 0.52.0 to avoid the queue collision. VERSION/CHANGELOG reconcile at merge (whichever lands second rebases).
+
+### Changed
+- `CLAUDE.md`: Step→Skill mapping, both workflow diagrams, successor map, Step 5 menu, and the "Steps 6 + 7" section rewritten as "Step 6: Concurrent Two-Pass Review (one gate)". Step 7 removed; Steps 8 (`/ship`) and 9 (`/ai-review-loop`) keep their numbers — a deliberate gap at 7, since `/ai-review-loop` is hard-referenced as "Step 9" across its SKILL.md and ADR-0012. Successor-map preamble reworded off the now-imprecise "step N+1".
+- `skills/ai-review-loop/SKILL.md`: "Steps 6/7" → "Step 6" (4 references).
+- `CONTEXT.md`, `README.md`: workflow diagram and source-attribution updated for the merge.
+- `templates/PRE-COMMIT-SETUP.md`: stale "Step 7 `/review`" → "Step 6".
+- `codex/AGENTS.global.md`: regenerated projection from the edited `CLAUDE.md`.
+
+### Added
+- `docs/adr/0017-merge-review-steps-6-7.md`: records the merge, the OCR investigation and rejection (with the security findings), and the numbering-gap rationale. Amends (does not supersede) ADR-0016 — only the Step 6/7 shape changes; all other gates stand.
+
+### Hook-enforcement candidates
+- (none) — this is a workflow-doc change; "both passes must complete before the single gate" is irreducibly prompt-level (no hook event fires on a model's review sequencing).
+
 ## [0.51.0] - 2026-07-21
 
 **Per-step model routing: research runs on Sonnet, everything from review through the post-ship loop runs on Opus, and Fable stays reserved for planning and implementation.**
