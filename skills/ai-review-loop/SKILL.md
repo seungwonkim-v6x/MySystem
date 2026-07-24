@@ -7,6 +7,7 @@ description: >
   findings within budget, reply to every bot comment with evidence,
   re-trigger, and loop until no valid findings remain. Runs autonomously
   after /ship creates a PR (per ADR-0012), or user-typed on any open PR.
+model: opus
 ---
 
 # /ai-review-loop — AI Reviewer Convergence Loop

@@ -1,6 +1,7 @@
 ---
 name: deep-research
 description: Multi-source deep research with a pluggable provider table; defaults to free built-in WebSearch/WebFetch and escalates to exa/apify/firecrawl/Scrapling by task fit, plus context7 for version-pinned library/framework API docs, Mobbin for UI/UX design references (real product screens/flows), and awesome-design-md for brand DESIGN.md tokens/rules. Delivers cited reports with source attribution. Use when the user wants thorough research on any topic with evidence and citations.
+model: sonnet
 ---
 
 # Deep Research
