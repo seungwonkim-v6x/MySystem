@@ -184,6 +184,28 @@ echo "[2/5] Running gstack setup..."
 STAGE_STARTED=$SECONDS
 if [ -x "skills/gstack/setup" ]; then
   ( cd skills/gstack && ./setup 2>&1 | sed 's/^/  /' )
+  # Codex scans skill roots recursively. gstack's source checkout can contain
+  # generated skill exports for other agent hosts; those are useful artifacts
+  # for their hosts, but in Codex they duplicate the real workflow skills and
+  # consume the skills context budget. Keep the source runtime + direct gstack
+  # skills, prune only generated host-export directories after setup.
+  for host_export in .agents .cursor .factory .gbrain .hermes .kiro .openclaw .opencode .slate; do
+    if [ -d "skills/gstack/$host_export" ]; then
+      rm -rf "skills/gstack/$host_export"
+    fi
+  done
+  # Keep Codex/Claude skill discovery aligned with the mandatory workflow.
+  # Non-whitelisted gstack skills can still be restored by running gstack setup
+  # directly, but they should not be auto-exposed in every MySystem session.
+  WORKFLOW_TOP_SKILLS=" gstack gstack-upgrade office-hours investigate deep-research autoplan verify-test qa-only design-review verification-before-completion review requesting-code-review ship ai-review-loop aside-qa "
+  for skill_dir in skills/*; do
+    [ -d "$skill_dir" ] || continue
+    skill_name=$(basename "$skill_dir")
+    case "$WORKFLOW_TOP_SKILLS" in
+      *" $skill_name "*) ;;
+      *) rm -rf "$skill_dir" ;;
+    esac
+  done
   echo "  ✓ gstack skills installed"
 else
   setup_fail GSTACK_SETUP_MISSING skills/gstack/setup "Gstack setup entrypoint is unavailable" "The external checkout is incomplete or non-executable" "Restore gstack and rerun full setup" gstack-skills
@@ -275,6 +297,17 @@ for entry in "${SPARSE_SKILLS[@]}"; do
 done
 print_timing sparse-skills "$((SECONDS - STAGE_STARTED))"
 
+# Sparse repos can contain many sibling skills. Only expose the specific
+# cherry-picked skill directories that the workflow declares.
+for skill_dir in external-skills/requesting-code-review/skills/*; do
+  [ -d "$skill_dir" ] || continue
+  [ "$(basename "$skill_dir")" = "requesting-code-review" ] || rm -rf "$skill_dir"
+done
+for skill_dir in external-skills/verification-before-completion/skills/*; do
+  [ -d "$skill_dir" ] || continue
+  [ "$(basename "$skill_dir")" = "verification-before-completion" ] || rm -rf "$skill_dir"
+done
+
 # Register external dirs in local-only ignore so they don't pollute git status
 EXCLUDE_FILE=".git/info/exclude"
 {
@@ -351,6 +384,56 @@ else
   run_parity "$REPO_ROOT/scripts/install-codex-parity.sh"
 fi
 print_timing codex-parity "$((SECONDS - STAGE_STARTED))"
+
+# Final Codex context-budget cleanup. The parity installer may refresh
+# ~/.agents/skills after the earlier gstack setup cleanup, so prune the
+# user-skill surface last as well.
+WORKFLOW_USER_SKILLS=" gstack gstack-upgrade office-hours investigate deep-research autoplan verify-test qa-only design-review verification-before-completion review requesting-code-review ship ai-review-loop aside-qa "
+if [ -d "$HOME/.agents/skills" ]; then
+  for skill_dir in "$HOME"/.agents/skills/*; do
+    [ -d "$skill_dir" ] || continue
+    skill_name=$(basename "$skill_dir")
+    case "$WORKFLOW_USER_SKILLS" in
+      *" $skill_name "*) ;;
+      *) rm -rf "$skill_dir" ;;
+    esac
+  done
+fi
+
+if [ -d "$HOME/.agents/skills/gstack" ] && [ ! -d "$HOME/.agents/skills/gstack/.git" ]; then
+  for host_export in .agents .cursor .factory .gbrain .hermes .kiro .openclaw .opencode .slate; do
+    if [ -d "$HOME/.agents/skills/gstack/$host_export" ]; then
+      rm -rf "$HOME/.agents/skills/gstack/$host_export"
+    fi
+  done
+  WORKFLOW_AGENT_GSTACK_SKILLS=" SKILL.md bin browse review qa ETHOS.md gstack gstack-upgrade office-hours investigate autoplan qa-only design-review review ship "
+  for skill_dir in "$HOME"/.agents/skills/gstack/*; do
+    [ -e "$skill_dir" ] || continue
+    skill_name=$(basename "$skill_dir")
+    case "$WORKFLOW_AGENT_GSTACK_SKILLS" in
+      *" $skill_name "*) ;;
+      *) rm -rf "$skill_dir" ;;
+    esac
+  done
+fi
+
+for plugin_cache_dir in \
+  "$HOME/.codex/plugins/cache/openai-primary-runtime/documents" \
+  "$HOME/.codex/plugins/cache/openai-primary-runtime/pdf" \
+  "$HOME/.codex/plugins/cache/openai-primary-runtime/presentations" \
+  "$HOME/.codex/plugins/cache/openai-primary-runtime/spreadsheets" \
+  "$HOME/.codex/plugins/cache/openai-bundled/browser" \
+  "$HOME/.codex/plugins/cache/openai-bundled/sites" \
+  "$HOME/.codex/plugins/cache/learning-opportunities/learning-opportunities-auto" \
+  "$HOME/.codex/plugins/cache/learning-opportunities/learning-opportunities" \
+  "$HOME/.codex/plugins/cache/learning-opportunities/orient" \
+  "$HOME/.codex/plugins/cache/openai-curated-remote/notion" \
+  "$HOME/.codex/plugins/cache/openai-curated-remote/openai-templates" \
+  "$HOME/.codex/plugins/cache/chatgpt-global/notion" \
+  "$HOME/.codex/plugins/cache/claude-plugins-official/code-review" \
+  "$HOME/.codex/plugins/cache/claude-plugins-official/plugin-install-iagkOH"; do
+  [ -e "$plugin_cache_dir" ] && rm -rf "$plugin_cache_dir"
+done
 
 echo ""
 echo "=== Setup Complete ==="
