@@ -365,6 +365,7 @@ import errno
 import os
 import stat
 import sys
+import time
 
 state_dir, current_pid = sys.argv[1], sys.argv[2]
 nofollow = getattr(os, "O_NOFOLLOW", 0)
@@ -396,6 +397,17 @@ try:
                 owner = int(raw)
             finally:
                 os.close(pid_fd)
+        if owner is None:
+            # Lock dir exists but carries no pid yet: another installer holds it
+            # via mkdir and has not written its pid. That is live contention, not
+            # an abandoned lock — stealing here would race the owner's pid write
+            # and surface INSTALL_LOCK_STALE_UNSAFE instead of INSTALL_LOCK_BUSY.
+            # Back off as BUSY while the lock is fresh; only a genuinely stale
+            # empty lock (older than the grace window) is reclaimed below.
+            fresh = os.stat("install.lock", dir_fd=parent_fd, follow_symlinks=False)
+            if time.time() - fresh.st_mtime < 5.0:
+                print("pending")
+                raise SystemExit(2)
         if owner is not None:
             try:
                 os.kill(owner, 0)
