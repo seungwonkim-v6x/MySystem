@@ -12,6 +12,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [0.52.1] - 2026-07-24
+
+**Config cleanup landed from pre-existing WIP: Codex context-budget skill pruning in `setup.sh`, and the default session model set to Opus.**
+
+### Changed
+- `setup.sh`: after the gstack/sparse installers, prune generated host-export directories, non-workflow skills, and plugin caches so the Codex skills surface stays scoped to the mandatory workflow whitelist (tighter context budget; pruned skills remain restorable via a direct gstack setup).
+- `settings.json`: default session model `claude-fable-5[1m]` → `opus[1m]`.
+
 ## [0.52.0] - 2026-07-24
 
 **Steps 6 and 7 merged into one concurrent two-pass review gate (ADR-0017, amends ADR-0016). Both passes still run — `/review` in-session (context-rich structural) and `/requesting-code-review` as a parallel fresh-context subagent — but concurrently, with findings merged into a single approval gate instead of two sequential gates. No coverage loss; one fewer approval wait. This started as an investigation into adopting `alibaba/open-code-review` (OCR) to do the merge and rejected it: in delegation mode OCR adds no review intelligence (only deterministic file selection + rule-doc injection — the review is still done by a fresh Claude subagent), while dragging in a version-pinned third-party binary, a re-audit-on-bump tax, and an untrusted-rule-injection surface on team repos. OCR's real fit is a Step-9 CI bot, which the owner cannot install anyway.**
