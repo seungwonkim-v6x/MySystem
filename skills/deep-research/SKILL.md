@@ -116,13 +116,16 @@ Do not blindly take the first row.
 | apify | `apify--rag-web-browser` | `apify--rag-web-browser` | cheap | credits — apify.com/pricing | managed search+scrape | yes |
 | firecrawl | `firecrawl_search` | `firecrawl_scrape` | cheap | credits — firecrawl.dev/pricing | managed scrape, structured extract, JS render-wait | yes |
 | scrapling | — | `stealthy_fetch` | free | local/OSS, no quota | bot-walled / Cloudflare (fetch-only) | yes |
-| context7 | `resolve-library-id` | `get-library-docs` | free | no key, no allowance page | version-pinned library/framework API docs | yes |
+| context7 | `resolve-library-id` | `get-library-docs` | free | no key; quota — context7.com/plans | version-pinned library/framework API docs | yes |
 
-**`free_tier` is a pointer, not a quota.** The column names where the allowance lives, never
-what it is. Metered rows here are credit-based, not request-quota-based, and the numbers move —
-per the vendor-facts safety rail, read the linked page and never restate an allowance from this
-table into a report. (This column previously asserted `1000/mo` for exa, which was wrong in
-kind, not just in value: exa bills credits, not requests.)
+**`free_tier` is a pointer, not a quota.** Wherever a vendor allowance exists, the column names
+the page it lives on, never the figure itself — the numbers move, so per the vendor-facts safety
+rail you read the linked page and never restate an allowance from this table into a report. Two
+rows have no vendor page to point at and say why instead: `builtin` (metered against the Claude
+plan) and `scrapling` (runs locally). Billing models differ per row — exa, apify and firecrawl
+bill credits; context7 meters request counts — so do not assume one shape from another.
+(This column previously asserted `1000/mo` for exa, which was wrong in kind, not just in value:
+exa bills credits, not requests.)
 
 **Tool param notes (get these right):**
 - **exa:** use `web_search_exa` (neural search), NOT the deprecated `crawling_exa`.
