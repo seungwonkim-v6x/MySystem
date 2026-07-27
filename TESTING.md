@@ -178,3 +178,9 @@ safety hooks.
 - Create Git repos and runtime homes only under `$BATS_TEST_TMPDIR`.
 - Clear inherited `CODEX_HOME` in fixture tests before discovery.
 - Every warning/failure `docs` field must resolve to a `SETUP.md` heading.
+- Tests that copy the working-tree `codex/` must call `sanitize_codex_copy`
+  (`tests/helpers/orca-sanitize.bash`) on the copy. Orca reinjects its telemetry
+  hooks into the live `codex/hooks.json` and leaves a `.bak`; copied verbatim that
+  pollution fails the hook-registration contract inside the fixture. The helper
+  removes only entries whose command carries `.orca/agent-hooks`, so a genuine
+  change to the registration still fails the contract tests.

@@ -12,6 +12,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [0.52.2] - 2026-07-27
+
+**`setup.sh` had been dying two thirds of the way through on every run, and the whole Codex parity test suite was red for a reason that had nothing to do with the code it tests.**
+
+Both traced to the same third party. Orca reinjects its telemetry hooks into `codex/hooks.json`, the parity contract does not know about them, and the resulting check failure was taking down far more than the check.
+
+### Fixed
+- `setup.sh`: a failing Codex parity check no longer aborts the run. The stage runs under `set -euo pipefail`, so a non-zero `--check` killed the script in place and the last ~60 lines never executed: the `~/.agents/skills` prune, the gstack host-export cleanup, the plugin cache sweep, and the completion summary. Codex-side cruft accumulated silently for as long as parity stayed red. The status is captured and re-raised as the script's exit code, so the `SessionStart` hook still surfaces the warning — the failure is reported, it just no longer takes the cleanup down with it.
+- `setup.sh`: the plugin-cache sweep used `[ -e "$dir" ] && rm -rf "$dir"`, an AND-list that returns 1 when the last cache directory is absent and trips `set -e`. Latent until now because the script never reached it; converted to `if`/`then`.
+- `setup.sh`: `computer-use` and `orchestration` are whitelisted in `WORKFLOW_USER_SKILLS`. Orca installs them into `~/.agents/skills` and the newly-reachable prune deleted them as non-workflow skills. A third-party tool's state is not ours to garbage-collect.
+- `tests/codex-parity.bats`, `tests/scripts.bats`: fixtures no longer inherit Orca's hook injection. `setup()` copies the working-tree `codex/` so contract edits stay testable, which also dragged in Orca's entries and the `.bak` beside them; the renderer then failed `CONTRACT_HOOK_REGISTRATION_INVALID` inside every fixture and 22 parity tests plus the projection check went red. The suite is 151/151 for the first time.
+
+### Added
+- `tests/helpers/orca-sanitize.bash`: `strip_orca_hooks` / `sanitize_codex_copy`, shared by both test files. Removes only entries whose command carries `.orca/agent-hooks`, and fails loudly rather than silently passing if the file is polluted and `jq` is missing. Verified by negative test: deleting a real safety hook still fails both the contract closure test and the projection check.
+
+### Changed
+- `settings.json`: dropped the unused `claude-video` marketplace. Its 19 skills were already gone — installed into `~/.claude/skills`, deleted by the workflow prune, leaving 19 broken symlinks in `~/.codex/skills` that have now been cleaned up. Transcript history shows 4 total invocations across 778 sessions.
+
 ## [0.52.1] - 2026-07-24
 
 **Config cleanup landed from pre-existing WIP: Codex context-budget skill pruning in `setup.sh`, and the default session model set to Opus.**

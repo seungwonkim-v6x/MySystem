@@ -2,6 +2,9 @@
 # Smoke test for repo utility scripts.
 
 SCRIPTS="$BATS_TEST_DIRNAME/../scripts"
+REPO="$BATS_TEST_DIRNAME/.."
+
+load helpers/orca-sanitize
 
 @test "claude-md-budget.sh reports separate Codex global and project budgets" {
   # Pin CLAUDE_HOME to the repo so local runs and CI exercise the same tree
@@ -14,7 +17,17 @@ SCRIPTS="$BATS_TEST_DIRNAME/../scripts"
 }
 
 @test "generated projections are current" {
-  run "$SCRIPTS/render-codex-agents.sh" --check
+  # Run against a mirror of the working tree with Orca's injected hooks stripped.
+  # The projections render from CLAUDE.md and rules/*.md, so the assertion is
+  # unchanged; hooks.json only gates the renderer via the hook-registration
+  # contract, and Orca's telemetry entries are not ours to certify.
+  local root="$BATS_TEST_TMPDIR/projection-root"
+  mkdir -p "$root"
+  cp "$REPO/CLAUDE.md" "$root/CLAUDE.md"
+  cp -R "$REPO/codex" "$REPO/rules" "$REPO/scripts" "$root/"
+  sanitize_codex_copy "$root"
+
+  MYSYSTEM_REPO_ROOT="$root" run "$root/scripts/render-codex-agents.sh" --check
   [ "$status" -eq 0 ]
   [[ "$output" == *"PROJECTIONS_CURRENT"* ]]
 }

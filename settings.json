@@ -296,15 +296,9 @@
         "source": "git",
         "url": "https://github.com/anthropics/claude-plugins-official.git"
       }
-    },
-    "claude-video": {
-      "source": {
-        "source": "github",
-        "repo": "bradautomates/claude-video"
-      }
     }
   },
-  "effortLevel": "high",
+  "effortLevel": "medium",
   "tui": "fullscreen",
   "skipDangerousModePermissionPrompt": true,
   "autoCompactEnabled": false,
