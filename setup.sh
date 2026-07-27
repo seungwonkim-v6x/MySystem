@@ -378,17 +378,27 @@ print_timing skill-validation "$((SECONDS - STAGE_STARTED))"
 echo ""
 echo "[5/5] Codex behavioral parity..."
 STAGE_STARTED=$SECONDS
+# Parity failure must NOT abort the run. Under `set -e` a non-zero --check
+# killed the script here, so everything below (the ~/.agents/skills prune, the
+# gstack host-export cleanup, the plugin cache sweep, the summary) never ran
+# and Codex-side cruft accumulated silently. Capture the status instead and
+# re-raise it at the very end so the SessionStart hook still reports it.
+PARITY_STATUS=0
 if [ "$SETUP_MODE" = session-start ]; then
-  run_parity "$REPO_ROOT/scripts/install-codex-parity.sh" --check
+  run_parity "$REPO_ROOT/scripts/install-codex-parity.sh" --check || PARITY_STATUS=$?
 else
-  run_parity "$REPO_ROOT/scripts/install-codex-parity.sh"
+  run_parity "$REPO_ROOT/scripts/install-codex-parity.sh" || PARITY_STATUS=$?
 fi
 print_timing codex-parity "$((SECONDS - STAGE_STARTED))"
 
 # Final Codex context-budget cleanup. The parity installer may refresh
 # ~/.agents/skills after the earlier gstack setup cleanup, so prune the
 # user-skill surface last as well.
-WORKFLOW_USER_SKILLS=" gstack gstack-upgrade office-hours investigate deep-research autoplan verify-test qa-only design-review verification-before-completion review requesting-code-review ship ai-review-loop aside-qa "
+# Orca installs its own skills here (computer-use, orchestration). They are not
+# MySystem workflow skills, but this prune is the only thing that deletes them and
+# Orca does not re-add them on every launch, so whitelist them: a third-party tool's
+# state is not ours to garbage-collect.
+WORKFLOW_USER_SKILLS=" gstack gstack-upgrade office-hours investigate deep-research autoplan verify-test qa-only design-review verification-before-completion review requesting-code-review ship ai-review-loop aside-qa computer-use orchestration "
 if [ -d "$HOME/.agents/skills" ]; then
   for skill_dir in "$HOME"/.agents/skills/*; do
     [ -d "$skill_dir" ] || continue
@@ -432,7 +442,11 @@ for plugin_cache_dir in \
   "$HOME/.codex/plugins/cache/chatgpt-global/notion" \
   "$HOME/.codex/plugins/cache/claude-plugins-official/code-review" \
   "$HOME/.codex/plugins/cache/claude-plugins-official/plugin-install-iagkOH"; do
-  [ -e "$plugin_cache_dir" ] && rm -rf "$plugin_cache_dir"
+  # if/then, not `[ -e ] && rm`: under `set -e` a missing final cache dir makes
+  # the AND-list return 1 and aborts the script before the summary below.
+  if [ -e "$plugin_cache_dir" ]; then
+    rm -rf "$plugin_cache_dir"
+  fi
 done
 
 echo ""
@@ -443,3 +457,8 @@ echo "  Hooks:   $(ls hooks/*.sh 2>/dev/null | wc -l | tr -d ' ')"
 print_timing total "$((SECONDS - SETUP_STARTED))"
 echo ""
 echo "Start a new Claude Code or Codex session to pick up changes."
+
+# Re-raise the parity status. Cleanup above always runs, but a parity failure
+# is still a failure: update-skills.sh reads this exit code to surface the
+# SessionStart warning. Never swallow it.
+exit "$PARITY_STATUS"
