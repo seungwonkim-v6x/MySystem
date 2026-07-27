@@ -5,6 +5,9 @@
 - **Author**: seungwon-v6x
 - **Supersedes / amends**: ADR-0010 (exa-only free stack)
 - **Tags**: skills, mcp, research-tooling, vendoring, provider-routing
+- **Amended**: 2026-07-27 (v0.53.0) — see "Amendment" below. The decision here is **reaffirmed**,
+  not reversed. Note before reading on: the Context section's "exa's free tier is 1,000 req/mo"
+  is **wrong** and is corrected in that amendment.
 
 <!-- mysystem:managed-start (intentionally empty — reserved for future tooling) -->
 <!-- mysystem:managed-end -->
@@ -94,27 +97,35 @@ occur again.
 
 Why it was rejected:
 
-1. **It is the "strict priority-walk routing" this ADR already declined**, re-labelled. The
-   B-real trigger defined above (~3 manual provider overrides in a month) had not fired.
+1. **It is the "strict priority-walk routing" this ADR already declined**, re-labelled. There is
+   no trigger written for revisiting routing specifically; the closest one is B-real's (~3 manual
+   provider overrides in a month, above), which governs building the fetch-proxy shim rather than
+   adopting rails. Borrowing it by analogy — both measure escalation friction — it had not fired.
 2. **The premise was false.** Transcript tool-call counts: builtin 1352 search + 939 fetch;
    context7 37; exa 29; firecrawl 11. The metered rows are a ~3% long tail, not dead rows, and
    context7 — which one rail would have policed — is the most-used escalation.
 3. **One rail pointed the wrong way.** A measured A/B plus the third-party benchmarks it surfaced
    put exa BELOW keyword engines on news recency and general factual lookup, because it ranks on
    semantic similarity rather than factual relevance. Forcing exa on freshness would have bet on
-   its weakness. This ADR's own `guaranteed-fresh → exa` line was wrong and has been corrected.
-4. **The real defect was source class, not provider.** Built-in search reported a vendor free tier
-   as 20,000 req/mo from three pricing-comparison sites; the vendor bills credits. A domain-pinned
-   search (`WebSearch allowed_domains`) on the *same* built-in tool returns the correct value — so
-   no metered escalation was needed to fix the observed failure.
+   its weakness. The `guaranteed-fresh → exa` line in `skills/deep-research/SKILL.md` was wrong
+   and has been corrected there.
+4. **The real defect was source class, not provider.** Built-in search reported Exa's free tier as
+   20,000 req/mo, sourced from three pricing-comparison sites. Exa bills credits, not requests —
+   $20 at signup plus $10 monthly, per <https://exa.ai/docs/reference/billing> and
+   <https://exa.ai/pricing> (checked 2026-07-27). A domain-pinned search
+   (`WebSearch allowed_domains: ["exa.ai"]`) on the *same* built-in tool returns the correct value,
+   so no metered escalation was needed to fix the observed failure.
 
 What shipped instead: a **provider-agnostic** "Vendor facts come from the vendor" safety rail that
 keys off source class (primary vendor page vs third-party aggregate), plus corrections to two
 now-falsified claims in the skill. Judgment-guided provider selection is untouched.
 
-Standing correction to the Consequences above: exa's `free_tier` was recorded as `1000/mo`. exa
-bills **credits**, not requests. The provider table no longer states allowances at all — it points
-at the vendor page, per the new rail.
+Standing correction: the Context section above states "exa's free tier is 1,000 req/mo" (a figure
+inherited from ADR-0010), and the skill's provider table carried the same `1000/mo`. Both were wrong
+in kind — exa bills **credits**, not requests, per the primary sources cited in reason 4 above. The
+provider table no longer states allowances at all; it points at the vendor page, per the new rail.
+The Context sentence is left as written (ADRs are not rewritten in place); it is corrected here and
+flagged in the header block.
 
 ## References
 
