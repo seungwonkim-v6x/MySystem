@@ -101,9 +101,10 @@ Why it was rejected:
    no trigger written for revisiting routing specifically; the closest one is B-real's (~3 manual
    provider overrides in a month, above), which governs building the fetch-proxy shim rather than
    adopting rails. Borrowing it by analogy — both measure escalation friction — it had not fired.
-2. **The premise was false.** Transcript tool-call counts: builtin 1352 search + 939 fetch;
-   context7 37; exa 29; firecrawl 11. The metered rows are a ~3% long tail, not dead rows, and
-   context7 — which one rail would have policed — is the most-used escalation.
+2. **The premise was false.** Local transcript tool-call counts, 2026-07-27: builtin 1356 search
+   + 939 fetch; context7 37; exa 32; firecrawl 11. The metered rows are a ~3% long tail, not dead
+   rows, and context7 — which one rail would have policed — is the most-used escalation. These
+   counts grow as sessions accumulate; the ratio is the durable part, not the absolute numbers.
 3. **One rail pointed the wrong way.** A measured A/B plus the third-party benchmarks it surfaced
    put exa BELOW keyword engines on news recency and general factual lookup, because it ranks on
    semantic similarity rather than factual relevance. Forcing exa on freshness would have bet on

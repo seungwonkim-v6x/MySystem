@@ -71,8 +71,9 @@ Do not blindly take the first row.
   1. **Domain-pinned search**, using whatever the runtime supports: Claude Code has
      `WebSearch(query, allowed_domains: ["<vendor-domain>"])`; elsewhere use a
      `site:<vendor-domain>` query. Cheap and deterministic — do this FIRST, before escalating.
-     (Note: plain `web_search_exa` cannot pin domains; that lives in
-     `web_search_advanced_exa`, which is off by default. Do not assume exa can filter.)
+     (Note: do not assume exa can domain-filter. Check the active tool list — if only
+     `web_search_exa` / `web_fetch_exa` are exposed, no domain-filter parameter is available
+     to you; the filtering variant is a separate tool that must be enabled first.)
   2. **Fetch the vendor's own docs / pricing / changelog URL** directly. If the number is
      buried in a rendered table, apply the lossy-`WebFetch` caveat below — re-fetch with a
      sharper prompt before concluding it is not there.
@@ -115,7 +116,7 @@ Do not blindly take the first row.
 | apify | `apify--rag-web-browser` | `apify--rag-web-browser` | cheap | credits — apify.com/pricing | managed search+scrape | yes |
 | firecrawl | `firecrawl_search` | `firecrawl_scrape` | cheap | credits — firecrawl.dev/pricing | managed scrape, structured extract, JS render-wait | yes |
 | scrapling | — | `stealthy_fetch` | free | local/OSS, no quota | bot-walled / Cloudflare (fetch-only) | yes |
-| context7 | `resolve-library-id` | `get-library-docs` | free | no key required — context7.com | version-pinned library/framework API docs | yes |
+| context7 | `resolve-library-id` | `get-library-docs` | free | no key, no allowance page | version-pinned library/framework API docs | yes |
 
 **`free_tier` is a pointer, not a quota.** The column names where the allowance lives, never
 what it is. Metered rows here are credit-based, not request-quota-based, and the numbers move —
