@@ -12,6 +12,34 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [0.53.0] - 2026-07-27
+
+**`/deep-research` was quoting SEO-generated pricing pages as primary sources, and three of them agreeing read as corroboration.**
+
+Asked why the skill never seemed to escalate off the free built-in tier, the answer turned out to be that the question was wrong. A three-pair A/B against real queries found the actual defect somewhere else: built-in search reported one vendor's free tier as "20,000 requests per month", sourced from three separate pricing-comparison sites. The vendor's own docs bill credits, not requests — the number was wrong in kind, not just in value. A domain-pinned search on that same built-in tool returns the correct figure, so no paid provider was ever needed. What was missing was a rule about which *class* of source counts.
+
+Measurement also killed the premise behind the original request. Across all transcripts the metered providers are a long tail, not dead rows: 37 context7 calls, 29 exa, 11 firecrawl, against 1352 `WebSearch` and 939 `WebFetch`. context7 — the provider a proposed rail would have policed — is the most-used escalation of the three.
+
+### Added
+
+- `skills/deep-research/SKILL.md`: a **"Vendor facts come from the vendor"** safety rail, in the `Safety rails (always hold — not judgment)` block rather than among the Step 3 heuristics. Pricing, free-tier and quota limits, rate limits, version numbers, release dates and shutdown notices get an ordered procedure: domain-pinned search first (`WebSearch(query, allowed_domains: [...])` on Claude Code, a `site:` query on runtimes without it), then a direct fetch of the vendor's own docs/pricing/changelog, then exa for primary-source discovery, and only then `unverified-primary` naming the page that could not be reached. A third-party comparison page is never primary no matter how many agree, because that content class copies itself. Carve-out: context7 counts as primary for library API facts, never for vendor pricing. Vendor pages that disagree get the discrepancy reported rather than silently resolved, and every number is pinned to a product/plan/version.
+- `TODOS.md`: `scripts/render-codex-agents.sh --check` prints `FAIL CONTRACT_HOOK_REGISTRATION_INVALID` but exits 0, so it cannot gate by exit code (P2).
+
+### Fixed
+
+- `skills/deep-research/SKILL.md`: exa is no longer listed as the freshness provider. Its ranking signal is semantic similarity, not factual relevance, which makes it weaker than keyword engines on news recency and general factual lookup — the opposite of what the old `guaranteed-fresh → exa` line and the table's `fresh` tag claimed. It is now scoped to finding the right *document*.
+- `skills/deep-research/SKILL.md`: the 429 fallback was unconditionally exa, which routed news-recency queries straight into that weakness. Now conditioned on query shape — semantic to exa, news/factual to apify or firecrawl.
+- `skills/deep-research/SKILL.md`: the `free_tier` column asserted request quotas (`1000/mo` for exa, `~1000/mo` for firecrawl, `$5/mo credit` for apify). These are credit-based and the figures move, so the column is now a pointer to the vendor page for every row, with the contract stated explicitly. Restating an allowance out of this table into a report is exactly what the new rail forbids.
+- `skills/deep-research/SKILL.md`: Quality Rule 2 ("if only one source says it, flag it as unverified") counted three agreeing aggregators as cross-referenced, so the failure case above passed it cleanly. It now carries an explicit exception, and the new Rule 7 says it overrides the source count.
+
+### Changed
+
+- No provider-routing change. The originally-requested design — five mandatory escalation rails forcing exa and context7 — was **rejected 6/6** by both `/autoplan` CEO voices and dropped. It would have reversed the deterministic-routing alternative that ADR-0011 explicitly declined, without ADR-0011's own trigger (~3 manual provider overrides in a month) ever firing, and its freshness rail pointed at exa's measured weakness. The shipped rail is provider-agnostic and keys off source class, so ADR-0011's rejected "rigid ladder" stands rejected. See the amendment note in `docs/adr/0011-deep-research-vendored-provider-pluggable.md`.
+
+### Hook-enforcement candidates
+
+- None available. No hook event observes "the agent accepted an aggregator as a primary source" — the judgment happens inside synthesis, so this rail is irreducibly prompt-level, the same finding as the v0.47.0 narration hold. The nearest thing to enforcement is the rail's own audit surface: reports must name the page they could not reach. Promote if `/retro` transcript sampling shows vendor numbers landing without a primary source.
+
 ## [0.52.2] - 2026-07-27
 
 **`setup.sh` had been dying two thirds of the way through on every run, and the whole Codex parity test suite was red for a reason that had nothing to do with the code it tests.**

@@ -84,6 +84,38 @@ built-in is the default) — "exa stays registered" is not "exa is the hot path"
   override the agent's provider choice more than ~3x in a month, or repeatedly fight its tool
   selection.** Do not re-anchor it to an unmeasurable number.
 
+## Amendment (2026-07-27, v0.53.0) — routing decision reaffirmed; a source-class rail added instead
+
+Revisited because `/deep-research` appeared never to escalate off the free built-in tier. The
+proposal was five mandatory escalation rails (force exa on any decision-shaped report and on any
+recent-fact claim, force context7 on any version-pinned API claim, etc.). **That proposal was
+rejected**, and this ADR's original decision stands unchanged. Recorded because the same idea will
+occur again.
+
+Why it was rejected:
+
+1. **It is the "strict priority-walk routing" this ADR already declined**, re-labelled. The
+   B-real trigger defined above (~3 manual provider overrides in a month) had not fired.
+2. **The premise was false.** Transcript tool-call counts: builtin 1352 search + 939 fetch;
+   context7 37; exa 29; firecrawl 11. The metered rows are a ~3% long tail, not dead rows, and
+   context7 — which one rail would have policed — is the most-used escalation.
+3. **One rail pointed the wrong way.** A measured A/B plus the third-party benchmarks it surfaced
+   put exa BELOW keyword engines on news recency and general factual lookup, because it ranks on
+   semantic similarity rather than factual relevance. Forcing exa on freshness would have bet on
+   its weakness. This ADR's own `guaranteed-fresh → exa` line was wrong and has been corrected.
+4. **The real defect was source class, not provider.** Built-in search reported a vendor free tier
+   as 20,000 req/mo from three pricing-comparison sites; the vendor bills credits. A domain-pinned
+   search (`WebSearch allowed_domains`) on the *same* built-in tool returns the correct value — so
+   no metered escalation was needed to fix the observed failure.
+
+What shipped instead: a **provider-agnostic** "Vendor facts come from the vendor" safety rail that
+keys off source class (primary vendor page vs third-party aggregate), plus corrections to two
+now-falsified claims in the skill. Judgment-guided provider selection is untouched.
+
+Standing correction to the Consequences above: exa's `free_tier` was recorded as `1000/mo`. exa
+bills **credits**, not requests. The provider table no longer states allowances at all — it points
+at the vendor page, per the new rail.
+
 ## References
 
 - Supersedes/amends: ADR-0010 (exa-only); builds on ADR-0007 (sparse cherry-pick mechanism — deep-research is now removed from it).
