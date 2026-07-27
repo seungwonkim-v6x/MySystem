@@ -2,6 +2,8 @@
 
 SOURCE_REPO="$BATS_TEST_DIRNAME/.."
 
+load helpers/orca-sanitize
+
 setup() {
   export TEST_ROOT="$BATS_TEST_TMPDIR/parity"
   export HOME="$TEST_ROOT/home"
@@ -13,6 +15,7 @@ setup() {
   mkdir -p "$TEST_REPO" "$HOME/.agents/skills"
   cp "$SOURCE_REPO/CLAUDE.md" "$TEST_REPO/CLAUDE.md"
   cp -R "$SOURCE_REPO/codex" "$SOURCE_REPO/hooks" "$SOURCE_REPO/rules" "$SOURCE_REPO/scripts" "$TEST_REPO/"
+  sanitize_codex_copy "$TEST_REPO"
   mkdir -p "$TEST_REPO/skills"
   for skill in deep-research verify-test aside-qa ai-review-loop; do
     cp -RL "$SOURCE_REPO/skills/$skill" "$TEST_REPO/skills/$skill"
