@@ -12,6 +12,31 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [0.53.0] - 2026-07-27
+
+**`/deep-research` was quoting SEO-generated pricing pages as primary sources, and three of them agreeing read as corroboration.**
+
+Reproducible instance: asked for Exa's free-tier limit, built-in search answered "20,000 requests per month", sourced from three pricing-comparison sites. Exa bills credits, not requests — $20 at signup plus $10 monthly, per [exa.ai/docs/reference/billing](https://exa.ai/docs/reference/billing) and [exa.ai/pricing](https://exa.ai/pricing), checked 2026-07-27. So the number was wrong in kind, not just in value. Re-running the same built-in tool with the search pinned to `exa.ai` returns the correct figure, which means no paid provider was ever needed here. What was missing was a rule about which *class* of source counts as primary.
+
+### Added
+
+- `skills/deep-research/SKILL.md`: a **"Vendor facts come from the vendor"** safety rail, in the `Safety rails (always hold — not judgment)` block rather than among the Step 3 heuristics. Pricing, free-tier and quota limits, rate limits, version numbers, release dates and shutdown notices get an ordered procedure: domain-pinned search first (`WebSearch(query, allowed_domains: [...])` on Claude Code, a `site:` query on runtimes without it), then a direct fetch of the vendor's own docs/pricing/changelog, then exa for primary-source discovery, and only then `unverified-primary` naming the page that could not be reached. A third-party comparison page is never primary no matter how many agree, because that content class copies itself. Carve-out: context7 counts as primary for library API facts, never for vendor pricing. Vendor pages that disagree get the discrepancy reported rather than silently resolved, and every number is pinned to a product/plan/version.
+
+### Fixed
+
+- `skills/deep-research/SKILL.md`: exa is no longer listed as the freshness provider. Its ranking signal is semantic similarity, not factual relevance, which makes it weaker than keyword engines on news recency and general factual lookup — the opposite of what the old `guaranteed-fresh → exa` line and the table's `fresh` tag claimed. It is now scoped to finding the right *document*.
+- `skills/deep-research/SKILL.md`: the 429 fallback was unconditionally exa, which routed news-recency queries straight into that weakness. Now conditioned on query shape — semantic to exa, news/factual to apify or firecrawl.
+- `skills/deep-research/SKILL.md`: the `free_tier` column stated request quotas for credit-billed providers (`1000/mo` for exa, `~1000/mo` for firecrawl). Every row with a vendor allowance now points at the page it lives on instead of naming a figure — `exa.ai/pricing`, `apify.com/pricing`, `firecrawl.dev/pricing`, and `context7.com/plans`. The column's contract is stated explicitly: it names where the allowance lives, never what it is. Only `builtin` (metered against the Claude plan) and `scrapling` (runs locally) have no vendor page, and their cells say so. The notes block also records that billing models differ per row and are not interchangeable: exa and firecrawl bill credits, apify bills a dollar-denominated usage allowance, context7 meters API call counts. Reasoning from one row's shape to another's is how `1000/mo` ended up on the exa row in the first place — and what was actually absent there was a fixed monthly *quota*, not per-request metering. Restating an allowance out of this table into a report is exactly what the new rail forbids.
+- `skills/deep-research/SKILL.md`: Quality Rule 2 ("if only one source says it, flag it as unverified") counted three agreeing aggregators as cross-referenced, so the failure case above passed it cleanly. It now carries an explicit exception, and the new Rule 7 says it overrides the source count.
+
+### Changed
+
+- **Provider selection stays judgment-guided.** No provider is newly forced for any task class, and free built-in remains the default. The only routing edit is the 429 fallback above, which reorders a degraded path rather than changing which provider a task starts on. If you were expecting mandatory escalation onto exa and context7: that design was considered and dropped, because it would have re-adopted the deterministic routing ADR-0011 explicitly declined, and because its freshness rail pointed at exa's measured weakness. Local transcript counts (2026-07-27, `grep -rhoE '"name":"mcp__[a-z0-9_]+__[a-z0-9_-]+"' ~/.claude/projects/` — note the digit class, a plain `[a-z_]` will not match `context7_`) also showed the escalation rows were mostly not dead: 37 context7 calls, 32 exa, 11 firecrawl, against 1356 `WebSearch` and 939 `WebFetch`. The one genuine exception is **apify, at zero calls** — it is the only escalation row that has never been used. The counts grow with every session; the ~3% ratio is the durable part. ADR-0011's rejected "rigid ladder" stands rejected; `docs/adr/0011-deep-research-vendored-provider-pluggable.md` carries the full reasoning.
+
+### Hook-enforcement candidates
+
+- None available. No hook event observes "the agent accepted an aggregator as a primary source" — the judgment happens inside synthesis, so this rail is irreducibly prompt-level, the same finding as the v0.47.0 narration hold. The nearest thing to enforcement is the rail's own audit surface: reports must name the page they could not reach. Promote if `/retro` transcript sampling shows vendor numbers landing without a primary source.
+
 ## [0.52.2] - 2026-07-27
 
 **`setup.sh` had been dying two thirds of the way through on every run, and the whole Codex parity test suite was red for a reason that had nothing to do with the code it tests.**

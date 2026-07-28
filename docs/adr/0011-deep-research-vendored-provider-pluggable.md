@@ -5,6 +5,9 @@
 - **Author**: seungwon-v6x
 - **Supersedes / amends**: ADR-0010 (exa-only free stack)
 - **Tags**: skills, mcp, research-tooling, vendoring, provider-routing
+- **Amended**: 2026-07-27 (v0.53.0) — see "Amendment" below. The decision here is **reaffirmed**,
+  not reversed. Note before reading on: the Context section's "exa's free tier is 1,000 req/mo"
+  is **wrong** and is corrected in that amendment.
 
 <!-- mysystem:managed-start (intentionally empty — reserved for future tooling) -->
 <!-- mysystem:managed-end -->
@@ -83,6 +86,49 @@ built-in is the default) — "exa stays registered" is not "exa is the hot path"
   qualitative trigger: **build B-real when escalation friction recurs — e.g. you manually
   override the agent's provider choice more than ~3x in a month, or repeatedly fight its tool
   selection.** Do not re-anchor it to an unmeasurable number.
+
+## Amendment (2026-07-27, v0.53.0) — routing decision reaffirmed; a source-class rail added instead
+
+Revisited because `/deep-research` appeared never to escalate off the free built-in tier. The
+proposal was five mandatory escalation rails (force exa on any decision-shaped report and on any
+recent-fact claim, force context7 on any version-pinned API claim, etc.). **That proposal was
+rejected**, and this ADR's original decision stands unchanged. Recorded because the same idea will
+occur again.
+
+Why it was rejected:
+
+1. **It is the "strict priority-walk routing" this ADR already declined**, re-labelled. There is
+   no trigger written for revisiting routing specifically; the closest one is B-real's (~3 manual
+   provider overrides in a month, above), which governs building the fetch-proxy shim rather than
+   adopting rails. Borrowing it by analogy — both measure escalation friction — it had not fired.
+2. **The premise was mostly false.** Local transcript tool-call counts, 2026-07-27: builtin 1356
+   search + 939 fetch; context7 37; exa 32; firecrawl 11; **apify 0**. The escalation rows are a
+   ~3% long tail rather than dead — except apify, which genuinely has never been called and is the
+   one row the "dead rows" framing fit. context7, which one rail would have policed, is the
+   most-used escalation. These counts grow as sessions accumulate; the ratio is the durable part,
+   not the absolute numbers.
+3. **One rail pointed the wrong way.** A measured A/B plus the third-party benchmarks it surfaced
+   put exa BELOW keyword engines on news recency and general factual lookup, because it ranks on
+   semantic similarity rather than factual relevance. Forcing exa on freshness would have bet on
+   its weakness. The `guaranteed-fresh → exa` line in `skills/deep-research/SKILL.md` was wrong
+   and has been corrected there.
+4. **The real defect was source class, not provider.** Built-in search reported Exa's free tier as
+   20,000 req/mo, sourced from three pricing-comparison sites. Exa bills credits, not requests —
+   $20 at signup plus $10 monthly, per <https://exa.ai/docs/reference/billing> and
+   <https://exa.ai/pricing> (checked 2026-07-27). A domain-pinned search
+   (`WebSearch allowed_domains: ["exa.ai"]`) on the *same* built-in tool returns the correct value,
+   so no metered escalation was needed to fix the observed failure.
+
+What shipped instead: a **provider-agnostic** "Vendor facts come from the vendor" safety rail that
+keys off source class (primary vendor page vs third-party aggregate), plus corrections to two
+now-falsified claims in the skill. Judgment-guided provider selection is untouched.
+
+Standing correction: the Context section above states "exa's free tier is 1,000 req/mo" (a figure
+inherited from ADR-0010), and the skill's provider table carried the same `1000/mo`. Both were wrong
+in kind — exa bills **credits**, not requests, per the primary sources cited in reason 4 above. The
+provider table no longer states allowances at all; it points at the vendor page, per the new rail.
+The Context sentence is left as written (ADRs are not rewritten in place); it is corrected here and
+flagged in the header block.
 
 ## References
 
