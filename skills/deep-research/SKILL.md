@@ -113,7 +113,7 @@ Do not blindly take the first row.
 |----|-------------|------------|------|-----------|----------|---------|
 | builtin | `WebSearch` | `WebFetch` | free | plan-metered | general search+read (DEFAULT) | yes |
 | exa | `web_search_exa` | `web_fetch_exa` | cheap | credits — exa.ai/pricing | neural/semantic depth, exact in-doc section | yes |
-| apify | `apify--rag-web-browser` | `apify--rag-web-browser` | cheap | credits — apify.com/pricing | managed search+scrape | yes |
+| apify | `apify--rag-web-browser` | `apify--rag-web-browser` | cheap | $ usage allowance — apify.com/pricing | managed search+scrape | yes |
 | firecrawl | `firecrawl_search` | `firecrawl_scrape` | cheap | credits — firecrawl.dev/pricing | managed scrape, structured extract, JS render-wait | yes |
 | scrapling | — | `stealthy_fetch` | free | local/OSS, no quota | bot-walled / Cloudflare (fetch-only) | yes |
 | context7 | `resolve-library-id` | `get-library-docs` | free | no key; quota — context7.com/plans | version-pinned library/framework API docs | yes |
@@ -122,10 +122,14 @@ Do not blindly take the first row.
 the page it lives on, never the figure itself — the numbers move, so per the vendor-facts safety
 rail you read the linked page and never restate an allowance from this table into a report. Two
 rows have no vendor page to point at and say why instead: `builtin` (metered against the Claude
-plan) and `scrapling` (runs locally). Billing models differ per row — exa, apify and firecrawl
-bill credits; context7 meters request counts — so do not assume one shape from another.
+plan) and `scrapling` (runs locally). **Billing models differ per row and are not
+interchangeable** — exa and firecrawl bill credits, apify bills a dollar-denominated usage
+allowance (compute units plus data transfer, proxy and storage), context7 meters API call counts.
+Never reason from one row's shape to another's; that is how `1000/mo` ended up on the exa row.
 (This column previously asserted `1000/mo` for exa, which was wrong in kind, not just in value:
-exa bills credits, not requests.)
+exa has no fixed monthly request quota at all — requests are priced per-1k and drawn down from a
+prepaid credit balance. "Credits, not requests" would itself be too loose; the absent thing is the
+*quota*, not the per-request metering.)
 
 **Tool param notes (get these right):**
 - **exa:** use `web_search_exa` (neural search), NOT the deprecated `crawling_exa`.
