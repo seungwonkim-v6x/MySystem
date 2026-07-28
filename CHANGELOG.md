@@ -12,6 +12,58 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [0.54.0] - 2026-07-28
+
+**Step 9 is gone. `/ship` is the last step, and the workflow no longer has an exception to its own approval gate.**
+
+`/ai-review-loop` ran end to end exactly once, on the v0.53.0 PR, and it worked: four rounds, 24 valid findings, converging clean. It caught a false claim that had already shipped and caught that PR violating its own new rule twice. It also cost four rounds of two reviewers each re-reading the whole diff, 104 changed lines against a 40-line budget, and three separate approval interrupts — on a documentation-only change.
+
+The value was capped by something structural: this repo has no PR-attached bot reviewers. No Copilot, no Greptile, no CodeRabbit. Step 9's whole justification was that bots attach to PRs and therefore only a post-PR pass can read them; with no bots to read, the loop reduced to re-running the two reviewers Step 6 had just run, on a slightly larger diff, N more times.
+
+### The tokens that matter
+
+Measured with `scripts/claude-md-budget.sh` before and after.
+
+| surface | before | after | Δ |
+|---|---|---|---|
+| `CLAUDE.md` + always-loaded rules | 30,746 B | 30,103 B | −643 B |
+| Codex global projection | 31,269 B | 30,626 B | −643 B |
+| Codex projection headroom | 5,595 B | 6,238 B | **+11%** |
+| skill descriptions in the session list | 61 skills | 60 skills | −1 |
+| `bats tests/` | 151 cases | 108 cases | −43 |
+
+The projection number is the one that decided it. That payload sits against a 32,768-byte compatibility limit, so it was running at 95% full, and Step 9 prose was eating the remaining room.
+
+### What this means for the workflow
+
+Every step transition is now gated, with no exceptions — the Step 8 to Step 9 auto-chain was the only one. `/ship` finishes and waits. Post-PR review is manual: if a bot ever comments, read it and decide by hand.
+
+This is a real loss of coverage, honestly stated. The class of defect Step 9 was good at is the one where an author keeps re-asserting a claim that survived pre-merge review, which is exactly what it caught on its only run. That now rests on Step 6's two passes being adversarial enough.
+
+### Itemized changes
+
+#### Removed
+
+- `skills/ai-review-loop/` (10 files) and `tests/ai-review-loop.bats` (43 cases), plus its `gh` test fixture. Recoverable from history at `git show v0.53.0:skills/ai-review-loop/`.
+- Step 9 from the step table, the workflow diagrams, the successor map, the autonomous-skill whitelist, and the Codex core-skills list in `CLAUDE.md` — and therefore from both generated Codex projections.
+- The skill's entries in `.gitignore`, `setup.sh` (both workflow whitelists plus the git-exclude skip), and `codex/parity-contract.json`.
+- The Step 8→9 approval-gate exception. There is no longer any exception.
+
+#### Changed
+
+- `rules/repo-self-management.md`: no skill holds an autonomous git-mutation grant any more. `/ship` commits and pushes under explicit approval; nothing else does. The retired carve-out is described as a template for the *shape* of a future grant, not as a precedent for granting one.
+- `docs/adr/0012-ai-review-loop-git-carveout.md`: marked Superseded by ADR-0018, with a header note explaining that the grantee no longer exists and why the budget-gate design is still worth copying.
+- `CONTEXT.md`, `README.md`, `SETUP.md`, `TESTING.md`, `TODOS.md`: Step 9 references removed or restated around `/ship` being terminal. The four Step-9-specific deferred TODOs are closed as obsolete; the unrelated shellcheck item survives.
+
+#### Added
+
+- `docs/adr/0018-remove-step9-ai-review-loop.md`. Records the token accounting, why deleting beat the lighter "keep it user-invocable" option that ADR-0015 once took (the cost being removed is residency, not invocation), and the three alternatives that were rejected.
+- A re-open condition with two required halves: at least one PR-attached bot reviewer installed, **and** a shipped defect that a bot had flagged and nobody read. Bot presence alone does not justify restoring it, and if it returns it returns gated on bot presence rather than auto-chaining unconditionally.
+
+### Hook-enforcement candidates
+
+- One retired: the proposed PreToolUse hook enforcing `review-loop(rN):` push discipline is moot with the loop gone. Nothing new — this release removes a grant rather than adding a rule, so there is less to enforce, not more.
+
 ## [0.53.0] - 2026-07-27
 
 **`/deep-research` was quoting SEO-generated pricing pages as primary sources, and three of them agreeing read as corroboration.**

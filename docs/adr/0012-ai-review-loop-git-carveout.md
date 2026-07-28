@@ -1,7 +1,16 @@
 # ADR-0012: Constitutional git-mutation carve-out for /ai-review-loop
 
 Date: 2026-07-03
-Status: Accepted
+Status: Superseded by ADR-0018 (2026-07-28)
+
+> **Superseded.** ADR-0018 (v0.54.0) removed workflow Step 9 and deleted
+> `/ai-review-loop`, so the carve-out this ADR granted no longer has a grantee.
+> There is now no autonomous git-mutation grant to any skill except `/ship`.
+> Kept for the reasoning: if a future skill needs bounded autonomous commits,
+> the budget-gate shape described below (staged-never-committed, measured line
+> budget, sensitive-path escalation, every escalation pauses as awaiting-user)
+> is the pattern worth copying. This ADR is precedent for the *shape* of such a
+> grant, never for granting one.
 
 ## Context
 

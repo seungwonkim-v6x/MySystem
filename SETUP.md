@@ -203,9 +203,10 @@ hook UI. Do not replace the host file with `~/.codex/hooks.json`.
 | `EXTERNAL_REPOS` | gstack | upstream setup generates Claude and Codex-native skills |
 | `SPARSE_SKILLS` | obra/superpowers | one complete skill subdirectory; autonomous source pinned where required |
 
-Tracked local skills are `verify-test`, `deep-research`, `aside-qa`, and
-`ai-review-loop`. `deep-research` is vendored and provider-adapted; it is no
-longer a sparse install. Seven unused sparse skills were removed in v0.44.0.
+Tracked local skills are `verify-test`, `deep-research`, and `aside-qa`.
+`deep-research` is vendored and provider-adapted; it is no longer a sparse
+install. Seven unused sparse skills were removed in v0.44.0, and `ai-review-loop`
+in v0.54.0 (ADR-0018).
 
 To add a workflow skill:
 

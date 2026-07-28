@@ -178,8 +178,6 @@ run_overrides() {
 @test "tracked user-owned workflow skills pin their models directly in frontmatter" {
   run awk 'NR==1&&/^---$/{f=1;next} f&&/^---$/{exit} f&&/^model:/{print $2}' "$CHECKOUT/skills/deep-research/SKILL.md"
   [ "$output" = "sonnet" ]
-  run awk 'NR==1&&/^---$/{f=1;next} f&&/^---$/{exit} f&&/^model:/{print $2}' "$CHECKOUT/skills/ai-review-loop/SKILL.md"
-  [ "$output" = "opus" ]
 }
 
 @test "setup.sh stage 3.5 delegates to the extracted script" {

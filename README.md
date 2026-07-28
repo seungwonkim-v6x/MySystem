@@ -70,7 +70,7 @@ directories; portable local and sparse skills are linked as complete folders.
 Structural parity means the projections, links, required skills, and safety-hook
 registrations are current. Behavioral parity additionally requires the bounded
 manual release scenarios in [TESTING.md](./TESTING.md): feature/debug routing,
-one-step approval advancement, Step 5 verification behavior, Step 9 chaining,
+one-step approval advancement, Step 5 verification behavior, `/ship` terminality,
 and project-rule isolation. Tests assert observable state transitions, not exact
 model wording.
 
@@ -98,7 +98,7 @@ crash window only when the restored destination still matches that identity.
 | Full repo | [gstack](https://github.com/garrytan/gstack) | Steps 1, 3, 5, 6, 8 and supporting workflows |
 | Sparse | [obra/superpowers](https://github.com/obra/superpowers) | Step 6 fresh-context review pass plus the Step 5 completion gate |
 | Vendored local | `skills/deep-research/` | Step 2 provider-pluggable research |
-| User-owned local | `verify-test`, `aside-qa`, `ai-review-loop` | Steps 5 and 9 |
+| User-owned local | `verify-test`, `aside-qa` | Step 5 |
 | Claude plugins | `settings.json` | Claude-native conditional capabilities |
 | Codex plugins/MCP | Codex runtime state | Profile-probed, never copied from Claude state |
 

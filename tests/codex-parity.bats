@@ -17,7 +17,7 @@ setup() {
   cp -R "$SOURCE_REPO/codex" "$SOURCE_REPO/hooks" "$SOURCE_REPO/rules" "$SOURCE_REPO/scripts" "$TEST_REPO/"
   sanitize_codex_copy "$TEST_REPO"
   mkdir -p "$TEST_REPO/skills"
-  for skill in deep-research verify-test aside-qa ai-review-loop; do
+  for skill in deep-research verify-test aside-qa; do
     cp -RL "$SOURCE_REPO/skills/$skill" "$TEST_REPO/skills/$skill"
   done
   for skill in requesting-code-review verification-before-completion; do
@@ -212,7 +212,6 @@ PY
   [ -L "$HOME/.codex/AGENTS.md" ]
   [ -L "$HOME/.codex/hooks" ]
   [ -L "$HOME/.codex/hooks.json" ]
-  [ -L "$HOME/.agents/skills/ai-review-loop" ]
   protected_after=$(shasum -a 256 "$HOME/.codex/config.toml" "$HOME/.codex/auth.json")
   [ "$protected_before" = "$protected_after" ]
   first=$(managed_snapshot)
