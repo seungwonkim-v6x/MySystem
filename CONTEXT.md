@@ -25,12 +25,11 @@ ADRs are the decision log, and `.out-of-scope/` records explicit no-decisions.
                                          run together, one gate)
                                              |
                                              v
-                              8. /ship -> 9. /ai-review-loop
-                                          (only when /ship created a PR)
+                              8. /ship  (terminal step)
 ```
 
 Debugging swaps Step 1 for `/investigate`. Every transition waits for explicit
-approval except the documented Step 8 to Step 9 PR-created chain. The complete
+approval, with no exceptions; `/ship` is terminal. The complete
 mapping and successor rules live only in `CLAUDE.md`; Codex consumes a generated
 native projection rather than an independent rewrite.
 
@@ -52,8 +51,6 @@ native projection rather than an independent rewrite.
   preflight. Unknown real content is preserved and blocks installation.
 - **Harness, don't build:** prefer established public skills and deterministic
   enforcement over more prompt prose.
-- **Valid-finding convergence:** Step 9 ends only when the untriaged queue is
-  empty and no finding is classified valid; rounds remain unbounded per ADR-0012.
 
 ## Ownership boundaries
 
@@ -89,7 +86,7 @@ native projection rather than an independent rewrite.
 | `rules/` | canonical detailed rules | yes |
 | `codex/` | parity contract, adapter, generated files, hook registration | yes |
 | `scripts/` | renderer, installer, doctor, budget helper | yes |
-| `skills/verify-test/`, `deep-research/`, `aside-qa/`, `ai-review-loop/` | user-owned skills | yes |
+| `skills/verify-test/`, `deep-research/`, `aside-qa/` | user-owned skills | yes |
 | `skills/gstack/`, `external-skills/`, other setup outputs | external cache/install state | no |
 | `hooks/` | canonical hook implementations | yes |
 | `tests/` | deterministic contracts | yes |

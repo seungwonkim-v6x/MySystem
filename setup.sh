@@ -197,7 +197,7 @@ if [ -x "skills/gstack/setup" ]; then
   # Keep Codex/Claude skill discovery aligned with the mandatory workflow.
   # Non-whitelisted gstack skills can still be restored by running gstack setup
   # directly, but they should not be auto-exposed in every MySystem session.
-  WORKFLOW_TOP_SKILLS=" gstack gstack-upgrade office-hours investigate deep-research autoplan verify-test qa-only design-review verification-before-completion review requesting-code-review ship ai-review-loop aside-qa "
+  WORKFLOW_TOP_SKILLS=" gstack gstack-upgrade office-hours investigate deep-research autoplan verify-test qa-only design-review verification-before-completion review requesting-code-review ship aside-qa "
   for skill_dir in skills/*; do
     [ -d "$skill_dir" ] || continue
     skill_name=$(basename "$skill_dir")
@@ -326,7 +326,6 @@ EXCLUDE_FILE=".git/info/exclude"
       verify-test) continue ;;    # tracked user-owned skill
       deep-research) continue ;;  # vendored user-owned skill (ADR-0011) — never re-exclude
       aside-qa) continue ;;       # tracked user-owned skill (was missing — new files were vanishing from git status)
-      ai-review-loop) continue ;; # tracked user-owned skill (Step 9, v0.46.0)
       gstack) continue ;;         # already listed above
     esac
     echo "skills/$name/"
@@ -398,7 +397,7 @@ print_timing codex-parity "$((SECONDS - STAGE_STARTED))"
 # MySystem workflow skills, but this prune is the only thing that deletes them and
 # Orca does not re-add them on every launch, so whitelist them: a third-party tool's
 # state is not ours to garbage-collect.
-WORKFLOW_USER_SKILLS=" gstack gstack-upgrade office-hours investigate deep-research autoplan verify-test qa-only design-review verification-before-completion review requesting-code-review ship ai-review-loop aside-qa computer-use orchestration "
+WORKFLOW_USER_SKILLS=" gstack gstack-upgrade office-hours investigate deep-research autoplan verify-test qa-only design-review verification-before-completion review requesting-code-review ship aside-qa computer-use orchestration "
 if [ -d "$HOME/.agents/skills" ]; then
   for skill_dir in "$HOME"/.agents/skills/*; do
     [ -d "$skill_dir" ] || continue

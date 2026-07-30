@@ -7,12 +7,12 @@ This file defines the complete workflow that applies to all projects. Keep it sh
 
 The agent has ZERO discretion to skip or reorder workflow steps. Every step is MANDATORY and runs in order. NEVER skip, reorder, or suggest skipping. NEVER write code before `/autoplan` is done — not even one line. NEVER ask the user "should we skip?" or "do you want to run the full workflow?" — just run the next step. If the user wants to skip, THEY interrupt; that is their job, not yours.
 
-NEVER proceed to the next workflow step without explicit user approval. After presenting results, STOP and wait. The user must explicitly say "ok", "approved", "next", "go" or similar. Single exception: Step 8→9 auto-chains when `/ship` created a PR (per ADR-0012); "skip step 9" at ship time is a user-initiated exception — accept it without argument.
+NEVER proceed to the next workflow step without explicit user approval. After presenting results, STOP and wait. The user must explicitly say "ok", "approved", "next", "go" or similar. There is no exception: every step transition is gated. `/ship` is the terminal step — after it, wait for the user to start the next cycle.
 
 Auto Mode does NOT override this workflow. "Execute immediately" / "minimize interruptions" guidance is subordinate to this file. Auto Mode lets you proceed *within a single step* without asking; it does NOT skip steps and does NOT remove approval gates.
 
 **CRITICAL — must survive `/compact`:**
-- **NEVER install PostToolUse hooks that mutate git state** (no `git add`, `git commit`, `git push`, `gh pr create`, or any write to `.git/` from a tool-call side effect). Git mutations happen only via `/ship`, `/ai-review-loop` (within its per-round budget — ≤20 changed lines/round and ≤40/loop autonomous, sensitive paths always escalate; per ADR-0012), or explicit user request. Full rule in `.claude/rules/repo-self-management.md`.
+- **NEVER install PostToolUse hooks that mutate git state** (no `git add`, `git commit`, `git push`, `gh pr create`, or any write to `.git/` from a tool-call side effect). Git mutations happen only via `/ship` or explicit user request — there is no autonomous git-mutation grant to any other skill (ADR-0018 retired the only one). Full rule in `.claude/rules/repo-self-management.md`.
 - **Commits are scoped to a single logical change, not a single file.** Bundle related edits into one commit. Per-file commits fragment history and defeat atomic-revert semantics. `/ship` handles atomic commits — do not pre-fragment.
 
 **Skill whitelist.** The agent may autonomously invoke only skills mapped to workflow steps below. Any other installed skill (`/design-shotgun`, `/scrape`, `/codex`, `/humanizer`, `/qa`, etc.) runs **only when the user types its name**. Do not proactively suggest off-workflow skills. IF A WHITELISTED SKILL APPLIES TO THE CURRENT REQUEST AT THE FEATURE / BUG FIX / REFACTOR LEVEL, YOU MUST INVOKE IT BEFORE RESPONDING. Even minimal probability requires invocation.
@@ -48,12 +48,11 @@ Auto Mode / plan-mode reminders are level 7 (session signals the user activated)
 |    (Step 5 augment) | `/verification-before-completion` | sparse cherry-pick obra/superpowers — Iron Law: no completion claims without evidence |
 | 6. Concurrent two-pass review (one gate) | `/review` (in-session, context-rich structural) **+** `/requesting-code-review` (parallel fresh-context subagent) — run concurrently, findings merged into a single approval gate | gstack + sparse cherry-pick obra/superpowers |
 | 8. Ship | `/ship` | gstack |
-| 9. AI reviewer loop (post-PR) | `/ai-review-loop` | user-owned |
 
 The agent **must** call exactly these skills for exactly these steps. Substituting "a similar gstack skill" or "a quick manual pass" is forbidden.
 
 <!-- mysystem:core-skills:start -->
-Codex core filesystem skills: `/office-hours`, `/investigate`, `/deep-research`, `/autoplan`, `/verify-test`, `/qa-only`, `/design-review`, `/verification-before-completion`, `/review`, `/requesting-code-review`, `/ship`, `/ai-review-loop`, `/aside-qa`.
+Codex core filesystem skills: `/office-hours`, `/investigate`, `/deep-research`, `/autoplan`, `/verify-test`, `/qa-only`, `/design-review`, `/verification-before-completion`, `/review`, `/requesting-code-review`, `/ship`, `/aside-qa`.
 <!-- mysystem:core-skills:end -->
 
 <!-- mysystem:conditional-skills:start -->
@@ -64,7 +63,7 @@ Codex preflight: immediately before a conditional profile, run `./setup.sh docto
 
 ### Sparse-skill invocation policy (v0.37.0, pruned v0.44.0)
 
-**Autonomous (in whitelist):** `/verification-before-completion` (augments Step 5 — Iron Law: no completion claims without fresh evidence; applies even on F/Skip), `/aside-qa` (browser layer for Step 5 / Quick Visual Check — see Step 5 section), `/ai-review-loop` (Step 9 — auto-chains after /ship creates a PR; announces one line at start; no per-round gate except its budget/sensitive-path escalations, which pause as awaiting-user), `/frontend-design` (Step 4 design discipline — see "Step 4 — design discipline" below; **materiality-gated**: fires only on a *new UI or reshaping of existing UI*, NOT on any UI file touched or a one-line CSS tweak).
+**Autonomous (in whitelist):** `/verification-before-completion` (augments Step 5 — Iron Law: no completion claims without fresh evidence; applies even on F/Skip), `/aside-qa` (browser layer for Step 5 / Quick Visual Check — see Step 5 section), `/frontend-design` (Step 4 design discipline — see "Step 4 — design discipline" below; **materiality-gated**: fires only on a *new UI or reshaping of existing UI*, NOT on any UI file touched or a one-line CSS tweak).
 
 ### Step 4 — design discipline (v0.47.0)
 
@@ -97,9 +96,7 @@ Load **both explicitly** — `/frontend-design` does **not** read `DESIGN.md` (r
        ↓  (wait for user approval)
 6. Concurrent review     ← /review (in-session, context-rich) + /requesting-code-review (parallel fresh subagent), findings merged into ONE gate  [step 7 folded in — see "Step 6" below]
        ↓  (wait for user approval)
-8. /ship                 ← commit, push, create PR
-       ↓  (only if /ship created a PR)
-9. /ai-review-loop       ← fan out to AI reviewers, triage, fix, converge
+8. /ship                 ← commit, push, create PR  (terminal step)
 ```
 
 ### Debugging
@@ -111,7 +108,7 @@ Load **both explicitly** — `/frontend-design` does **not** read `DESIGN.md` (r
        ↓  (wait for user approval)
 3. /autoplan             ← plan the fix + CEO/Design/Eng review
        ↓  (wait for user approval)
-4. Implementation → 5. Verification → 6. Concurrent review (/review + /requesting-code-review, one gate) → 8. /ship → 9. /ai-review-loop (if PR created)
+4. Implementation → 5. Verification → 6. Concurrent review (/review + /requesting-code-review, one gate) → 8. /ship (terminal)
 ```
 
 **Debug Step 1 rule.** During `/investigate`, generate 3-5 ranked, **falsifiable** hypotheses before instrumenting any of them. Show the ranked list to the user before testing. Each hypothesis: falsifiable (concrete observation could disprove), ranked by prior probability (not test-ease), and distinct (different root cause, not same cause in different words). After 3+ failed fix attempts, question the architecture, not the current attempt. (Pattern from mattpocock/skills `diagnose` + obra/superpowers `systematic-debugging`.)
@@ -128,8 +125,7 @@ After a step completes, the ONLY allowed next action is the next step in the suc
 | 4 (Implementation) | 5 (Verification) |
 | 5 (Verification — any subset) | 6 (concurrent `/review` + `/requesting-code-review`) |
 | 6 (concurrent review — both passes run together, one gate) | 8 (`/ship`) — step 7 is folded into 6; there is no separate step 7 |
-| 8 (`/ship`) | 9 (`/ai-review-loop`) — auto-chains only when /ship created a PR; otherwise 8 is terminal |
-| 9 (`/ai-review-loop`) | (complete; user starts new feature) |
+| 8 (`/ship`) | (complete; user starts new feature) — 8 is terminal, always |
 
 If the user explicitly says "go back to step N" or "skip step N," that's a user-initiated exception logged in the session. The agent never proposes either move.
 
@@ -165,7 +161,7 @@ Both passes still run — the former Steps 6 and 7 are **merged into a single st
 
 **Execution:** launch both concurrently — `/review` in-session while `/requesting-code-review`'s fresh subagent runs in the background. When both complete, **merge and dedupe findings into one table, then present ONE approval gate.** A clean `/review` does not excuse skipping the fresh pass; both must complete before the gate.
 
-Step 6 reviews the **pre-merge diff**; Step 9 (`/ai-review-loop`) reviews the **PR artifact** (bot reviewers attach to PRs only) — complementary, not redundant. Step 9's tier B/C prompts carry "do not re-raise findings already resolved in Step 6."
+Step 6 reviews the **pre-merge diff**, and it is the only review gate. There is no post-PR review step (ADR-0018 removed it): if a PR-attached bot reviewer ever posts findings worth acting on, read them and decide by hand.
 
 ## `/autoplan` Details
 
@@ -184,7 +180,7 @@ Optional per-project convention: `<repo>/CONTEXT.md` (living glossary, read at s
 
 ## Testing
 
-`bats tests/` — behavioral contract tests for the defense-in-depth hooks (JSON stdin → exit code; enforce blocks = exit 2) plus script and Codex-parity checks (`tests/hooks.bats`, `tests/codex-parity.bats`, `tests/ai-review-loop.bats`). CI mirrors the suite on every push (`.github/workflows/test.yml`). Conventions live in `TESTING.md`. When a hook is added or changed, its contract test changes with it.
+`bats tests/` — behavioral contract tests for the defense-in-depth hooks (JSON stdin → exit code; enforce blocks = exit 2) plus script and Codex-parity checks (`tests/hooks.bats`, `tests/codex-parity.bats`). CI mirrors the suite on every push (`.github/workflows/test.yml`). Conventions live in `TESTING.md`. When a hook is added or changed, its contract test changes with it.
 
 ## Detailed rules
 

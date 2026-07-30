@@ -20,7 +20,6 @@ sudo apt-get install bats jq    # Ubuntu
 bats tests/                       # complete deterministic suite
 bats tests/codex-parity.bats      # projection/installer/doctor contracts
 bats tests/hooks.bats             # hook payload and exit contracts
-bats tests/ai-review-loop.bats    # Step 9 helper contracts
 ./setup.sh --check                # live filesystem structural check
 ```
 
@@ -44,8 +43,6 @@ suite. CI runs Ubuntu and macOS jobs on every push and pull request.
 - **Hooks:** real subprocess payloads, default dry-run behavior, enforced blocks,
   malformed-input behavior, and unconditional hard refusals for force-push to
   main/master and private-key commits.
-- **Step 9 helpers:** reviewer detection, pagination, fingerprints, budget and
-  sensitive-path gates, posting safety, and convergence state.
 - **Documentation:** current generated files and deny-patterns for disproven
   shared-cap/CLAUDE-only claims.
 
@@ -73,7 +70,7 @@ Orca-hosted Codex pass these bounded scenarios in an unrelated temporary repo:
    `/verification-before-completion`, including Skip.
 5. Material UI work runs the `material-ui` preflight; browser verification runs
    the `browser` preflight and non-mutating live capability check.
-6. `/ship` advances to Step 9 only when it created a PR.
+6. `/ship` is terminal — it never auto-advances to another step, PR or not.
 7. A MySystem session receives repo self-management rules; an unrelated repo
    does not.
 
@@ -128,7 +125,7 @@ baseline:
 - explicit Step 1 approval selected only `/deep-research`, never Step 3;
 - the UI-free Step 5 menu omitted design review and always retained
   `/verification-before-completion`, including on Skip;
-- a PR-producing `/ship` selected only Step 9 `/ai-review-loop`;
+- a PR-producing `/ship` stopped and waited instead of auto-advancing;
 - material UI and browser questions named the exact `doctor --require` profile
   plus `/frontend-design` or `/aside-qa` respectively;
 - unrelated repositories rejected MySystem-only repo rules, while the MySystem
