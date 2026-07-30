@@ -38,8 +38,11 @@ native projection rather than an independent rewrite.
 - **Behavioral parity:** Claude Code and Codex produce the same observable
   workflow routing, approval stops, required skill/tool attempts, and forbidden
   actions. Exact wording is not part of the contract.
-- **Canonical prose:** marked sections in `CLAUDE.md` and `rules/*.md`. Humans
-  edit these; generated `codex/AGENTS.*.md` files are never edited directly.
+- **Canonical prose:** marked sections in `codex/workflow-contract.md` and
+  `rules/*.md`. Humans edit these; generated `codex/AGENTS.*.md` files are never
+  edited directly. Since ADR-0019 the gated workflow contract lives in
+  `codex/workflow-contract.md` rather than `CLAUDE.md`, so the two surfaces can
+  diverge: Codex keeps the contract, Claude Code reads a thin working agreement.
 - **Projection:** deterministic provider-native `AGENTS.md` output containing
   canonical prose plus the small Codex terminology adapter.
 - **Core profile:** always-required workflow skills and safety hooks.
