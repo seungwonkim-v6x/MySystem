@@ -18,7 +18,8 @@ load helpers/orca-sanitize
 
 @test "generated projections are current" {
   # Run against a mirror of the working tree with Orca's injected hooks stripped.
-  # The projections render from CLAUDE.md and rules/*.md, so the assertion is
+  # The projections render from codex/workflow-contract.md and rules/*.md (ADR-0019
+  # moved the gated contract off CLAUDE.md), so the assertion is
   # unchanged; hooks.json only gates the renderer via the hook-registration
   # contract, and Orca's telemetry entries are not ours to certify.
   local root="$BATS_TEST_TMPDIR/projection-root"

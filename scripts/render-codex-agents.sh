@@ -203,7 +203,7 @@ declared_skills() {
     $0 == start { active=1; next }
     $0 == end { active=0; next }
     active { print }
-  ' "$REPO_ROOT/CLAUDE.md" \
+  ' "$REPO_ROOT/codex/workflow-contract.md" \
     | grep -oE '`/[A-Za-z0-9][A-Za-z0-9-]*`' \
     | tr -d '`/' \
     | LC_ALL=C sort -u
