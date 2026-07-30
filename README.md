@@ -109,9 +109,10 @@ source directories.
 
 ## Layout
 
-- `CLAUDE.md` - canonical global workflow prose
-- `rules/` - canonical detailed rules
+- `CLAUDE.md` - Claude Code working agreement (thin; not a projection source since ADR-0019)
+- `rules/` - canonical detailed rules, always loaded on both surfaces
 - `codex/` - narrow contract, adapter header, generated projections, hook registration
+- `codex/workflow-contract.md` - canonical gated workflow prose, projected to Codex only
 - `scripts/render-codex-agents.sh` - deterministic projection generator/checker
 - `scripts/install-codex-parity.sh` - isolated safe link installer and recovery boundary
 - `scripts/codex-parity-doctor.sh` - read-only diagnostics and profile probes

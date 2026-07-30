@@ -63,12 +63,12 @@ install_parity() {
 }
 
 @test "renderer fails closed on stale source and missing markers" {
-  printf '\nsource drift\n' >> "$TEST_REPO/CLAUDE.md"
+  printf '\nsource drift\n' >> "$TEST_REPO/codex/workflow-contract.md"
   run "$TEST_REPO/scripts/render-codex-agents.sh" --check
   [ "$status" -eq 1 ]
   [[ "$output" == *"STALE_PROJECTION"* ]]
 
-  sed -i.bak '/mysystem:section claude-workflow:start/d' "$TEST_REPO/CLAUDE.md"
+  sed -i.bak '/mysystem:section claude-workflow:start/d' "$TEST_REPO/codex/workflow-contract.md"
   run "$TEST_REPO/scripts/render-codex-agents.sh"
   [ "$status" -eq 1 ]
   [[ "$output" == *"SECTION_MARKER_COUNT"* ]]
@@ -78,7 +78,7 @@ install_parity() {
   start='<!-- mysystem:section claude-workflow:start -->'
   end='<!-- mysystem:section claude-workflow:end -->'
 
-  python3 - "$TEST_REPO/CLAUDE.md" "$start" <<'PY'
+  python3 - "$TEST_REPO/codex/workflow-contract.md" "$start" <<'PY'
 import sys
 path, start = sys.argv[1:]
 text = open(path, encoding="utf-8").read().replace(start, start + "\n" + start, 1)
@@ -88,7 +88,7 @@ PY
   [ "$status" -eq 1 ]
   [[ "$output" == *"SECTION_MARKER_COUNT"* ]]
 
-  cp "$SOURCE_REPO/CLAUDE.md" "$TEST_REPO/CLAUDE.md"
+  cp "$SOURCE_REPO/codex/workflow-contract.md" "$TEST_REPO/codex/workflow-contract.md"
   pstart='<!-- mysystem:section repo-self-management:start -->'
   pend='<!-- mysystem:section repo-self-management:end -->'
   python3 - "$TEST_REPO/rules/repo-self-management.md" "$pstart" "$pend" <<'PY'
@@ -102,7 +102,7 @@ PY
   [ "$status" -eq 1 ]
   [[ "$output" == *"SECTION_EXTRACTION_INVALID"* ]]
 
-  cp "$SOURCE_REPO/CLAUDE.md" "$TEST_REPO/CLAUDE.md"
+  cp "$SOURCE_REPO/codex/workflow-contract.md" "$TEST_REPO/codex/workflow-contract.md"
   cp "$SOURCE_REPO/rules/repo-self-management.md" "$TEST_REPO/rules/repo-self-management.md"
   python3 - "$TEST_REPO/rules/repo-self-management.md" "$pstart" "$pend" <<'PY'
 import sys

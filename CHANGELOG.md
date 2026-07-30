@@ -12,6 +12,43 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [0.55.0] - 2026-07-30
+
+**The request sentence is the scope. Claude Code gets a 4 KB working agreement; Codex keeps the gated contract; self-scored "repeat until 10" loops are off the default path.** (ADR-0019)
+
+Measured 58 sessions with 3+ workflow steps before changing anything. Of 77 course-corrections, **79% were scope, not defects** — REDIRECT "you built the wrong thing" 47%, REMOVE "take out what I didn't ask for" 32%, RETRY "it doesn't work" only 8%. **71% arrived after code was written**, so six approval gates were not catching direction errors. Only **31% of sessions reached `/ship`** and 24% never ran a test or review step, which means the contract was honored about a third of the time — unpredictability that reads as "it doesn't do what I said."
+
+Three independent causes, none sufficient alone:
+
+1. **Volume.** CLAUDE.md was 19,939 B / 2,722 words with 34% of the body being rationale, history, and duplicated diagrams that change no behavior.
+2. **A direct contradiction.** Every gstack skill injects `Completeness Principle — Boil the Ocean` ("the only thing out of scope is genuinely unrelated work"), the exact opposite of this repo's `Boil the Lake` ("boil lakes, not oceans"). Precedence said CLAUDE.md wins; nothing named the conflict, so the nearer 100 KB won.
+3. **A self-scored loop.** `/autoplan` → `plan-design-review` at "all 7 dimensions, full depth", whose `0-10 Rating Method` says "if it's not a 10 … do the work to get it there", "repeat until 10 or user says 'good enough, move on'". No term for the user's request, monotonic in scope, and the exit requires the user to interrupt.
+
+`/deep-research` found no third-party planning skill worth swapping in (spec-kit and BMAD are heavier, Kiro is an editor, OpenSpec adds tooling, superpowers `brainstorming` has no small-change path) and confirmed the fix is documented and already installed. Anthropic names the failure — "you become the verification loop" — and warns against mechanism 3 directly: "Chasing every finding leads to over-engineering." The literature: unguided self-refinement gains ≤1.8pp over five iterations and often degrades output, versus up to +80% with external feedback ([arXiv:2310.01798](https://arxiv.org/abs/2310.01798), [arXiv:2508.12903](https://arxiv.org/html/2508.12903v1)).
+
+ADR-0015 already tried gate removal and ADR-0016 reversed it — for Codex, not for Claude Code. The parity contract rendered both surfaces from one file, so CLAUDE.md could not be thinned without weakening Codex. **That coupling was the blocker, not the gates.**
+
+Changed:
+
+- **Surfaces split.** The gated contract moved verbatim to `codex/workflow-contract.md` and remains the `AGENTS.global.md` projection source. Three mechanical edits: new file, `projections.global.sections` source, and the hardcoded path in `render-codex-agents.sh`'s `declared_skills`.
+- **CLAUDE.md 19,939 B → 6,037 B** (70% smaller); always-loaded 29,655 B → 17,902 B (40% smaller). Removed the mandatory-invocation rule, skill whitelist, 9-level precedence list, triviality carve-out, successor map, and Step-5 A–F menu. The seven steps survive as a *default order*, not a contract.
+- **Request Lock** added as the load-bearing rule: discovered work goes under "Not done", widening requires asking first, feedback applies to that feedback only.
+- **Self-scored loops off the default path**, and every loop must declare an exit that is not "the user interrupts" — in code (`/goal`, Stop hook) for unattended ones.
+- **Named override** instead of patching the 43 regenerated gstack skill files that carry the section. `--explain-level=terse` was rejected: it also deletes `Confusion Protocol`, a drift-*reducing* rule. `tests/named-override.bats` (6 tests) fails loudly if the quoted wording disappears.
+- **Three anchors** in `rules/operating-principles.md` — `First Principle` (current goal = request as stated), `Boil the Lake` (completeness within requested scope), `Conditional Clarification` (retarget the question budget from taste-after to spec-before, since `AskUserQuestion` already runs in 95% of sessions).
+- **Debugging rule restored** (3-5 ranked falsifiable hypotheses; question the architecture after three failed fixes).
+
+`bats tests/` 114/114. Two parity tests that mutated `CLAUDE.md` to exercise the renderer's stale-source and marker validation now mutate `codex/workflow-contract.md` — the source they were always testing. Codex projection changed by +8/-2 lines (the anchors) to 32,344 B, 4,520 B under the ceiling.
+
+**Versioning note.** `rules/repo-self-management.md` calls a change to the canonical step→skill mapping a major bump, which would mean 1.0.0. Taken as a minor instead: the 2026-05-08 renumbering moved this repo into `0.x` specifically to signal "still iterating, no stability promise," and shipping 1.0.0 for a simplification would invert that signal. One-line change if the literal reading is preferred.
+
+Not done: the manual Codex behavioral-parity scenarios (TESTING.md 1-6) were not re-run — structural checks only. `render-codex-agents.sh` still fails `CONTRACT_HOOK_REGISTRATION_INVALID` in the live tree from pre-existing Orca hook reinjection; projections were rendered from a sanitized mirror.
+
+### Hook-enforcement candidates
+
+- **Request Lock** — prompt-level only. `tests/named-override.bats` protects the override's referents but nothing enforces the lock itself. Candidate: a Stop hook that refuses turn-end when the diff touches paths outside a declared scope, or a PreToolUse check on Edit/Write against a session scope file.
+- **"Every loop declares a non-user exit"** — irreducibly prompt-level as written. The native `/goal` condition and Stop hook are the enforcement path; adopt one on the next real unattended loop rather than shipping config speculatively.
+
 ## [0.54.0] - 2026-07-28
 
 **Step 9 is gone. `/ship` is the last step, and the workflow no longer has an exception to its own approval gate.**

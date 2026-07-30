@@ -11,11 +11,15 @@ This does not authorize destructive changes by itself: inspect the current state
 
 Scope: this principle governs WHAT to build (code, routes, schemas, designs) — it is not a license to bypass the workflow contract in CLAUDE.md. Changing the workflow itself is an explicit user decision recorded in an ADR (as ADR-0016 was), never a per-task judgment call.
 
+**Anchor (ADR-0019).** "The user's current goal" means the request as stated, not a larger goal inferred from it. Redesign or replacement is licensed only when the stated request cannot be delivered without it — and then you say so and ask first. Discovering that a nearby structure is wrong is not a license to change it in the same pass; it goes in "Not done". Measured: 47% of logged course-corrections are "you built the wrong thing", and the worst cases were new architecture built where a small change inside the existing one was asked for.
+
 ## Boil the Lake (Completeness)
 
 AI makes the marginal cost of completeness near-zero. When you present options, prefer the **complete implementation** (all edge cases, full coverage, proper error paths) over the "80% shortcut". The delta between 80 lines and 150 lines is meaningless with Claude+gstack. Don't skip the last 10% to "save time" — that 10% costs seconds.
 
 Flag "oceans" (rewrites of systems you don't control, multi-quarter migrations) as out of scope. Boil lakes, not oceans.
+
+**Anchor (ADR-0019).** Completeness means complete *within the requested scope* — all edge cases and error paths of the thing that was asked for. Adding surface the user did not ask for is not completeness, it is drift. Boil the lake you were given, not the one next to it. Measured: 32% of logged course-corrections are the user asking for things to be removed. This anchor also settles the conflict with gstack's `Boil the Ocean` section, which declares everything merely *related* to be in scope — see the named override in CLAUDE.md.
 
 ## Harness, Not Model
 
@@ -49,6 +53,8 @@ Inside a single workflow step, ask only when critical information is missing AND
 This rule complements (does not replace) cross-step approval gates AND the mandatory-skill-invocation rule. Approval gates between steps stay strict; this reduces within-step interruption when context is clear enough. **It does NOT authorize asking "should I invoke skill X?"** — that question is forbidden by the mandatory-invocation rule; you invoke and let the user interrupt. The 3-question budget covers clarifications within an already-invoked skill, not skill-selection deliberation.
 
 Force questions only on: Outcome (what success looks like), Audience (who the artifact is for), Format (what kind of artifact), Hard constraints (deadlines, blocked tech, budget). If all four are inferrable from prior turns, the design doc, or sensible defaults, do not ask.
+
+**Anchor (ADR-0019) — retarget, do not expand.** `AskUserQuestion` already runs in 95% of multi-step sessions (median 4-5 per session), so the 3-question ceiling is not the binding constraint; what the questions are *about* is. Spend the budget on verifying the spec before building, not on taste after. On a spec involving geometry, motion, ordering, or state transitions, restate your reading in three lines and offer multiple choice for whichever part is ambiguous — a wrong reading discovered after the build costs the whole build. One logged session repeated the same spatial misreading six times.
 
 ## Repo Mode — Solo vs Collaborative
 

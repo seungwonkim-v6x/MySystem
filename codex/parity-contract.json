@@ -17,7 +17,7 @@
       "output": "codex/AGENTS.global.md",
       "header": "codex/AGENTS.header.md",
       "sections": [
-        {"source": "CLAUDE.md", "id": "claude-workflow"},
+        {"source": "codex/workflow-contract.md", "id": "claude-workflow"},
         {"source": "rules/operating-principles.md", "id": "operating-principles"},
         {"source": "rules/trust-boundaries.md", "id": "trust-boundaries"}
       ]
