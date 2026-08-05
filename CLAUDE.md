@@ -57,6 +57,107 @@ ask the user detailed questions with `AskUserQuestion`, write a self-contained s
 that names the files involved, **states what is out of scope**, and ends with an
 end-to-end verification step — then implement it in a fresh session.
 
+## Step → Skill Mapping (canonical)
+
+| Step | Skill (slash command) | Source |
+|------|------------------------|--------|
+| 1. Validate idea / problem | `/office-hours` | gstack |
+|    (debug branch) | `/investigate` | gstack |
+| 2. Research | `/deep-research` | vendored, provider-pluggable (ADR-0011) |
+| 3. Plan + multi-review | `/autoplan` | gstack |
+| 4. Implementation | direct (coordinator writes code); on a **material UI change** also load `/frontend-design` + the project `DESIGN.md` rider | Anthropic plugin (frontend-design) + user rider |
+| 5. Verification | `/verify-test` and/or `/qa-only` and/or `/design-review` | user-owned (verify-test) + gstack |
+|    (Step 5 augment) | `/verification-before-completion` | sparse cherry-pick obra/superpowers — Iron Law: no completion claims without evidence |
+| 6. Concurrent two-pass review (one gate) | `/review` (in-session, context-rich structural) **+** `/requesting-code-review` (parallel fresh-context subagent) — run concurrently, findings merged into a single approval gate | gstack + sparse cherry-pick obra/superpowers |
+| 8. Ship | `/ship` | gstack |
+
+This table says **which** skill owns a step, not that every step runs. *Default Order*
+decides whether a step runs at all; when one does, call the skill named here — not "a
+similar gstack skill" and not "a quick manual pass".
+
+## Complete Workflow
+
+### Feature / Bug Fix / Refactoring
+
+```
+1. /office-hours       validate the idea or problem
+2. /deep-research      docs, codebase, web, existing solutions
+3. /autoplan           plan + CEO/Design/Eng review
+4. Implementation      coordinator writes the code
+5. Verification        ask the user which check to run (see below)
+6. Concurrent review   /review + /requesting-code-review, findings merged into ONE gate
+8. /ship               commit, push, create PR (terminal step)
+```
+
+There is **no approval wait between steps** — *Short Loop* governs stopping: PR and
+irreversible actions only. Step 7 is folded into Step 6 (ADR-0017); there is no Step 9
+(ADR-0018). The numbering is kept so that references to "Step 6" keep meaning one thing.
+
+### Debugging
+
+```
+1. /investigate  →  2. /deep-research  →  3. /autoplan  →  4. Implementation
+                 →  5. Verification    →  6. Concurrent review  →  8. /ship
+```
+
+Step 1 follows the ranked-falsifiable-hypotheses rule in *Short Loop* → **Debugging**.
+
+## Step 5: Verification — Ask User
+
+After implementation, present these options:
+
+> Which verification should we run?
+>
+> **A) All** — `/verify-test` + `/qa-only` + `/design-review` (when UI changed)
+> **B) `/verify-test` only** — throwaway code test
+> **C) `/qa-only` only** — browser-driven flow check
+> **D) `/design-review` only** — designer's-eye visual QA
+> **E) Both functional** — `/verify-test` + `/qa-only`
+> **F) Skip** — proceed directly to Step 6 (concurrent review)
+
+Drop `/design-review` from A and D automatically when the change has no UI surface (pure
+backend, refactor, infra). Wait for the user's choice, then execute.
+
+**Automatic Step-5 augment.** Whichever option the user picks (A/B/C/D/E), also invoke
+`/verification-before-completion` (Iron Law: no completion claims without fresh
+verification evidence). It runs orthogonally — it cross-checks any "I tested it" / "this
+works" claim from Step 4. Invoke it on F (Skip) too. Autonomous — do not ask whether to
+run it.
+
+**Browser layer.** All browser-driven verification (`/qa-only`, `/design-review` browser
+actions, Quick Visual Check) drives the browser via `/aside-qa` (real logged-in session,
+full Playwright API). gstack `/browse` is the fallback for public unauthenticated pages
+or when aside is unavailable — announce the fallback, never switch silently.
+
+**Quick Visual Check (pre-Step-5, when UI changed).** Before presenting the menu:
+(1) `git diff --name-only` filtered to UI files, (2) navigate to affected pages via
+`/aside-qa` (attach to an open tab first; `openTab` only when none matches), (3) verify
+project design constraints (`DESIGN.md`), (4) full-page screenshot at 1440px desktop,
+(5) capture console messages. Screenshot + console become inputs for the user's choice.
+Skip entirely on pure backend/docs/config changes.
+
+## Step 6: Concurrent Two-Pass Review (one gate)
+
+Both passes run concurrently and present **one** approval gate (ADR-0017). They catch
+different bug classes and both MUST run:
+
+- **`/review` (gstack)** — runs **in-session** (context-rich): knows the plan and repo
+  invariants. Targeted structural analysis: SQL safety, LLM trust boundaries,
+  conditional side effects. Catches "violates a known invariant / unsafe against our
+  schema / diverges from the plan."
+- **`/requesting-code-review` (superpowers)** — dispatched as a **parallel fresh-context
+  subagent** on `BASE_SHA..HEAD_SHA` (never the session history). Open adversarial
+  re-read: Critical / Important / Minor. Catches what the author — and a context-sharing
+  reviewer — is blind to.
+
+**Execution:** launch both concurrently, then **merge and dedupe findings into one table
+and present ONE approval gate.** A clean `/review` does not excuse skipping the fresh
+pass; both must complete before the gate.
+
+Step 6 reviews the **pre-merge diff**, and it is the only review gate. There is no
+post-PR review step (ADR-0018 removed it): if a PR-attached bot reviewer posts findings
+worth acting on, read them and decide by hand.
+
 ## Short Loop
 
 - Before building, restate your understanding in three lines. If any part is
