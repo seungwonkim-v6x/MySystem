@@ -12,6 +12,33 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [0.56.0] - 2026-08-05
+
+**The step scaffolding comes back to the Claude Code surface; the approval gates do not.** (ADR-0020)
+
+ADR-0019 moved the gated contract off `CLAUDE.md`, which took the step→skill mapping, the
+Step 5 verification menu, and the Step 6 two-pass review with it — leaving one abstract
+line (`scope → research → design → implement → test → review → PR`) that names phases but
+not the work in them. Restored to `CLAUDE.md`: the canonical Step → Skill Mapping table,
+the Complete Workflow (steps 1–8, feature and debug branches), Step 5's A–F menu with the
+`/verification-before-completion` augment and `/aside-qa` browser layer, and Step 6's
+concurrent `/review` + `/requesting-code-review` single gate.
+
+Not restored: the `↓ (wait for user approval)` arrows. ADR-0019 measured 71% of
+course-corrections arriving *after* code was written and only 31% of sessions reaching
+`/ship` — the gates are the part that measured badly. *Short Loop* keeps its rule: stop and
+wait only for PR and irreversible actions.
+
+Two deliberate deviations from a verbatim restore, both recorded in the ADR: the mapping's
+"must call exactly these skills" sentence is scoped so it cannot cancel *Default Order*'s
+"skip steps to match the weight of the task", and the step numbering keeps its gaps (no 7,
+no 9) so "Step 6" resolves to one thing across both surfaces and ADRs 0017/0018.
+
+The Codex surface is untouched — `codex/workflow-contract.md` keeps its gates as the
+`AGENTS.global.md` projection source, per ADR-0016. The two surfaces now overlap on step
+content and differ on gates, which is the divergence the ADR-0019 split was built to allow.
+`CLAUDE.md` 6,037 B → ~12 KB; no projection budget is affected.
+
 ## [0.55.0] - 2026-07-30
 
 **The request sentence is the scope. Claude Code gets a 4 KB working agreement; Codex keeps the gated contract; self-scored "repeat until 10" loops are off the default path.** (ADR-0019)
