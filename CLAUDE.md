@@ -40,22 +40,39 @@ injects `## Completeness Principle — Boil the Ocean`, whose claim is that
 Request Lock supersedes it: work that is *related* but not *requested* is out of scope. Their `Confusion Protocol` (stop and
 ask on high-stakes ambiguity) is kept and encouraged.
 
-## Default Order (a default, not a contract)
+## Critical Workflow Rules
+
+The agent has ZERO discretion to skip or reorder workflow steps. Every step is MANDATORY and runs in order. NEVER skip, reorder, or suggest skipping. NEVER write code before `/autoplan` is done — not even one line. NEVER ask the user "should we skip?" or "do you want to run the full workflow?" — just run the next step. If the user wants to skip, THEY interrupt; that is their job, not yours.
+
+**Skill whitelist.** The agent may autonomously invoke only skills mapped to workflow steps below. Any other installed skill (`/design-shotgun`, `/scrape`, `/codex`, `/humanizer`, `/qa`, etc.) runs **only when the user types its name**. Do not proactively suggest off-workflow skills. IF A WHITELISTED SKILL APPLIES TO THE CURRENT REQUEST AT THE FEATURE / BUG FIX / REFACTOR LEVEL, YOU MUST INVOKE IT BEFORE RESPONDING. Even minimal probability requires invocation.
+
+**Triviality carve-out (conservative).** Direct-to-implementation is permitted ONLY for: typo fixes, single-character edits, comment-only changes, single-symbol renames via Edit, or work the user explicitly framed as "trivial". Anything touching behavior or adding a file → invoke the step.
+
+**Autonomous (in whitelist).** `/verification-before-completion` (Step 5 augment; applies
+even on F/Skip), `/aside-qa` (browser layer for Step 5 / Quick Visual Check),
+`/frontend-design` (Step 4 design discipline — **materiality-gated**: fires only on a *new
+UI or reshaping of existing UI*, NOT on any UI file touched or a one-line CSS tweak).
+
+**Steps are mandatory; step transitions are not gated (ADR-0021).** Running every step is
+required. *Waiting for approval between them* is not — ADR-0019 measured that the six
+approval waits did not catch direction errors, and ADR-0020 declined to restore them.
+*Short Loop* governs stopping: PR and irreversible actions only.
+
+Request Lock still binds inside every step. A mandatory step is a mandatory *step*, not a
+license to widen what that step is about.
+
+## Default Order
 
 ```
 scope → research → design → implement → test → review → PR
 ```
 
-Skip steps to match the weight of the task, and say in one line what you skipped.
-Never ask "should we run step N?" — decide, and let the user interrupt. If you could
-describe the diff in one sentence, skip the plan.
-
 Research is not the thing to cut. Only stop research from widening the scope.
 
-For a genuinely large feature, the heavier path is an interview, not a review panel:
-ask the user detailed questions with `AskUserQuestion`, write a self-contained spec
-that names the files involved, **states what is out of scope**, and ends with an
-end-to-end verification step — then implement it in a fresh session.
+For a genuinely large feature, `/autoplan` is not enough on its own: also interview the
+user with `AskUserQuestion`, write a self-contained spec that names the files involved,
+**states what is out of scope**, and ends with an end-to-end verification step — then
+implement it in a fresh session.
 
 ## Step → Skill Mapping (canonical)
 
@@ -71,9 +88,8 @@ end-to-end verification step — then implement it in a fresh session.
 | 6. Concurrent two-pass review (one gate) | `/review` (in-session, context-rich structural) **+** `/requesting-code-review` (parallel fresh-context subagent) — run concurrently, findings merged into a single approval gate | gstack + sparse cherry-pick obra/superpowers |
 | 8. Ship | `/ship` | gstack |
 
-This table says **which** skill owns a step, not that every step runs. *Default Order*
-decides whether a step runs at all; when one does, call the skill named here — not "a
-similar gstack skill" and not "a quick manual pass".
+The agent **must** call exactly these skills for exactly these steps. Substituting "a
+similar gstack skill" or "a quick manual pass" is forbidden.
 
 ## Complete Workflow
 
@@ -103,6 +119,13 @@ irreversible actions only. Step 7 is folded into Step 6 (ADR-0017); there is no 
 Step 1 follows the ranked-falsifiable-hypotheses rule in *Short Loop* → **Debugging**.
 
 ## Step 5: Verification — Ask User
+
+**This menu is not an approval gate.** The Verification step itself always runs; the menu
+picks that step's *content*, which is a within-step choice. `F` does not skip Step 5 — it
+runs it with no functional check, and `/verification-before-completion` still fires. So
+neither *Critical Workflow Rules*' "NEVER suggest skipping" (which governs whole steps) nor
+*Short Loop*'s "stop and wait only for PR" (which governs step *transitions*) is in tension
+with asking here.
 
 After implementation, present these options:
 
@@ -184,7 +207,8 @@ worth acting on, read them and decide by hand.
 
 ## Skills
 
-Workflow skills, available when they fit: `/office-hours`, `/investigate`,
+Workflow skills — the autonomous-invocation whitelist (see *Critical Workflow Rules*):
+`/office-hours`, `/investigate`,
 `/deep-research`, `/autoplan`, `/verify-test`, `/qa-only`, `/design-review`,
 `/review`, `/requesting-code-review`, `/verification-before-completion`, `/ship`.
 
