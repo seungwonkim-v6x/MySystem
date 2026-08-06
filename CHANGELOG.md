@@ -12,6 +12,54 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [0.57.0] - 2026-08-06
+
+**Step invocation is mandatory again on the Claude Code surface; the approval gates stay gone.** (ADR-0021)
+
+ADR-0020 restored the step scaffolding to `CLAUDE.md` as description rather than obligation:
+`## Default Order (**a default, not a contract**)` told the agent to "skip steps to match the
+weight of the task", and the mapping said it names "**which** skill owns a step, **not that
+every step runs**". The consequence showed up as the owner asking why Claude Code wasn't
+starting from `/office-hours` — and nothing on that surface required it to. The
+mandatory-invocation clauses lived only in `codex/workflow-contract.md`.
+
+Restored to `CLAUDE.md` as a new `## Critical Workflow Rules` section, verbatim from the
+Codex contract: the ZERO-discretion / MANDATORY paragraph, the skill whitelist with "YOU
+MUST INVOKE IT BEFORE RESPONDING", and the conservative triviality carve-out. Alongside
+them, v0.54.0's `Autonomous (in whitelist)` carve-out comes back too, naming
+`/verification-before-completion`, `/aside-qa`, and `/frontend-design` — without it the
+whitelist contradicts the Step 4 and Step 5 text that invokes all three on its own. The
+mapping reverts to "The agent **must** call exactly these skills for exactly these steps."
+*Default Order* loses its "(a default, not a contract)" qualifier and its skip-steps
+paragraph, and its large-feature advice is rewritten from "an interview, **not a review
+panel**" to "`/autoplan` is **not enough on its own**" so it no longer reads as routing
+around a mandatory step.
+
+`tests/mandatory-invocation.bats` (4 tests, 115 → 119) keeps the two surfaces honest. Three
+locate each restored paragraph in the Codex contract by a unique anchor and assert
+`CLAUDE.md` carries that exact line, so a reword on either side turns the suite red. The
+fourth asserts the negative: the Codex-only approval-gate paragraph must never appear in
+`CLAUDE.md`. Both directions were verified by injecting drift into a throwaway copy.
+
+Not restored: the `↓ (wait for user approval)` arrows, the `NEVER proceed without explicit
+user approval` paragraph, the Auto Mode subordination paragraph, the Instruction Precedence
+table, and the Workflow Successor Map. ADR-0019 measured the gates — 71% of
+course-corrections arriving after code was written, 31% of sessions reaching `/ship` — and
+nothing in that measurement implicates mandatory *invocation*, which is a separate
+mechanism. Kept intact: Request Lock, the self-scored-loop ban, the named gstack
+`Boil the Ocean` override and its watchdog test, and the `operating-principles.md` anchors.
+
+One paragraph is new and recorded in the ADR as a deviation — "Steps are mandatory; step
+transitions are not gated" — because in v0.54.0 the "runs in order" language sat above the
+gate paragraph and inherited its meaning from it; restored alone it would re-imply the gates.
+
+The Codex surface is untouched. The two surfaces now agree on step content and on mandatory
+invocation, and still differ in both directions: Codex alone keeps the approval gates, the
+Instruction Precedence table, and the Workflow Successor Map; Claude Code alone keeps
+Request Lock, the self-scored-loop ban, and the named gstack override. `CLAUDE.md`
+11,471 B → 13,164 B; always-loaded total 23,336 B → 25,029 B; the Codex projection is
+unchanged at 32,344 B, 424 B under its 32,768 B compatibility limit.
+
 ## [0.56.0] - 2026-08-05
 
 **The step scaffolding comes back to the Claude Code surface; the approval gates do not.** (ADR-0020)
