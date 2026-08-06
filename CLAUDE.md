@@ -120,6 +120,13 @@ Step 1 follows the ranked-falsifiable-hypotheses rule in *Short Loop* → **Debu
 
 ## Step 5: Verification — Ask User
 
+**This menu is not an approval gate.** The Verification step itself always runs; the menu
+picks that step's *content*, which is a within-step choice. `F` does not skip Step 5 — it
+runs it with no functional check, and `/verification-before-completion` still fires. So
+neither *Critical Workflow Rules*' "NEVER suggest skipping" (which governs whole steps) nor
+*Short Loop*'s "stop and wait only for PR" (which governs step *transitions*) is in tension
+with asking here.
+
 After implementation, present these options:
 
 > Which verification should we run?

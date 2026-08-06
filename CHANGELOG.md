@@ -35,11 +35,19 @@ paragraph, and its large-feature advice is rewritten from "an interview, **not a
 panel**" to "`/autoplan` is **not enough on its own**" so it no longer reads as routing
 around a mandatory step.
 
-`tests/mandatory-invocation.bats` (4 tests, 115 → 119) keeps the two surfaces honest. Three
+`tests/mandatory-invocation.bats` (5 tests, 115 → 120) keeps the two surfaces honest. Three
 locate each restored paragraph in the Codex contract by a unique anchor and assert
-`CLAUDE.md` carries that exact line, so a reword on either side turns the suite red. The
-fourth asserts the negative: the Codex-only approval-gate paragraph must never appear in
-`CLAUDE.md`. Both directions were verified by injecting drift into a throwaway copy.
+`CLAUDE.md` carries that exact line — exactly once, and inside `## Critical Workflow Rules`,
+so a stale duplicate elsewhere cannot mask drift in the operative copy. The fourth asserts
+the negative: the Codex-only approval-gate paragraph must never appear in `CLAUDE.md`. The
+fifth asserts the operative heading still exists, so the scoping check cannot pass
+vacuously. Every failure mode was verified by injecting it into a throwaway copy.
+
+Step 5's verification menu gets an explicit carve-out: it is a within-step choice of what
+the Verification step *contains*, not a step transition and not a skip of the step, and
+`/verification-before-completion` fires even on `F`. Without that sentence, `F) Skip` and
+"wait for the user's choice" read as contradicting both "NEVER suggest skipping" and
+*Short Loop*'s "stop and wait only for PR".
 
 Not restored: the `↓ (wait for user approval)` arrows, the `NEVER proceed without explicit
 user approval` paragraph, the Auto Mode subordination paragraph, the Instruction Precedence
@@ -57,7 +65,7 @@ The Codex surface is untouched. The two surfaces now agree on step content and o
 invocation, and still differ in both directions: Codex alone keeps the approval gates, the
 Instruction Precedence table, and the Workflow Successor Map; Claude Code alone keeps
 Request Lock, the self-scored-loop ban, and the named gstack override. `CLAUDE.md`
-11,471 B → 13,164 B; always-loaded total 23,336 B → 25,029 B; the Codex projection is
+11,471 B → 13,637 B; always-loaded total 23,336 B → 25,502 B; the Codex projection is
 unchanged at 32,344 B, 424 B under its 32,768 B compatibility limit.
 
 ## [0.56.0] - 2026-08-05

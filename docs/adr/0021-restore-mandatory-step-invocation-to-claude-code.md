@@ -105,11 +105,27 @@ Code alone carries Request Lock, the self-scored-loop ban, and the named gstack 
 Because "the two surfaces agree" is the load-bearing claim and nothing enforced it,
 `tests/mandatory-invocation.bats` is added on the pattern v0.55.0 used for the named
 override: it locates each of the three paragraphs in the contract by a unique anchor
-phrase and asserts `CLAUDE.md` carries that exact line, so a reword on either side turns
-the suite red. A fourth test asserts the negative — that the Codex-only approval-gate
-paragraph never appears in `CLAUDE.md` — since a leak there would silently collapse the
-split back into the gated contract ADR-0019 rejected. Both directions were verified by
-injecting drift into a throwaway copy and confirming the suite goes red.
+phrase and asserts `CLAUDE.md` carries that exact line — exactly once, and inside
+`## Critical Workflow Rules`. A fourth test asserts the negative, that the Codex-only
+approval-gate paragraph never appears in `CLAUDE.md`, since a leak there would silently
+collapse the split back into the gated contract ADR-0019 rejected. A fifth asserts the
+operative heading still exists, so the section-scoping check cannot pass vacuously.
+
+The uniqueness and section-scoping conditions came out of the Codex structured review,
+which found that a plain existence check would let a stale duplicate elsewhere in the file
+keep the suite green while the operative paragraph drifted — a watchdog reporting green
+over a broken invariant, the one outcome the file exists to prevent. Every failure mode
+named here was verified by injecting it into a throwaway copy and confirming the suite
+goes red, including that exact duplicate-plus-drift case.
+
+Step 5's verification menu gets an explicit carve-out, also from that review. `F) Skip` and
+"wait for the user's choice" read as contradicting both "NEVER suggest skipping" and *Short
+Loop*'s "stop and wait only for PR". They do not, but nothing said so: the menu is a
+within-step choice of what the Verification step *contains*, not a step transition and not
+a skip of the step. The carve-out states that, and notes that
+`/verification-before-completion` fires even on `F`. The skip half of this tension is
+pre-existing — v0.54.0 carried both texts — but the wait half was sharpened by this ADR
+naming *Short Loop* as the authority on stopping.
 
 ## Consequences
 
@@ -120,8 +136,8 @@ injecting drift into a throwaway copy and confirming the suite goes red.
   small changes, and expect the user to interrupt — which the restored text explicitly
   names as their job. If the friction is worse than the drift, the lever is to widen the
   carve-out, not to re-soften the mapping.
-- `CLAUDE.md` grows from 11,471 B to 13,164 B; `scripts/claude-md-budget.sh` puts the
-  always-loaded total at 23,336 B → 25,029 B. The Codex global projection is unchanged at
+- `CLAUDE.md` grows from 11,471 B to 13,637 B; `scripts/claude-md-budget.sh` puts the
+  always-loaded total at 23,336 B → 25,502 B. The Codex global projection is unchanged at
   32,344 B — 424 B under the 32,768 B compatibility payload limit, 4,520 B under the
   36,864 B absolute ceiling — because `CLAUDE.md` stopped being a projection source in
   ADR-0019.

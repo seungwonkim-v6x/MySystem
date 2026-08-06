@@ -21,23 +21,59 @@
 SOURCE_REPO="$BATS_TEST_DIRNAME/.."
 CONTRACT="$SOURCE_REPO/codex/workflow-contract.md"
 CLAUDE_MD="$SOURCE_REPO/CLAUDE.md"
+RULES_HEADING='## Critical Workflow Rules'
+
+# Print the body of a top-level CLAUDE.md section, stopping at the next `## `.
+section_body() {
+  awk -v heading="$1" '
+    $0 == heading { inside = 1; next }
+    inside && /^## / { exit }
+    inside { print }
+  ' "$CLAUDE_MD"
+}
 
 # Locate the single contract line containing $1, then assert CLAUDE.md carries
-# that whole line verbatim. Both halves fail loudly and say which one broke.
+# that whole line verbatim, EXACTLY ONCE, and INSIDE the operative section.
+#
+# Existence alone is not enough. A bare `grep -Fqx` passes as long as the line
+# survives anywhere in the file, so a stale duplicate left in an appendix would
+# keep the suite green while the operative paragraph in Critical Workflow Rules
+# quietly drifted — the watchdog reporting green over a broken invariant, which
+# is the one outcome this file exists to prevent. Hence three assertions, each
+# with its own failure message so a red test says which property broke.
 assert_surfaces_agree() {
-  local anchor=$1 line hits
-  hits=$(grep -cF -- "$anchor" "$CONTRACT" 2>/dev/null || true)
-  if [ "${hits:-0}" -ne 1 ]; then
-    printf 'Anchor is no longer unique in %s (found %s lines):\n  %s\nThe anchor itself needs updating before this test can guard anything.\n' \
-      "$CONTRACT" "${hits:-0}" "$anchor" >&2
+  local anchor=$1 line n_contract n_file n_section
+  n_contract=$(grep -cF -- "$anchor" "$CONTRACT" 2>/dev/null || true)
+  if [ "${n_contract:-0}" -ne 1 ]; then
+    printf 'Anchor is no longer unique in %s (matched %s lines):\n  %s\nThe anchor itself needs updating before this test can guard anything.\n' \
+      "$CONTRACT" "${n_contract:-0}" "$anchor" >&2
     return 1
   fi
   line=$(grep -F -- "$anchor" "$CONTRACT")
-  if ! grep -Fqx -- "$line" "$CLAUDE_MD"; then
+
+  n_file=$(grep -cFx -- "$line" "$CLAUDE_MD" 2>/dev/null || true)
+  if [ "${n_file:-0}" -eq 0 ]; then
     printf 'The two instruction surfaces have drifted (ADR-0021).\ncodex/workflow-contract.md carries:\n  %s\nCLAUDE.md does not carry that line verbatim.\nChanging the workflow means changing both surfaces — or amending ADR-0021.\n' \
       "$line" >&2
     return 1
   fi
+  if [ "${n_file:-0}" -ne 1 ]; then
+    printf 'CLAUDE.md carries this contract line %s times; expected exactly 1:\n  %s\nA duplicate can mask later drift in the operative copy. Remove the stale one.\n' \
+      "${n_file}" "$line" >&2
+    return 1
+  fi
+
+  n_section=$(section_body "$RULES_HEADING" | grep -cFx -- "$line" 2>/dev/null || true)
+  if [ "${n_section:-0}" -ne 1 ]; then
+    printf 'CLAUDE.md carries this contract line, but not inside `%s`:\n  %s\nThe rule is only operative where the agent reads it as a rule.\n' \
+      "$RULES_HEADING" "$line" >&2
+    return 1
+  fi
+}
+
+@test "the operative section CLAUDE.md is asserted against actually exists" {
+  run grep -Fqx -- "$RULES_HEADING" "$CLAUDE_MD"
+  [ "$status" -eq 0 ]
 }
 
 @test "both surfaces carry the ZERO-discretion paragraph verbatim" {
