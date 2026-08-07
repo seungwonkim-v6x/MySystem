@@ -69,6 +69,9 @@ hooks/**/*.pyc
 # Generated Codex-native workflow projection and its narrow contract.
 !codex/
 !codex/**
+# Host-written sibling backups. Orca drops <file>.bak beside codex/hooks.json
+# every time it reinjects its hooks; the whitelist above would otherwise track it.
+codex/*.bak
 
 # OS / editor noise
 .DS_Store

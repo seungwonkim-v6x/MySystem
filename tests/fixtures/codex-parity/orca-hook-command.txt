@@ -1,0 +1,1 @@
+if [ -f '$HOME/.orca/agent-hooks/codex-hook.sh' ] && [ -r '$HOME/.orca/agent-hooks/codex-hook.sh' ] && [ -x '$HOME/.orca/agent-hooks/codex-hook.sh' ]; then /bin/sh '$HOME/.orca/agent-hooks/codex-hook.sh'; else { command -p cat 2>/dev/null || cat; } >/dev/null 2>&1 || :; fi

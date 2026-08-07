@@ -12,6 +12,61 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [0.58.0] - 2026-08-07
+
+**The parity doctor checks again: host hooks are exempted by command digest, not by exact-set equality.** (ADR-0022)
+
+`validate_hook_registration()` compared `codex/hooks.json` against the contract with exact
+set equality. Orca reinjects eight wildcard telemetry tuples into that file on every launch —
+additively; a diff against `HEAD` confirms all seven reviewed tuples survive untouched — so
+the comparison could never pass. Worse than a stale warning: `codex-parity-doctor.sh` treats
+`CONTRACT_INVALID` as fatal and exits at once, so the live install reported
+`PASS=0 WARN=0 FAIL=1` and the other thirty-plus checks never ran. The session-start banner
+from `hooks/update-skills.sh` was not noise about one field, it marked a checker that had
+stopped checking. Reverting the injection is not available: it is reapplied on every launch.
+
+The contract gains `foreign_hooks_allowed`, whose entries pin one host command each by
+`{path, command_sha256}`. A registration entry is exempt only when the sha256 of its command
+matches a declared digest, taken over the command's portable form — the caller's `$HOME`
+rewritten back to literal `$HOME` — so the contract stays machine-independent instead of
+embedding one developer's absolute paths. `path` is enforced, not decorative: an entry whose
+command does not reference its own declared path is a contract error.
+
+Exemption is by digest, not by mentioning a path, and that distinction is the whole change.
+The first draft exempted any command *containing* a declared path; review reproduced six ways
+through it — a trailing comment (`curl … | sh   # $HOME/.orca/…/codex-hook.sh`), a `;`-chained
+payload appended to the real command, prefix over-matches onto `codex-hook.sh.bak` and
+`codex-hook.sh-evil-payload`, and a dead-code mention. All six now fail. Token equality via
+`shlex.split` was considered and rejected: it stops the prefix and comment cases, not the
+chained one.
+
+Everything else stays strict. The seven contracted tuples are still exact-matched — missing,
+retargeted, or inert all still fail — and a host the contract does not name still fails. The
+contract model requires each entry to be an object with exactly `path` and `command_sha256`,
+the path `$HOME/`-rooted with no `..`, no second `$`, and no trailing `/`, so `["$HOME/"]` or
+`["$HOME/.orca/"]` cannot widen the exemption to a directory. Only `codex-hook.sh` is
+declared; `claude-hook.sh` appears solely in `settings.json`, which this validator never
+reads, so declaring it would be dead surface.
+
+The accepted cost, recorded in the ADR: an Orca release that edits its hook command breaks
+the digest and brings the banner back until the contract is re-approved. Orca has already
+changed it once, rewriting the `else` branch from `cat >/dev/null` to
+`{ command -p cat 2>/dev/null || cat; }`. The doctor's existing `ORCA_VERSION_UNTESTED`
+warning already demands a contract review on host upgrade, so the re-approval lands where a
+review was owed anyway; `SETUP.md#hook-registration` carries a runnable refresh recipe.
+
+Four tests (120 → 124). The exemption case injects the verbatim host command from a new
+fixture, `tests/fixtures/codex-parity/orca-hook-command.txt`, rather than a hand-written
+approximation, and a second test asserts the fixture's digest still equals the contract's so
+the two cannot drift apart. A third walks the six bypass variants; a fourth walks nine
+contract shapes that must be refused. Their `[[ ]]` assertions are chained with `|| return 1`
+per the standing TODO — bats 1.13.0 does not fail a test on a bare non-final `[[ ]]`, so the
+loop bodies would otherwise have asserted nothing.
+
+Also: `.gitignore` stops tracking `codex/*.bak`. The whitelist opens `codex/**` wholesale, and
+Orca drops a `.bak` sibling every time it rewrites the registration, so it surfaced in
+`git status` on every session.
+
 ## [0.57.0] - 2026-08-06
 
 **Step invocation is mandatory again on the Claude Code surface; the approval gates stay gone.** (ADR-0021)

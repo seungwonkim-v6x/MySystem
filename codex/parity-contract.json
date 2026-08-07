@@ -62,6 +62,12 @@
     {"event": "SessionStart", "matcher": "", "script": "update-skills.sh", "requiredness": "convenience"},
     {"event": "Stop", "matcher": "", "script": "preview-stop.sh", "requiredness": "convenience"}
   ],
+  "foreign_hooks_allowed": [
+    {
+      "path": "$HOME/.orca/agent-hooks/codex-hook.sh",
+      "command_sha256": "6b82489a803d3ac6214dbbfd334f1535b8c942400652288a8fb07a63e372603c"
+    }
+  ],
   "managed_paths": {
     "project_agents": "AGENTS.md",
     "default_agents": "$HOME/.codex/AGENTS.md",

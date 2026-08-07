@@ -84,6 +84,16 @@ validate_contract_model() {
         ["Stop","","preview-stop.sh","convenience"]
       ] | sort) and
     ([.hooks[] | [.event,.matcher,.script]] | length) == ([.hooks[] | [.event,.matcher,.script]] | unique | length) and
+    (.foreign_hooks_allowed | type == "array") and
+    ([.foreign_hooks_allowed[].command_sha256] | length) ==
+      ([.foreign_hooks_allowed[].command_sha256] | unique | length) and
+    all(.foreign_hooks_allowed[];
+      type == "object" and
+      (keys == ["command_sha256","path"]) and
+      (.command_sha256 | type == "string" and test("^[0-9a-f]{64}$")) and
+      (.path | type == "string" and startswith("$HOME/") and
+        (endswith("/") | not) and (test("\\.\\.") | not) and
+        ((split("$") | length) == 2))) and
     (.approved_migrations.files | type == "object") and
     (.approved_migrations.trees | type == "object") and
     (.approved_migrations.identities | type == "object") and
@@ -100,6 +110,7 @@ validate_contract_model() {
 
 validate_hook_registration() {
   python3 - "$CONTRACT" "$REPO_ROOT/codex/hooks.json" "$HOME/.codex/hooks" <<'PY'
+import hashlib
 import json
 import os
 import shlex
@@ -111,6 +122,48 @@ with open(contract_path, encoding="utf-8") as source:
 with open(hooks_path, encoding="utf-8") as source:
     registration = json.load(source)
 
+def expand(path):
+    return os.path.expanduser(os.path.expandvars(path))
+
+
+def portable(command):
+    """Rewrite the caller's absolute home back to $HOME.
+
+    The host registers fully-expanded paths, so a digest taken over the raw
+    string would only ever match on the machine that produced it. Hashing this
+    form instead keeps the contract machine-independent, and makes the
+    exemption fire for a host that writes "$HOME/..." directly.
+    """
+    home = os.environ.get("HOME")
+    return command.replace(home, "$HOME") if home else command
+
+
+# Hosts that own the agent runtime (Orca and friends) reinject their telemetry
+# hooks into this registration continuously. Each declared host entry exempts
+# exactly ONE command, pinned by the digest of its portable form — not by
+# mentioning a path, which any command can do. A host we did not declare, a
+# host command that changed by one byte, and any edit to a hook we did declare
+# all still fail.
+foreign_allowed = {}
+for entry in contract.get("foreign_hooks_allowed", []):
+    foreign_allowed[entry["command_sha256"]] = entry["path"]
+
+
+def foreign_exempt(command):
+    portable_command = portable(command)
+    digest = hashlib.sha256(portable_command.encode("utf-8")).hexdigest()
+    declared_path = foreign_allowed.get(digest)
+    if declared_path is None:
+        return False
+    # The digest already decides this; requiring the declared path to appear
+    # keeps `path` an enforced claim rather than a stale comment.
+    if declared_path not in portable_command:
+        raise SystemExit(
+            "host hook %s does not reference its declared path %s" % (digest, declared_path)
+        )
+    return True
+
+
 actual = []
 for event, groups in registration.get("hooks", {}).items():
     if not isinstance(groups, list):
@@ -120,7 +173,10 @@ for event, groups in registration.get("hooks", {}).items():
         for hook in group.get("hooks", []):
             if hook.get("type") != "command" or not isinstance(hook.get("command"), str):
                 raise SystemExit("hook registration contains a non-command entry")
-            argv = [os.path.expanduser(os.path.expandvars(arg)) for arg in shlex.split(hook["command"])]
+            command = hook["command"]
+            if foreign_exempt(command):
+                continue
+            argv = [expand(arg) for arg in shlex.split(command)]
             actual.append((event, matcher, argv))
 
 expected = []
