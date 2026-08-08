@@ -12,6 +12,32 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [0.59.1] - 2026-08-09
+
+**The install lock could not tell "another installer is working" apart from "this lock is corrupt", so a losing installer reported a corrupt lock and turned the concurrent-installer contract test red on CI.**
+
+The flake was opened as a handoff during the v0.59.0 ship (`docs/handoff/ci-concurrent-installer-flake.md`): run `31264264997` on `macos-latest` failed while a sibling runner on the same commit passed, and 26 local runs could not reproduce it. Root-caused here by forced reproduction rather than by waiting for a second occurrence.
+
+`parity_acquire_lock` funnelled every unexpected condition on the contender path into `except Exception` → exit 3 → `INSTALL_LOCK_STALE_UNSAFE`. Several of those conditions are not corruption at all: they are the intermediate states a **correct** peer publishes while making progress. The test asserts a loser may fail only with `INSTALL_LOCK_BUSY`, so any of them turns it red.
+
+Two were confirmed by reproduction. The one CI hit is an **unstamped lock**: the owner creates `install.lock/pid` with `O_CREAT|O_EXCL` and writes its pid a moment later, and a contender that reads the leaf in between gets an empty string, fails `isdigit`, and reports a malformed lock. It reproduces deterministically with no timing injection, and it needs no unusual conditions in that test, where ten contenders arrive in a tight cluster around the moment the winner creates the lock. The second is the handoff's S1: the reclaim path's `os.mkdir` sits outside the `except FileExistsError` that guards the first one, so a contender that loses the `rmdir`→`mkdir` gap dies on an uncaught `FileExistsError`. Widening that gap to 300ms produced it 5 times out of 5. S1 is not reachable from the failing test (reclaim needs a pid-less lock older than the grace window or a dead owner, and neither occurs there), which is what points at the unstamped lock as the CI failure.
+
+The 5-second grace window added in v0.53.0 was a fix for the *previous* window in this same class. Patching one more window would have repeated that, so the fix is at the level of the classification instead.
+
+### Fixed
+- `scripts/codex-parity-lib.sh`: an empty `pid` leaf now carries the same meaning as a missing one, so the existing freshness gate treats it as live contention. Only a **non-empty** pid that is not a number is still a malformed lock.
+- `scripts/codex-parity-lib.sh`: the `pid` unlink moved onto the reclaim path, guarded by presence rather than by having parsed an owner. An abandoned lock holding an unstamped leaf would otherwise fail `rmdir` with `ENOTEMPTY` on every future run and never be reclaimable.
+- `scripts/codex-parity-lib.sh`: `ENOENT`, `EEXIST`, and `ENOTEMPTY` raised inside the inspect, reclaim, and claim region are reported as `INSTALL_LOCK_BUSY`. Those errnos are reachable there only when a peer created, stamped, reclaimed, or released the lock between two of our syscalls. Every lock shape that is corrupt at rest is still rejected by a check that runs before any of them can fire — the `lstat` on the lock leaf, the unexpected-entry scan, `O_NOFOLLOW` (which raises `ELOOP`, deliberately not in the set), the pid `fstat`, and the `isdigit` check — and still reports `INSTALL_LOCK_STALE_UNSAFE`. The one narrow exception, a same-uid process planting a `pid` symlink between our `mkdir` and our claim, is stated in the code comment rather than papered over: `O_CREAT|O_EXCL` reports `EEXIST` before `O_NOFOLLOW` is consulted, so it is reported as BUSY. It is never followed and never written, the run still aborts non-zero, and the next run reports it correctly. Narrowing `EEXIST` by call site would not help, because at that same open it is also exactly what a peer that reclaimed and stamped the lock first produces.
+- `scripts/codex-parity-lib.sh`: the busy message no longer splices the literal `pending` into a field the reader parses as a pid. A contender backing off from an unidentified holder now says so.
+
+### Added
+- `tests/codex-parity.bats`: three lock cases, all deterministic with no sleeps. An unstamped lock reports contention; an abandoned unstamped lock is reclaimed rather than deadlocked; a **non-empty** malformed pid still fails loudly, which is the counterweight that stops the reclassification from being widened later. The first two fail against the pre-fix library; the third passes on both sides on purpose.
+
+### Notes
+- The contract test's assertion is unchanged and still accepts `INSTALL_LOCK_BUSY` only. Widening that grep would have defeated the test's purpose, and the handoff ruled it out.
+- The new assertions chain `|| false`. bats does not fail a test on a non-final `[[ ]]` that returns false (the TODOS.md item, verified again here on 1.13.0), so the `INSTALL_LOCK_BUSY` assertion was silently unenforced until it was chained — it passed against the very bug it exists to catch. The repo-wide sweep of that pattern remains open in TODOS.md.
+- Evidence: 140/140 suite green; the two race cases red against the pre-fix library; 2560 contender exits across forced-contention runs under CPU oversubscription with zero non-BUSY codes; the widened-reclaim-window probe went from 5/5 failures to 0; the concurrent contract test 12/12 under load. `taskpolicy -c background`, which the handoff suggested for constraining the runner, starves the workload on this machine and was replaced with 40-way CPU oversubscription.
+
 ## [0.59.0] - 2026-08-07
 
 **Step 1 gets a skill that accepts ordinary changes; the enforcement hook is held until the pre-registered 08-13 criterion runs.** (ADR-0023)
