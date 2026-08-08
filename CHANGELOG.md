@@ -185,6 +185,13 @@ contract shapes that must be refused. Their `[[ ]]` assertions are chained with 
 per the standing TODO — bats 1.13.0 does not fail a test on a bare non-final `[[ ]]`, so the
 loop bodies would otherwise have asserted nothing.
 
+One test was left more debuggable than it was found. `tests/codex-parity.bats`'s
+concurrency case asserts that a losing installer may fail only on lock contention,
+and it fired once on a macOS CI runner while the same commit passed on a sibling
+runner and 26 local runs — including under CPU load — could not reproduce it. Its
+failure output was the bare `grep` line, which says nothing about what the loser
+actually hit, so the log is now printed on mismatch. The assertion is unchanged.
+
 Also: `.gitignore` stops tracking `codex/*.bak`. The whitelist opens `codex/**` wholesale, and
 Orca drops a `.bak` sibling every time it rewrites the registration, so it surfaced in
 `git status` on every session.

@@ -388,7 +388,18 @@ PY
   for pid in $pids; do
     index=$((index + 1))
     if ! wait "$pid"; then
-      grep -q 'INSTALL_LOCK_BUSY' "$TEST_ROOT/concurrent.$index.log"
+      # Assertion unchanged: a losing installer may fail ONLY on lock contention.
+      # The diagnostic is new. This fired once on a macOS CI runner (2026-08-08,
+      # db14615) while the same commit passed on a sibling runner and 26 local
+      # runs, including under CPU load, could not reproduce it — and the failure
+      # output was the bare grep line, which says nothing about what the loser
+      # actually hit. Print the log so the next occurrence is diagnosable
+      # instead of costing another investigation.
+      grep -q 'INSTALL_LOCK_BUSY' "$TEST_ROOT/concurrent.$index.log" || {
+        printf 'concurrent installer %s failed for a reason other than lock contention:\n' "$index" >&2
+        sed 's/^/  | /' "$TEST_ROOT/concurrent.$index.log" >&2
+        return 1
+      }
     fi
   done
   run install_parity
