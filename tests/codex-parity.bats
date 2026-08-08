@@ -17,7 +17,7 @@ setup() {
   cp -R "$SOURCE_REPO/codex" "$SOURCE_REPO/hooks" "$SOURCE_REPO/rules" "$SOURCE_REPO/scripts" "$TEST_REPO/"
   sanitize_codex_copy "$TEST_REPO"
   mkdir -p "$TEST_REPO/skills"
-  for skill in deep-research verify-test aside-qa; do
+  for skill in scope-check deep-research verify-test aside-qa; do
     cp -RL "$SOURCE_REPO/skills/$skill" "$TEST_REPO/skills/$skill"
   done
   for skill in requesting-code-review verification-before-completion; do

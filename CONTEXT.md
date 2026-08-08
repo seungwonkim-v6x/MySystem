@@ -17,7 +17,7 @@ ADRs are the decision log, and `.out-of-scope/` records explicit no-decisions.
 ## The 9-step workflow
 
 ```text
-1. /office-hours -> 2. /deep-research -> 3. /autoplan
+1. /scope-check  -> 2. /deep-research -> 3. /autoplan
                                              |
                                              v
 4. Implementation -> 5. Verification -> 6. Concurrent review
@@ -28,8 +28,10 @@ ADRs are the decision log, and `.out-of-scope/` records explicit no-decisions.
                               8. /ship  (terminal step)
 ```
 
-Debugging swaps Step 1 for `/investigate`. Every transition waits for explicit
-approval, with no exceptions; `/ship` is terminal. The complete
+Step 1 is `/scope-check` for an existing codebase, `/office-hours` for a product
+that does not exist yet, `/investigate` when the cause is unknown (ADR-0023).
+Approval-wait behavior differs per surface and is stated in `CLAUDE.md` and
+`codex/workflow-contract.md`, not here; `/ship` is terminal. The complete
 mapping and successor rules live only in `CLAUDE.md`; Codex consumes a generated
 native projection rather than an independent rewrite.
 
