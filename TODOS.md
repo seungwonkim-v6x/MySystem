@@ -13,3 +13,14 @@ Deferred work items. Format: what / why / effort (human → CC) / priority.
 - [x] **Gate-removal quality review (ADR-0015)** — obsolete: ADR-0016 (v0.50.0, 2026-07-21) restored the gated workflow and retired the ADR-0015 kill criterion before the review window elapsed.
 - [ ] **Sandbox/container isolation layer** — strongest rail per research (survives prompt injection); an ocean today. Effort: XL → L. P3.
 - [ ] **Audit non-final `[[ ]]` assertions in bats suites** — bats does not fail a test when a non-final `[[ ]]` returns false (verified 1.13.0), so mid-test assertions may be silently unenforced; sweep tests/*.bats and either move assertions last, chain `|| false`, or adopt bats-assert. Effort: S → S. P2. Trigger: found while fixing the test-72 CI failure (2026-07-13).
+
+## From the v0.59.0 ship (2026-08-08)
+
+- [ ] **Root-cause the concurrent-installer CI flake** — `tests/codex-parity.bats`'s
+  "concurrent installers" case failed once on a macOS runner while the same commit
+  passed on a sibling runner; 26 local runs including under CPU load could not
+  reproduce it. Full handoff with ruled-out hypotheses, prime suspects at
+  `scripts/codex-parity-lib.sh:426-429`, and acceptance criteria:
+  [`docs/handoff/ci-concurrent-installer-flake.md`](docs/handoff/ci-concurrent-installer-flake.md).
+  Effort: M → M. P3. Trigger: the next occurrence — the test now prints the losing
+  installer's log, which should identify the failure code on its own.

@@ -12,6 +12,28 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [0.59.1] - 2026-08-08
+
+**Handoff for the one CI failure v0.59.0 could not root-cause.**
+
+`tests/codex-parity.bats`'s concurrency case failed once on a macOS runner during
+the v0.59.0 ship. The same commit passed on a sibling macOS runner, ubuntu passed
+on both, and 26 local runs — including under CPU load — could not reproduce it,
+so it is a race in the install-lock protocol rather than a defect in the change
+that surfaced it. v0.59.0 already made the failure diagnosable by printing the
+losing installer's log; this release writes down everything else that was learned
+so the next session does not repeat the characterization.
+
+`docs/handoff/ci-concurrent-installer-flake.md` carries the exact job IDs, the
+four hypotheses already ruled out and how, three prime suspects with file:line
+(the unguarded `mkdir` on the reclaim path at `scripts/codex-parity-lib.sh:428`
+is first), a forced-contention recipe that drives `parity_acquire_lock` directly
+instead of paying for ten full installs, and acceptance criteria that rule out
+the tempting non-fixes: widening the grep to accept
+`INSTALL_LOCK_STALE_UNSAFE`, and raising the five-second grace window.
+
+`TODOS.md` points at it, filed P3 with the next occurrence as the trigger.
+
 ## [0.59.0] - 2026-08-07
 
 **Step 1 gets a skill that accepts ordinary changes; the enforcement hook is held until the pre-registered 08-13 criterion runs.** (ADR-0023)
