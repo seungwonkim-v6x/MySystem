@@ -420,6 +420,55 @@ PY
   [[ "$output" == *"INSTALL_LOCK_BUSY"* ]]
 }
 
+# An unstamped lock — the directory exists and carries a pid leaf that is still
+# empty — is what every owner publishes between creating the leaf with O_EXCL and
+# writing its pid into it. A contender that lands there is looking at live
+# contention. Before the fix it read the empty leaf, decided the pid was
+# malformed, and reported INSTALL_LOCK_STALE_UNSAFE, which is the code the
+# concurrent-installer contract test refuses to accept.
+@test "an unstamped install lock reports contention, not corruption" {
+  mkdir -p "$MYSYSTEM_STATE_DIR/install.lock"
+  : > "$MYSYSTEM_STATE_DIR/install.lock/pid"
+  chmod 600 "$MYSYSTEM_STATE_DIR/install.lock/pid"
+  # Pin the lock inside the freshness window explicitly instead of leaning on
+  # the installer's preamble finishing within it. A loaded runner is exactly
+  # the condition this whole change is about, so the test that proves it must
+  # not itself depend on runner speed.
+  touch -t 209901010000 "$MYSYSTEM_STATE_DIR/install.lock"
+  run install_parity
+  [ "$status" -eq 1 ]
+  # `|| false` on every [[ ]]: bats does not fail a test on a non-final [[ ]]
+  # that returns false (verified on 1.13.0), so a bare mid-test assertion here
+  # would be silently unenforced and this test would pass against the very bug
+  # it exists to catch. Tracked repo-wide in TODOS.md.
+  [[ "$output" == *"INSTALL_LOCK_BUSY"* ]] || false
+  [[ "$output" != *"INSTALL_LOCK_STALE_UNSAFE"* ]] || false
+}
+
+# Same shape, but abandoned past the grace window: an owner died between creating
+# the pid leaf and writing it. The leaf must be removed on the reclaim path or the
+# rmdir fails with ENOTEMPTY and the lock is unreclaimable forever.
+@test "an abandoned unstamped install lock is reclaimed, not deadlocked" {
+  mkdir -p "$MYSYSTEM_STATE_DIR/install.lock"
+  : > "$MYSYSTEM_STATE_DIR/install.lock/pid"
+  chmod 600 "$MYSYSTEM_STATE_DIR/install.lock/pid"
+  touch -t 200001010000 "$MYSYSTEM_STATE_DIR/install.lock"
+  run install_parity
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"FAIL=0"* ]] || false
+}
+
+# The counterweight to the two cases above: reclassifying transient states as
+# contention must not swallow a lock that is genuinely corrupt. A non-empty pid
+# that is not a number was never a state a correct owner publishes.
+@test "a malformed install lock pid still fails loudly" {
+  mkdir -p "$MYSYSTEM_STATE_DIR/install.lock"
+  printf '%s\n' not-a-pid > "$MYSYSTEM_STATE_DIR/install.lock/pid"
+  run install_parity
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"INSTALL_LOCK_STALE_UNSAFE"* ]] || false
+}
+
 @test "symlinked lock and state leaves fail without touching their targets" {
   mkdir -p "$MYSYSTEM_STATE_DIR" "$TEST_ROOT/lock-victim"
   printf '%s\n' 99999999 > "$TEST_ROOT/lock-victim/pid"

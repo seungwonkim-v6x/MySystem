@@ -370,72 +370,122 @@ import time
 state_dir, current_pid = sys.argv[1], sys.argv[2]
 nofollow = getattr(os, "O_NOFOLLOW", 0)
 directory = getattr(os, "O_DIRECTORY", 0)
+
+
+class LockContended(Exception):
+    """The lock changed under us mid-protocol: contention, not corruption."""
+
+
+# Errnos a correct peer produces just by making progress: it created, stamped,
+# reclaimed, or released the lock between two of our syscalls. Observing that is
+# live contention (INSTALL_LOCK_BUSY), not a corrupt lock.
+#
+# Every lock shape that is corrupt at rest is rejected by a check that runs
+# before any of these errnos can fire: a linked, unowned, group-writable, or
+# non-directory lock leaf by the lstat below; unexpected entries by the listdir
+# check; a linked pid leaf by O_NOFOLLOW (ELOOP, not in this set); a non-regular
+# or unowned pid leaf by its fstat; a non-empty malformed pid by isdigit. Those
+# all reach INSTALL_LOCK_STALE_UNSAFE, so a corrupt lock is never quietly
+# downgraded to "someone else is installing".
+#
+# One narrow exception, stated rather than papered over: O_CREAT|O_EXCL reports
+# EEXIST before O_NOFOLLOW is consulted, so a pid leaf that a same-uid process
+# plants as a symlink between our mkdir and our claim below is reported BUSY.
+# It is not misclassified into anything unsafe — O_EXCL never follows and never
+# writes it, this run still aborts non-zero, and the next run takes the
+# FileExistsError path where O_NOFOLLOW raises ELOOP and reports STALE_UNSAFE.
+# Narrowing EEXIST by call site would not help: at that same open, EEXIST is
+# also exactly what a peer that reclaimed the lock and stamped it first
+# produces, and the two are indistinguishable there.
+CONTENTION_ERRNOS = frozenset((errno.ENOENT, errno.EEXIST, errno.ENOTEMPTY))
+
 parent_fd = os.open(state_dir, os.O_RDONLY | directory | nofollow)
 lock_fd = None
 try:
     try:
-        os.mkdir("install.lock", 0o700, dir_fd=parent_fd)
-        os.fsync(parent_fd)
-    except FileExistsError:
-        st = os.stat("install.lock", dir_fd=parent_fd, follow_symlinks=False)
-        if not stat.S_ISDIR(st.st_mode) or st.st_uid != os.getuid() or st.st_mode & (stat.S_IWGRP | stat.S_IWOTH):
-            raise RuntimeError("lock leaf is linked, unowned, or writable by others")
-        lock_fd = os.open("install.lock", os.O_RDONLY | directory | nofollow, dir_fd=parent_fd)
-        names = os.listdir(lock_fd)
-        if any(name != "pid" for name in names):
-            raise RuntimeError("lock directory contains unexpected state")
-        owner = None
-        if "pid" in names:
-            pid_fd = os.open("pid", os.O_RDONLY | nofollow, dir_fd=lock_fd)
-            try:
-                pid_st = os.fstat(pid_fd)
-                if not stat.S_ISREG(pid_st.st_mode) or pid_st.st_uid != os.getuid():
-                    raise RuntimeError("lock pid leaf is unsafe")
-                raw = os.read(pid_fd, 64).decode("ascii", "strict").strip()
-                if not raw.isdigit():
-                    raise RuntimeError("lock pid is malformed")
-                owner = int(raw)
-            finally:
-                os.close(pid_fd)
-        if owner is None:
-            # Lock dir exists but carries no pid yet: another installer holds it
-            # via mkdir and has not written its pid. That is live contention, not
-            # an abandoned lock — stealing here would race the owner's pid write
-            # and surface INSTALL_LOCK_STALE_UNSAFE instead of INSTALL_LOCK_BUSY.
-            # Back off as BUSY while the lock is fresh; only a genuinely stale
-            # empty lock (older than the grace window) is reclaimed below.
-            fresh = os.stat("install.lock", dir_fd=parent_fd, follow_symlinks=False)
-            if time.time() - fresh.st_mtime < 5.0:
-                print("pending")
-                raise SystemExit(2)
-        if owner is not None:
-            try:
-                os.kill(owner, 0)
-            except ProcessLookupError:
-                pass
-            except PermissionError:
-                print(owner)
-                raise SystemExit(2)
+        try:
+            os.mkdir("install.lock", 0o700, dir_fd=parent_fd)
+            os.fsync(parent_fd)
+        except FileExistsError:
+            st = os.stat("install.lock", dir_fd=parent_fd, follow_symlinks=False)
+            if not stat.S_ISDIR(st.st_mode) or st.st_uid != os.getuid() or st.st_mode & (stat.S_IWGRP | stat.S_IWOTH):
+                raise RuntimeError("lock leaf is linked, unowned, or writable by others")
+            lock_fd = os.open("install.lock", os.O_RDONLY | directory | nofollow, dir_fd=parent_fd)
+            names = os.listdir(lock_fd)
+            if any(name != "pid" for name in names):
+                raise RuntimeError("lock directory contains unexpected state")
+            owner = None
+            if "pid" in names:
+                pid_fd = os.open("pid", os.O_RDONLY | nofollow, dir_fd=lock_fd)
+                try:
+                    pid_st = os.fstat(pid_fd)
+                    if not stat.S_ISREG(pid_st.st_mode) or pid_st.st_uid != os.getuid():
+                        raise RuntimeError("lock pid leaf is unsafe")
+                    raw = os.read(pid_fd, 64).decode("ascii", "strict").strip()
+                    # An empty pid leaf carries exactly the information a missing
+                    # one does: the owner created it with O_CREAT|O_EXCL below and
+                    # has not written to it yet. Leave owner unset so the freshness
+                    # gate treats it as live contention. Only non-empty garbage is
+                    # a malformed lock.
+                    if raw:
+                        if not raw.isdigit():
+                            raise RuntimeError("lock pid is malformed")
+                        owner = int(raw)
+                finally:
+                    os.close(pid_fd)
+            if owner is None:
+                # Lock dir exists but carries no pid yet: another installer holds it
+                # via mkdir and has not written its pid. That is live contention, not
+                # an abandoned lock — stealing here would race the owner's pid write
+                # and surface INSTALL_LOCK_STALE_UNSAFE instead of INSTALL_LOCK_BUSY.
+                # Back off as BUSY while the lock is fresh; only a genuinely stale
+                # empty lock (older than the grace window) is reclaimed below.
+                fresh = os.stat("install.lock", dir_fd=parent_fd, follow_symlinks=False)
+                if time.time() - fresh.st_mtime < 5.0:
+                    print("pending")
+                    raise SystemExit(2)
             else:
-                print(owner)
-                raise SystemExit(2)
-            os.unlink("pid", dir_fd=lock_fd)
-            os.fsync(lock_fd)
-        os.close(lock_fd)
-        lock_fd = None
-        os.rmdir("install.lock", dir_fd=parent_fd)
-        os.fsync(parent_fd)
-        os.mkdir("install.lock", 0o700, dir_fd=parent_fd)
-        os.fsync(parent_fd)
+                try:
+                    os.kill(owner, 0)
+                except ProcessLookupError:
+                    pass
+                except PermissionError:
+                    print(owner)
+                    raise SystemExit(2)
+                else:
+                    print(owner)
+                    raise SystemExit(2)
+            # Reclaiming an abandoned lock. Drop the pid leaf first whenever one
+            # is present, including the unstamped leaf an owner that died between
+            # creating and writing it left behind: rmdir would otherwise fail with
+            # ENOTEMPTY forever and the lock could never be reclaimed.
+            if "pid" in names:
+                os.unlink("pid", dir_fd=lock_fd)
+                os.fsync(lock_fd)
+            os.close(lock_fd)
+            lock_fd = None
+            os.rmdir("install.lock", dir_fd=parent_fd)
+            os.fsync(parent_fd)
+            os.mkdir("install.lock", 0o700, dir_fd=parent_fd)
+            os.fsync(parent_fd)
 
-    lock_fd = os.open("install.lock", os.O_RDONLY | directory | nofollow, dir_fd=parent_fd)
-    pid_fd = os.open("pid", os.O_WRONLY | os.O_CREAT | os.O_EXCL | nofollow, 0o600, dir_fd=lock_fd)
-    try:
-        os.write(pid_fd, (current_pid + "\n").encode("ascii"))
-        os.fsync(pid_fd)
-    finally:
-        os.close(pid_fd)
-    os.fsync(lock_fd)
+        lock_fd = os.open("install.lock", os.O_RDONLY | directory | nofollow, dir_fd=parent_fd)
+        pid_fd = os.open("pid", os.O_WRONLY | os.O_CREAT | os.O_EXCL | nofollow, 0o600, dir_fd=lock_fd)
+        try:
+            os.write(pid_fd, (current_pid + "\n").encode("ascii"))
+            os.fsync(pid_fd)
+        finally:
+            os.close(pid_fd)
+        os.fsync(lock_fd)
+    except OSError as error:
+        # SystemExit and RuntimeError deliberately bypass this: the first is a
+        # decided outcome, the second is a corrupt lock we must still report.
+        if error.errno in CONTENTION_ERRNOS:
+            raise LockContended from error
+        raise
+except LockContended:
+    print("pending")
+    raise SystemExit(2)
 except SystemExit:
     raise
 except Exception as error:
@@ -450,7 +500,15 @@ PY
   case "$status" in
     0) ;;
     2)
-      parity_fail INSTALL_LOCK_BUSY "$PARITY_LOCK_DIR" "Another parity install is active" "Process $result owns the install lock" "Wait for that process to finish, then retry" interrupted-migration
+      # The heredoc prints an owning pid when it could read one, and the literal
+      # "pending" when the lock is held by a peer that has not stamped it yet or
+      # that changed the lock under us. Do not splice "pending" into a field the
+      # reader parses as a pid: this component's whole value is diagnosability.
+      if [ "$result" = pending ]; then
+        parity_fail INSTALL_LOCK_BUSY "$PARITY_LOCK_DIR" "Another parity install is active" "An unidentified process is claiming the install lock right now" "Wait for that process to finish, then retry" interrupted-migration
+      else
+        parity_fail INSTALL_LOCK_BUSY "$PARITY_LOCK_DIR" "Another parity install is active" "Process $result owns the install lock" "Wait for that process to finish, then retry" interrupted-migration
+      fi
       return 1
       ;;
     *)
