@@ -260,6 +260,35 @@ parity installer. Unknown real content must be inspected and moved manually.
 Default `hooks.json` is malformed or lacks a semantic event/matcher/script
 tuple. Run the parity installer, then review/trust hooks in the Codex UI.
 
+Hosts that own the agent runtime reinject their own hooks into this file. The
+contract's `foreign_hooks_allowed` pins each accepted host command by
+`command_sha256`, taken over the command with `$HOME` left unexpanded, next to
+the `path` that command must reference. Only a byte-exact match is exempt:
+mentioning a declared path is not enough, so a comment, an appended `; payload`,
+or a neighbouring `codex-hook.sh.bak` is still reported. Everything else stays
+strict too — a contracted tuple that is missing, retargeted, or made inert
+fails, and so does a host the contract does not name (ADR-0022).
+
+`HOOK_REGISTRATION_INVALID` after a host upgrade usually means the host changed
+its command. Confirm the new command is the host's, then refresh
+`tests/fixtures/codex-parity/orca-hook-command.txt` and the contract digest
+together in one reviewed commit:
+
+```bash
+python3 - <<'EOF'
+import json, os, hashlib
+home = os.environ["HOME"]
+reg = json.load(open(f"{home}/.claude/codex/hooks.json"))
+for event, groups in reg["hooks"].items():
+    for group in groups:
+        for hook in group.get("hooks", []):
+            command = hook["command"]
+            if "/.orca/agent-hooks/" in command:
+                portable = command.replace(home, "$HOME")
+                print(hashlib.sha256(portable.encode()).hexdigest(), portable, sep="\n")
+EOF
+```
+
 ### Hook safety missing
 
 A required safety tuple is missing from default Codex. Do not continue with

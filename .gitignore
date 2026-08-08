@@ -57,6 +57,10 @@ hooks/**/*.pyc
 # aside-qa — user-owned browser-verification layer over the aside MCP (no public alternative).
 !skills/aside-qa/
 !skills/aside-qa/**
+# scope-check — Step 1 for an ordinary change. gstack's /office-hours scopes itself to
+# new ideas only, so no public alternative covers this slot. ADR-0023.
+!skills/scope-check/
+!skills/scope-check/**
 # Rules — tracked native `.claude/rules/*.md` path-scoped + always-loaded
 # rule files (v0.41.0+, ADR-0009).
 !rules/
@@ -65,10 +69,14 @@ hooks/**/*.pyc
 # Scripts — tracked rollback/ops helpers (v0.38.0+).
 !scripts/
 !scripts/**
+scripts/__pycache__/
 
 # Generated Codex-native workflow projection and its narrow contract.
 !codex/
 !codex/**
+# Host-written sibling backups. Orca drops <file>.bak beside codex/hooks.json
+# every time it reinjects its hooks; the whitelist above would otherwise track it.
+codex/*.bak
 
 # OS / editor noise
 .DS_Store

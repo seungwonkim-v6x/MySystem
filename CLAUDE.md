@@ -78,8 +78,9 @@ implement it in a fresh session.
 
 | Step | Skill (slash command) | Source |
 |------|------------------------|--------|
-| 1. Validate idea / problem | `/office-hours` | gstack |
-|    (debug branch) | `/investigate` | gstack |
+| 1. Frame the request | `/scope-check` — the default. A change to code that already exists | user-owned (ADR-0023) |
+|    (new idea) | `/office-hours` — only when the thing does not exist yet, or "is this worth building" | gstack |
+|    (debug branch) | `/investigate` — a defect whose cause is unknown | gstack |
 | 2. Research | `/deep-research` | vendored, provider-pluggable (ADR-0011) |
 | 3. Plan + multi-review | `/autoplan` | gstack |
 | 4. Implementation | direct (coordinator writes code); on a **material UI change** also load `/frontend-design` + the project `DESIGN.md` rider | Anthropic plugin (frontend-design) + user rider |
@@ -91,12 +92,14 @@ implement it in a fresh session.
 The agent **must** call exactly these skills for exactly these steps. Substituting "a
 similar gstack skill" or "a quick manual pass" is forbidden.
 
+**Step 1 is exactly one of `/scope-check` (default — existing codebase, including a new file in it), `/office-hours` (a new product, not a new file), `/investigate` (unknown cause). None of them is a skipped step.**
+
 ## Complete Workflow
 
 ### Feature / Bug Fix / Refactoring
 
 ```
-1. /office-hours       validate the idea or problem
+1. /scope-check        frame the request (/office-hours if the thing is new)
 2. /deep-research      docs, codebase, web, existing solutions
 3. /autoplan           plan + CEO/Design/Eng review
 4. Implementation      coordinator writes the code
@@ -208,7 +211,7 @@ worth acting on, read them and decide by hand.
 ## Skills
 
 Workflow skills — the autonomous-invocation whitelist (see *Critical Workflow Rules*):
-`/office-hours`, `/investigate`,
+`/scope-check`, `/office-hours`, `/investigate`,
 `/deep-research`, `/autoplan`, `/verify-test`, `/qa-only`, `/design-review`,
 `/review`, `/requesting-code-review`, `/verification-before-completion`, `/ship`.
 

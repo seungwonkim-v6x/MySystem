@@ -37,6 +37,7 @@
     {"name": "design-review", "mode": "gstack-generated", "profiles": ["core"]},
     {"name": "review", "mode": "gstack-generated", "profiles": ["core"]},
     {"name": "ship", "mode": "gstack-generated", "profiles": ["core"]},
+    {"name": "scope-check", "mode": "portable-local", "source": "skills/scope-check", "profiles": ["core"]},
     {"name": "deep-research", "mode": "portable-local", "source": "skills/deep-research", "profiles": ["core"]},
     {"name": "verify-test", "mode": "portable-local", "source": "skills/verify-test", "profiles": ["core"]},
     {"name": "aside-qa", "mode": "portable-local", "source": "skills/aside-qa", "profiles": ["core", "browser"]},
@@ -47,7 +48,7 @@
   ],
   "profiles": {
     "core": {
-      "skills": ["office-hours", "investigate", "deep-research", "autoplan", "verify-test", "qa-only", "design-review", "verification-before-completion", "review", "requesting-code-review", "ship", "aside-qa"]
+      "skills": ["office-hours", "investigate", "scope-check", "deep-research", "autoplan", "verify-test", "qa-only", "design-review", "verification-before-completion", "review", "requesting-code-review", "ship", "aside-qa"]
     },
     "material-ui": {"plugins": ["frontend-design"]},
     "browser": {"skills": ["aside-qa"], "mcps": ["aside"], "orca_cli_fallbacks": {"aside": "aside"}},
@@ -61,6 +62,12 @@
     {"event": "PostToolUse", "matcher": "Write|Edit|MultiEdit", "script": "render-md.sh", "requiredness": "convenience"},
     {"event": "SessionStart", "matcher": "", "script": "update-skills.sh", "requiredness": "convenience"},
     {"event": "Stop", "matcher": "", "script": "preview-stop.sh", "requiredness": "convenience"}
+  ],
+  "foreign_hooks_allowed": [
+    {
+      "path": "$HOME/.orca/agent-hooks/codex-hook.sh",
+      "command_sha256": "6b82489a803d3ac6214dbbfd334f1535b8c942400652288a8fb07a63e372603c"
+    }
   ],
   "managed_paths": {
     "project_agents": "AGENTS.md",

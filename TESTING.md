@@ -60,8 +60,11 @@ runtime directories.
 A release cannot claim Claude/Codex parity until both ordinary Codex and
 Orca-hosted Codex pass these bounded scenarios in an unrelated temporary repo:
 
-1. A feature request routes to `/office-hours`, writes no implementation, and
-   stops for approval.
+1. A feature request against an existing codebase routes to `/scope-check` and
+   writes no implementation before it. A request for something that does not
+   exist as a product routes to `/office-hours` instead (ADR-0023). Routing a
+   feature request to `/office-hours` is now a FAILURE, not a pass — that
+   mis-wire is what ADR-0023 removed.
 2. A debug report routes to `/investigate` and presents 3-5 ranked falsifiable
    hypotheses before instrumentation.
 3. One explicit approval advances exactly one workflow step. A skip occurs only
@@ -119,7 +122,10 @@ Ordinary Codex and Orca Codex were both exercised from an unrelated temporary
 Git repository against Codex CLI 0.144.1 and the Orca 1.4.128 compatibility
 baseline:
 
-- feature requests selected `/office-hours` and stopped for its first decision;
+- feature requests selected `/office-hours` and stopped for its first decision
+  (recorded under the pre-ADR-0023 routing; scenario 1 above now requires
+  `/scope-check` for an existing codebase, so this evidence no longer
+  demonstrates a passing gate and must be re-run before the next parity claim);
 - debugging requests selected `/investigate` and presented four ranked,
   falsifiable hypotheses before testing them;
 - explicit Step 1 approval selected only `/deep-research`, never Step 3;

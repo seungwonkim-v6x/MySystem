@@ -13,7 +13,14 @@
 
 set -u
 
-CLAUDE_HOME="${CLAUDE_HOME:-$HOME/.claude}"
+# Default to the checkout this script lives in, NOT $HOME/.claude. Run from a
+# worktree or clone, the old default measured the LIVE install and silently
+# reported numbers for a projection that did not contain the change under review
+# (observed twice: it printed 4520 bytes of headroom while the checkout's real
+# figure was 4276). MYSYSTEM_REPO_ROOT and CLAUDE_HOME both still win, so
+# ./setup.sh and the live install keep their existing behavior.
+_self_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+CLAUDE_HOME="${CLAUDE_HOME:-${MYSYSTEM_REPO_ROOT:-$_self_root}}"
 CONTRACT="$CLAUDE_HOME/codex/parity-contract.json"
 
 cd "$CLAUDE_HOME" || { echo "cannot cd to $CLAUDE_HOME" >&2; exit 1; }

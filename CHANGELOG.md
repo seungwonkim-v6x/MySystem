@@ -12,6 +12,190 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [0.59.0] - 2026-08-07
+
+**Step 1 gets a skill that accepts ordinary changes; the enforcement hook is held until the pre-registered 08-13 criterion runs.** (ADR-0023)
+
+The owner reported that fresh worktree sessions skip Step 1 and implement directly.
+The report was correct, and the investigation produced two findings — the second of
+which corrected the first.
+
+`CLAUDE.md` mapped Step 1 to gstack's `/office-hours` for every Feature / Bug Fix /
+Refactoring. That skill's own body scopes itself to "a **new product idea** …
+something that **doesn't exist yet** … **before any code is written**"
+(`skills/gstack/office-hours/SKILL.md:61-63`). For "change this button's copy" the
+skill declares itself inapplicable and the model follows the more specific
+instruction. The map pointed at a socket that refuses the plug, and the file is
+gstack-owned so `gstack-upgrade` reverts any local fix.
+
+The measurement was wrong twice, and review caught both. The first pass reported
+decay to 12% by bucketing on calendar week and file **mtime**, smearing across the
+ADR-0021 commit boundary. The second split at commit boundaries using session
+**start** time but omitted the ADR-0015 / ADR-0016 pair, blending three
+configurations into one "48% baseline". A third error surfaced in re-review: boundaries were timed from the merge to
+`main`, but `~/.claude` is the live repo developed in place, so ADR-0021's
+CLAUDE.md was readable from 16:13 while main did not carry it until 18:08.
+
+Corrected — every boundary listed, timed from when the text landed on disk,
+synthetic probe sessions excluded: **46%** pre-0015 (n=13), **8%** with the rule
+deleted (n=12), **62%** restored (n=27), **0%** deleted again (n=38), **0%**
+description-only (n=9), **31%** since 08-06 (n=16). Snapshot of corpus
+`2026-06-12 .. 2026-08-08`, 115 counted of 259 seen.
+
+The direction is the trustworthy part: rule present 46-62%, rule absent 0-8%,
+consistent across three removals and restorations. The exact figures are not.
+This measurement was recomputed five times in one session and produced a
+different table each time, because transcripts are retention-pruned
+(`cleanupPeriodDays` unset → 30-day default) and the corpus shrinks daily — the
+pre-0015 window lost six sessions inside one hour of review. The script now
+prints its corpus range, count, and exclusions on every run; quote that line with
+any number, or the number means nothing. The owner's "it used to work" is
+confirmed; the cause was the deletion, which ADR-0021 already reversed.
+
+So `skills/scope-check/` ships as the default Step 1 — restate the request in three
+lines, name what is out of scope, ask one question only if a reading is genuinely
+ambiguous, write nothing, invoke nothing. `/office-hours` keeps work that does not
+exist yet; `/investigate` keeps the debug branch. Both instruction surfaces change
+together per *Detailed Rules*, plus one compressed line both surfaces carry verbatim
+that settles the case which actually broke before: a new file inside an existing
+codebase is `/scope-check`, not `/office-hours`.
+
+`tests/step1-routing.bats` guards it, on the third attempt. The first version
+passed a byte-identical revert. The second, scoped to the mapping rows, passed a
+semantic one: `/office-hours` restored as the default with `/scope-check` demoted
+to a "rare" row, all three skills still named, 137/137 green. Presence was never
+the invariant — precedence is. The current version asserts that the FIRST Step-1
+row names `/scope-check` on both surfaces and that the shared line names it
+first, and it fails against that exact revert. Both misses were found by review,
+not by the author.
+
+The `PreToolUse` enforcement hook that prompted this work is **not** shipped. Both
+review voices independently returned "do not ship as written". The trigger
+evaporated with the corrected measurement; ADR-0019's pre-registered kill criterion
+comes due **2026-08-13**; ADR-0015 already built this hook as `tier-guard` with 17
+passing bats contracts and deleted it, recording a rejection that reads as a review
+of the new plan ("it relocates gates into hooks rather than removing them … for an
+operator whose complaint was harness weight, violating trigger-driven shipping");
+the success metric was invocation rate, a process-volume number with no harm term,
+which *No self-scored improvement loops* forbids; and the design had no triviality
+carve-out, so enforce mode would have blocked the typo fixes `CLAUDE.md` permits.
+
+`scripts/measure-step1.py` is committed because three ADRs cite a measurement script
+for their kill criteria and that script is gone from disk — which is how each one
+re-derived a different number from the same corpus. It buckets by config window,
+calendar week, or session size, and documents its own undercount: a Step-1 skill the
+user *typed* emits no `Skill` tool call, so those sessions score as non-compliant and
+every number is a floor.
+
+Three facts worth keeping, all measured rather than read:
+
+- **`Skill` IS matchable by a hook**, contradicting `code.claude.com/docs/en/hooks`
+  ("Skill tool matchable: **No** — Skill is not a tool event"). On CLI 2.1.223,
+  `PreToolUse` and `PostToolUse` with `matcher: "Skill"` both fire and carry
+  `tool_input.skill` plus `prompt_id`.
+- **A user-typed `/skill` fires no hook at all.** Any future guard keyed on `Skill`
+  must also read `UserPromptSubmit` or it denies a user who genuinely ran Step 1.
+- **`permissions.deny` applies under `bypassPermissions`.** A whole-tool deny removes
+  the tool ("disabled for this session, in subagents as well as here"); `Bash(sed:*)`
+  is denied at call time.
+
+Two latent faults were found while reviewing this change and are fixed here.
+`setup.sh`'s two prune whitelists (`WORKFLOW_TOP_SKILLS`, `WORKFLOW_USER_SKILLS`) are
+hardcoded strings that `rm -rf` anything unlisted, and neither is derived from the
+contract — so adding a core skill without editing both armed a destructive prune:
+the next `./setup.sh` would have deleted the tracked `skills/scope-check/`, aborted
+the parity stage on `MANAGED_SOURCE_MISSING`, and taken every portable link with it.
+A new test holds both lists against `.profiles.core.skills`. Separately,
+`scripts/claude-md-budget.sh` defaulted to `$HOME/.claude`, so from a clone it
+measured the LIVE install and reported headroom for a projection that did not contain
+the change under review; it now defaults to its own checkout.
+
+The Codex global projection is down to **95 bytes** of slack (32673 of a 32768 payload
+limit) from 424 before this change. That is why the disambiguation rule is one
+compressed line rather than the paragraph the Claude surface carries. Exactly what
+was traded: the Codex Step-1 rows **grew** (two rows to three, 106 → 158 bytes) and
+the projection grew 329 bytes net; the saving came from compressing the paragraph,
+not from shortening the rows. Raising `global_max_bytes` was rejected — the budget
+encodes an observed compatibility baseline, so raising it to fit is weakening a
+check to get unblocked.
+
+### Hook-enforcement candidates
+
+- **Step-1 invocation** — logged, deliberately not built. ADR-0023 holds it until
+  2026-08-13 with a committed decision rule: above 30% and the ADR-0019 harm
+  criterion passing means no hook is ever written. If it is built, the mechanism is a
+  `(session_id, prompt_id)` marker written by `PostToolUse(Skill)` **and**
+  `UserPromptSubmit`, checked by `PreToolUse(Edit|Write|MultiEdit)` — not transcript
+  scanning (the 40MB parse costs 50-70ms and a tail bound misses, because the Step-1
+  call sits at 1-13% of the file), and not Bash write-detection (`prettier --write`,
+  `make`, `git apply`, `perl -pi`, `> "$f"` defeat any pattern list while the
+  false-positive surface arrives in full).
+- **Request Lock** — still open from v0.55.0, still prompt-level only, and it
+  addresses the scope drift this repo has actually measured harm from. Ahead of
+  Step-1 invocation in the queue.
+
+## [0.58.0] - 2026-08-07
+
+**The parity doctor checks again: host hooks are exempted by command digest, not by exact-set equality.** (ADR-0022)
+
+`validate_hook_registration()` compared `codex/hooks.json` against the contract with exact
+set equality. Orca reinjects eight wildcard telemetry tuples into that file on every launch —
+additively; a diff against `HEAD` confirms all seven reviewed tuples survive untouched — so
+the comparison could never pass. Worse than a stale warning: `codex-parity-doctor.sh` treats
+`CONTRACT_INVALID` as fatal and exits at once, so the live install reported
+`PASS=0 WARN=0 FAIL=1` and the other thirty-plus checks never ran. The session-start banner
+from `hooks/update-skills.sh` was not noise about one field, it marked a checker that had
+stopped checking. Reverting the injection is not available: it is reapplied on every launch.
+
+The contract gains `foreign_hooks_allowed`, whose entries pin one host command each by
+`{path, command_sha256}`. A registration entry is exempt only when the sha256 of its command
+matches a declared digest, taken over the command's portable form — the caller's `$HOME`
+rewritten back to literal `$HOME` — so the contract stays machine-independent instead of
+embedding one developer's absolute paths. `path` is enforced, not decorative: an entry whose
+command does not reference its own declared path is a contract error.
+
+Exemption is by digest, not by mentioning a path, and that distinction is the whole change.
+The first draft exempted any command *containing* a declared path; review reproduced six ways
+through it — a trailing comment (`curl … | sh   # $HOME/.orca/…/codex-hook.sh`), a `;`-chained
+payload appended to the real command, prefix over-matches onto `codex-hook.sh.bak` and
+`codex-hook.sh-evil-payload`, and a dead-code mention. All six now fail. Token equality via
+`shlex.split` was considered and rejected: it stops the prefix and comment cases, not the
+chained one.
+
+Everything else stays strict. The seven contracted tuples are still exact-matched — missing,
+retargeted, or inert all still fail — and a host the contract does not name still fails. The
+contract model requires each entry to be an object with exactly `path` and `command_sha256`,
+the path `$HOME/`-rooted with no `..`, no second `$`, and no trailing `/`, so `["$HOME/"]` or
+`["$HOME/.orca/"]` cannot widen the exemption to a directory. Only `codex-hook.sh` is
+declared; `claude-hook.sh` appears solely in `settings.json`, which this validator never
+reads, so declaring it would be dead surface.
+
+The accepted cost, recorded in the ADR: an Orca release that edits its hook command breaks
+the digest and brings the banner back until the contract is re-approved. Orca has already
+changed it once, rewriting the `else` branch from `cat >/dev/null` to
+`{ command -p cat 2>/dev/null || cat; }`. The doctor's existing `ORCA_VERSION_UNTESTED`
+warning already demands a contract review on host upgrade, so the re-approval lands where a
+review was owed anyway; `SETUP.md#hook-registration` carries a runnable refresh recipe.
+
+Four tests (120 → 124). The exemption case injects the verbatim host command from a new
+fixture, `tests/fixtures/codex-parity/orca-hook-command.txt`, rather than a hand-written
+approximation, and a second test asserts the fixture's digest still equals the contract's so
+the two cannot drift apart. A third walks the six bypass variants; a fourth walks nine
+contract shapes that must be refused. Their `[[ ]]` assertions are chained with `|| return 1`
+per the standing TODO — bats 1.13.0 does not fail a test on a bare non-final `[[ ]]`, so the
+loop bodies would otherwise have asserted nothing.
+
+One test was left more debuggable than it was found. `tests/codex-parity.bats`'s
+concurrency case asserts that a losing installer may fail only on lock contention,
+and it fired once on a macOS CI runner while the same commit passed on a sibling
+runner and 26 local runs — including under CPU load — could not reproduce it. Its
+failure output was the bare `grep` line, which says nothing about what the loser
+actually hit, so the log is now printed on mismatch. The assertion is unchanged.
+
+Also: `.gitignore` stops tracking `codex/*.bak`. The whitelist opens `codex/**` wholesale, and
+Orca drops a `.bak` sibling every time it rewrites the registration, so it surfaced in
+`git status` on every session.
+
 ## [0.57.0] - 2026-08-06
 
 **Step invocation is mandatory again on the Claude Code surface; the approval gates stay gone.** (ADR-0021)
