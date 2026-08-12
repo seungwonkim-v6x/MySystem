@@ -53,10 +53,28 @@ even on F/Skip), `/aside-qa` (browser layer for Step 5 / Quick Visual Check),
 `/frontend-design` (Step 4 design discipline — **materiality-gated**: fires only on a *new
 UI or reshaping of existing UI*, NOT on any UI file touched or a one-line CSS tweak).
 
-**Steps are mandatory; step transitions are not gated (ADR-0021).** Running every step is
-required. *Waiting for approval between them* is not — ADR-0019 measured that the six
-approval waits did not catch direction errors, and ADR-0020 declined to restore them.
-*Short Loop* governs stopping: PR and irreversible actions only.
+**The harness enforces this, not your judgment (ADR-0024).** A `PreToolUse` gate
+(`hooks/gate.py`) enforces exactly three things, and they are the three that survived
+three rounds of adversarial review untouched:
+
+1. **Step order** — a step may only advance the phase it is next for.
+2. **The turn boundary** — a second step in the same turn is denied, so you present
+   results, end the turn, and the owner's reply lets the next step run.
+3. **`Write`/`Edit`/`MultiEdit`/`NotebookEdit` are denied before phase 3** (after
+   `/autoplan`). The repo's own `docs/` tree and `CHANGELOG.md`/`VERSION`/`TODOS.md`/
+   `CONTEXT.md`/`.gitignore` stay writable, resolved through symlinks and confined to
+   the invoking repo.
+
+**Everything else is a rule you follow, not one the harness enforces.** `Bash` is
+ungated, so writing code or publishing through it evades the gate — do not. Three review
+rounds each broke a predicate added around the core (a read-only `Bash` allowlist, then a
+publishing allowlist, then an "is this edit trivial" test), so those predicates are gone
+rather than sharpened a fourth time.
+
+Run `~/.claude/scripts/mysystem-steps status` for the phase and `… explain` for the last
+denial (not on `PATH` — use the full path). Only the owner may type `gate: off` (that one
+request) or `gate: reset`, as plain text — a leading `/` is resolved as a CLI command and
+rejected before the harness sees it.
 
 Request Lock still binds inside every step. A mandatory step is a mandatory *step*, not a
 license to widen what that step is about.
@@ -108,9 +126,11 @@ similar gstack skill" or "a quick manual pass" is forbidden.
 8. /ship               commit, push, create PR (terminal step)
 ```
 
-There is **no approval wait between steps** — *Short Loop* governs stopping: PR and
-irreversible actions only. Step 7 is folded into Step 6 (ADR-0017); there is no Step 9
-(ADR-0018). The numbering is kept so that references to "Step 6" keep meaning one thing.
+**Each step transition ends the turn.** Present the step's results and stop; the owner's
+next message is what lets the following step run. This is not advice — `hooks/gate.py`
+denies a second step invoked inside the same turn (ADR-0024). Step 7 is folded into Step 6
+(ADR-0017); there is no Step 9 (ADR-0018). The numbering is kept so that references to
+"Step 6" keep meaning one thing.
 
 ### Debugging
 
@@ -123,12 +143,12 @@ Step 1 follows the ranked-falsifiable-hypotheses rule in *Short Loop* → **Debu
 
 ## Step 5: Verification — Ask User
 
-**This menu is not an approval gate.** The Verification step itself always runs; the menu
-picks that step's *content*, which is a within-step choice. `F` does not skip Step 5 — it
-runs it with no functional check, and `/verification-before-completion` still fires. So
-neither *Critical Workflow Rules*' "NEVER suggest skipping" (which governs whole steps) nor
-*Short Loop*'s "stop and wait only for PR" (which governs step *transitions*) is in tension
-with asking here.
+**This menu picks the step's content, not whether it runs.** The Verification step always
+runs; the menu is a within-step choice. `F` does not skip Step 5 — it runs it with no
+functional check, and `/verification-before-completion` still fires. So *Critical Workflow
+Rules*' "NEVER suggest skipping" (which governs whole steps) is not in tension with asking
+here. The gate agrees: Step-5 skills unlock only at phase 4, once a write has actually
+happened, because verifying an implementation that does not exist yet is not verification.
 
 After implementation, present these options:
 
@@ -196,7 +216,8 @@ worth acting on, read them and decide by hand.
   mistake waits for them to notice it. Show the evidence, don't assert success.
 - After two failed corrections on the same issue, stop correcting. `/clear` and
   restart with a prompt that incorporates what was learned.
-- Stop and wait only for **PR** and **irreversible actions**. Nothing else.
+- Stop at **each step transition**, at **PR**, and before **irreversible actions**. The
+  first of those is enforced by `hooks/gate.py`, not left to you (ADR-0024).
 
 ## Safety (enforced in code)
 
@@ -244,6 +265,9 @@ than the current attempt.
 
 - `rules/operating-principles.md`, `rules/trust-boundaries.md` — always loaded
 - `rules/repo-self-management.md` — MySystem-internal edits
-- Codex reads a separate, still-gated contract: `codex/workflow-contract.md`
-  (ADR-0016 / ADR-0019). Changing the workflow means changing both surfaces.
+- Codex reads a separate contract: `codex/workflow-contract.md` (ADR-0016 / ADR-0019).
+  It states the gates as prose because no hook runs there; here they are code
+  (ADR-0024). Changing the workflow means changing both surfaces.
+- Gate internals: `hooks/gate.py`, `hooks/record-step.py`,
+  `hooks/mysystem_steps_lib.py`, `scripts/mysystem-steps`.
 - Inspect the always-loaded chain: `scripts/claude-md-budget.sh`
