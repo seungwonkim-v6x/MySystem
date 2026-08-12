@@ -1,8 +1,10 @@
 #!/usr/bin/env bats
 #
-# Watchdog for the ADR-0021 mandatory-invocation restore.
+# Watchdog for the mandatory-invocation copies shared by both surfaces
+# (ADR-0021, still current) — NOT for the gates, which ADR-0024 moved into
+# hooks/gate.py on the Claude Code surface. See tests/gate-*.bats for those.
 #
-# CLAUDE.md's `## Critical Workflow Rules` holds three paragraphs that are
+# CLAUDE.md's `## Critical Workflow Rules` holds paragraphs that are
 # byte-identical copies of codex/workflow-contract.md. The copying is what makes
 # the two instruction surfaces agree on which steps are mandatory — ADR-0021's
 # central claim. Nothing else stops an edit to one file from leaving the other
@@ -53,7 +55,7 @@ assert_surfaces_agree() {
 
   n_file=$(grep -cFx -- "$line" "$CLAUDE_MD" 2>/dev/null || true)
   if [ "${n_file:-0}" -eq 0 ]; then
-    printf 'The two instruction surfaces have drifted (ADR-0021).\ncodex/workflow-contract.md carries:\n  %s\nCLAUDE.md does not carry that line verbatim.\nChanging the workflow means changing both surfaces — or amending ADR-0021.\n' \
+    printf 'The two instruction surfaces have drifted (ADR-0021, ADR-0024).\ncodex/workflow-contract.md carries:\n  %s\nCLAUDE.md does not carry that line verbatim.\nChanging the workflow means changing both surfaces — or amending the ADR.\n' \
       "$line" >&2
     return 1
   fi
@@ -88,9 +90,10 @@ assert_surfaces_agree() {
   assert_surfaces_agree 'Triviality carve-out (conservative)'
 }
 
-# The gates are the one thing ADR-0021 deliberately did NOT copy across. If this
-# paragraph ever lands in CLAUDE.md, the surface split collapsed back into the
-# gated contract that ADR-0019 measured and rejected.
+# The gate PROSE is Codex-only and stays that way. ADR-0024 gated the Claude Code
+# surface too, but in code (hooks/gate.py) rather than by copying this paragraph,
+# because prose is the lever that measured 46-62% and stopped. If the paragraph
+# ever lands in CLAUDE.md, someone reverted to the mechanism that did not work.
 @test "CLAUDE.md does NOT carry the Codex-only approval-gate paragraph" {
   run grep -Fq 'NEVER proceed to the next workflow step without explicit user approval' "$CLAUDE_MD"
   [ "$status" -ne 0 ]

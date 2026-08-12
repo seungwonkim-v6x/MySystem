@@ -3,8 +3,10 @@
      This is the projection source for codex/AGENTS.global.md (see
      codex/parity-contract.json → projections.global.sections).
      Kept gated because ADR-0016 measured that Codex sequences and verifies work
-     worse without the explicit step contract; ADR-0019 split the surfaces so
-     Claude Code stopped paying for a rail only Codex needs.
+     worse without the explicit step contract. ADR-0019 split the surfaces; as of
+     ADR-0024 both are gated, and what differs is the MECHANISM: Claude Code
+     enforces the sequence in hooks/gate.py, while no hook runs on this surface,
+     so here the gates must stay prose.
      Everything below the start marker is verbatim CLAUDE.md as of v0.54.0. -->
 <!-- mysystem:section claude-workflow:start -->
 # MySystem — Personal Workflow

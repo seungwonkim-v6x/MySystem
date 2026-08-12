@@ -1,0 +1,151 @@
+#!/usr/bin/env python3
+"""Inspect and repair the workflow gate's state (ADR-0024).
+
+Without this, a false deny is unexplainable and the owner's only recourse is
+disabling the guard — the failure ADR-0023 predicted for the previous attempt.
+
+Usage:
+  mysystem-steps status [SESSION_ID]   phase, steps, and what is allowed next
+  mysystem-steps explain [SESSION_ID]  the last gate denials, newest first
+  mysystem-steps reset [SESSION_ID]    clear the marker (debugging the harness)
+  mysystem-steps sessions              markers on disk, newest first
+
+SESSION_ID defaults to $CLAUDE_CODE_SESSION_ID, then to the newest marker.
+"""
+
+import json
+import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "hooks"))
+import mysystem_steps_lib as lib  # noqa: E402
+
+
+def markers():
+    try:
+        names = [n for n in os.listdir(lib.STEPS_DIR) if n.endswith(".json")]
+    except OSError:
+        return []
+    paths = [os.path.join(lib.STEPS_DIR, n) for n in names]
+    return sorted(paths, key=lambda p: os.path.getmtime(p), reverse=True)
+
+
+def resolve(argv):
+    if len(argv) > 1:
+        return argv[1]
+    env = os.environ.get("CLAUDE_CODE_SESSION_ID")
+    if env:
+        return env
+    found = markers()
+    if not found:
+        return None
+    return os.path.basename(found[0])[: -len(".json")]
+
+
+def cmd_status(session_id):
+    state = lib.load(session_id)
+    phase = state.get("phase", 0)
+    print(f"session      {session_id}")
+    print(f"phase        {phase}" + ("  (terminal)" if phase >= lib.TERMINAL_PHASE else ""))
+    print(f"prompt_id    {state.get('current_prompt_id')}")
+    print(f"phase set by {state.get('phase_prompt_id')}")
+    bypass = state.get("bypass_prompt_id")
+    if bypass:
+        active = bypass == state.get("current_prompt_id")
+        print(f"bypass       {bypass} ({'ACTIVE' if active else 'expired'})")
+    print()
+    print("steps recorded")
+    if not state.get("steps"):
+        print("  (none)")
+    for entry in state.get("steps", []):
+        print(f"  {entry.get('ts', '?')}  /{entry.get('skill')}")
+    print()
+    nxt = sorted(lib.next_step_skills(phase))
+    print("advances the phase   " + (", ".join("/" + s for s in nxt) or "(terminal)"))
+    print("writes unlocked      " + ("yes" if phase >= lib.WRITE_UNLOCK_PHASE else f"no (needs phase {lib.WRITE_UNLOCK_PHASE})"))
+    print("bash                 not phase-gated (advisory vs the write gate)")
+    print("publishing           " + ("yes" if phase >= lib.PUBLISH_UNLOCK_PHASE else f"no (needs phase {lib.PUBLISH_UNLOCK_PHASE})"))
+    return 0
+
+
+def cmd_explain(session_id, limit=10):
+    if not os.path.exists(lib.GATE_LOG):
+        print(f"no gate log at {lib.GATE_LOG}")
+        return 1
+    rows = []
+    with open(lib.GATE_LOG, encoding="utf-8") as fh:
+        for line in fh:
+            try:
+                row = json.loads(line)
+            except ValueError:
+                continue
+            if session_id and row.get("session_id") != session_id:
+                continue
+            if row.get("decision") == "deny":
+                rows.append(row)
+    if not rows:
+        print(f"no denials recorded for {session_id}")
+        return 0
+    for row in reversed(rows[-limit:]):
+        print(f"{row.get('ts')}  phase={row.get('phase')}  tool={row.get('tool')}"
+              + (f"  skill=/{row['skill']}" if row.get("skill") else "")
+              + (f"  path={row['path']}" if row.get("path") else ""))
+        print(f"  rule   {row.get('rule')}")
+        print(f"  reason {row.get('reason')}")
+        if row.get("dry_run"):
+            print("  (dry-run — was not actually blocked)")
+        print()
+    return 0
+
+
+def cmd_reset(session_id):
+    path = lib.state_path(session_id)
+    if os.path.exists(path):
+        os.unlink(path)
+        print(f"cleared {path}")
+    else:
+        print(f"no marker for {session_id}")
+    return 0
+
+
+def cmd_sessions():
+    found = markers()
+    if not found:
+        print(f"no markers under {lib.STEPS_DIR}")
+        return 0
+    for path in found:
+        try:
+            with open(path, encoding="utf-8") as fh:
+                state = json.load(fh)
+        except (OSError, ValueError):
+            continue
+        steps = ",".join("/" + s.get("skill", "?") for s in state.get("steps", [])) or "-"
+        print(f"phase {state.get('phase', 0)}  {os.path.basename(path)[:-5]}  {steps}")
+    return 0
+
+
+def main(argv):
+    command = argv[0] if argv else "status"
+    if command in ("-h", "--help", "help"):
+        print(__doc__)
+        return 0
+    if command == "sessions":
+        return cmd_sessions()
+
+    session_id = resolve(argv)
+    if not session_id:
+        print("no session id given and no markers on disk", file=sys.stderr)
+        return 1
+
+    if command == "status":
+        return cmd_status(session_id)
+    if command == "explain":
+        return cmd_explain(session_id)
+    if command == "reset":
+        return cmd_reset(session_id)
+    print(f"unknown command: {command}\n\n{__doc__}", file=sys.stderr)
+    return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
