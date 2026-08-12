@@ -12,6 +12,95 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [1.0.0] - 2026-08-12
+
+**Five attempts to make workflow steps run were all prose, and prose measured 46-62% and stopped. The workflow is now enforced by a default-deny phase gate in `PreToolUse`, so the sequence is a check that returns pass/fail rather than a sentence the model can reinterpret.**
+
+`rules/operating-principles.md` has said since v0.35.0 that prompt-only rules rot under context pressure and that every CRITICAL RULE should aspire to a paired harness enforcement. `hooks/` contained zero workflow enforcement — four safety hooks, all dry-run, and four utilities. Closing that nine-month gap is what makes this 1.0.0.
+
+The lever, not the wording, was the problem. ADR-0016 restored the gates, ADR-0019 removed them, ADR-0020 declined to restore them, ADR-0021 restored the mandatory-invocation rule only, and a sixth prose patch was drafted this session and abandoned. Across every window the Step-1 rate tracked the prose: present 46-62%, absent 0-8%, currently 57% (`corpus 2026-08-06T20:03 .. 2026-08-11T11:28, 21 counted of 275 seen` — quote that line with the number or it means nothing).
+
+The design inverts the question every previous guard asked. ADR-0023 was right that blocklists cannot catch `Bash` writes — gstack's own `/careful` hook records patching for BSD capital `-R` and then for command substitution ending in an allowlisted suffix (`rm -rf $(./wipe-all)/node_modules`). So the gate asks what is *allowed* at this phase and denies everything else. A wrong allowlist blocks legitimate work, which is visible and recoverable in one keystroke; a wrong blocklist silently permits the failure being fixed.
+
+Prior art was searched first: no widely-used workflow repo enforces step order in code. BMAD shards `step-XX-*.md`, Spec Kit gates at the prompt level, superpowers injects a prompt from `SessionStart`. obra/superpowers issue #384 proposed nearly this design and is closed as not planned.
+
+### Added
+- `hooks/gate.py` — `PreToolUse` matcher `*`. Computes the current phase's allowlist and denies the rest via JSON `permissionDecision: "deny"`. Writes and non-read-only `Bash` unlock at phase 3 (after `/autoplan`); publishing (`git commit`/`push`, `gh pr create`) unlocks after both Step-6 review passes; read-only tools and read-only `Bash` are never gated, so investigation before Step 1 stays free. Unparseable commands and command substitution are denied, not guessed at.
+- `hooks/record-step.py` — `PostToolUse` on `Skill` and on the write tools, plus `UserPromptSubmit`. Records only, never denies. All three registrations are required: a user-typed `/scope-check` fires no `Skill` hook at all, so a recorder watching only `Skill` would leave the gate denying an owner who complied.
+- `hooks/mysystem_steps_lib.py` — the phase model, the marker file, and the allowlists, in one place so the policy is readable as code.
+- `scripts/mysystem-steps` — `status`, `explain`, `reset`, `sessions`. Without it a false deny is unexplainable and the only recourse is disabling the guard, the failure ADR-0023 predicted.
+- Step transitions end the turn: advancing requires a new `prompt_id`. This is the 2026-05 "After presenting results, STOP and wait" as a comparison, and it restores the `## Workflow Successor Map` state machine ADR-0019 dropped. Entering phase 4 by writing deliberately does not impose a wait, so writing code and verifying it in one turn still works.
+- Carve-outs, all computed rather than judged: docs and `*.md` paths writable in any phase, and an `Edit` differing by ≤ 1 line and ≤ 40 characters. ADR-0023 named the absence of these as a decisive objection to the previous attempt.
+- `gate: off` (that request only, keyed to `prompt_id`) and `gate: reset`. Never an env var — an env var is how a guard gets switched off permanently. Typed as plain text, not as slash commands: end-to-end testing found that a leading `/` is resolved by the CLI and an unknown command is rejected with "Unknown command" before the prompt is submitted, so `/gate-off` never reaches the hook. The unit tests missed it because they feed the hook directly; the `/gate-off` spelling is kept as an alias for hosts that register such a command.
+- `~/.local/state/mysystem/gate-log.jsonl` records every decision, allow or deny, with the phase and the rule that fired.
+- Tests across `tests/gate-phases.bats`, `tests/gate-bash-allowlist.bats`, `tests/gate-transition.bats`, `tests/gate-carveouts.bats`, `tests/gate-robustness.bats` and `tests/record-step.bats`. They assert the gate's `rule` name from the log rather than the deny prose, so wording stays free to improve while policy does not drift. Full suite: **228 green**, of which 88 cover the gate.
+- `docs/adr/0024-the-harness-is-the-workflow.md`.
+
+### Changed
+- `CLAUDE.md`: the prose enforcement paragraphs are replaced by a statement of what the harness enforces, the phase unlocks, the escape hatch, and the four things the gate cannot cover. `## Critical Workflow Rules`' ZERO-discretion paragraph is untouched — it is byte-locked to `codex/workflow-contract.md:16`, and rewording it would revive the 95-byte Codex projection limit.
+- Step 2 is gated like every other step, which settles a conflict prose could not. The CLI injects "Do not use workflows or deep-research unless the user requested it" as an Opus-5 prompt-bundle default (internal gate `tengu_heron_brook`). ADR-0021 concluded repo prose cannot outrank a provider default; a denial does not need to. No line claiming the vendor default is void was added — that was drafted and dropped as unfounded.
+- `codex/workflow-contract.md`: header comment only. Both surfaces are gated now; what differs is the mechanism, since no hook runs on the Codex surface. Comments are stripped from the projection, so `global_bytes` is unchanged at 32673.
+- `tests/mandatory-invocation.bats`: stale ADR-0021 references in its header and helper message updated. Its "CLAUDE.md does NOT carry the approval-gate paragraph" test deliberately stays — the gate enforces the wait in code instead of copying the prose that did not work.
+- Enforcing by default, unlike the safety hooks. `MYSYSTEM_GATE_DRYRUN=1` logs without enforcing.
+
+### Fixed during verification
+Throwaway edge-case testing (`/verify-test`, 59 disposable cases) found six ways the gate could be opened, all fixed before shipping. Both classes are worth naming because the committed contract tests could not see either.
+
+- **Malformed input read as permission.** The gate fails open on a crash so a bug cannot brick a session, which meant any `TypeError` while reading a bad marker silently disabled enforcement. A marker holding `[1,2,3]`, a `phase` of `"3"`, and a numeric `file_path` each produced allow where deny was required. `lib.load()` now sanitises every field (non-dict → blank, phase coerced and clamped to 0..7, steps filtered to dicts, ids to str-or-None) and `as_text()` coerces tool-input fields. Corruption must never read as permission.
+- **Read-only allowlist entries that can write.** `sed -i` edits in place, `awk '{print > "out.py"}'` writes from inside its program string, and `env make` runs anything with `env` as argv[0] — all three were allowed at phase 0 with no redirection for the allowlist to catch. `sed`, `awk` and `env` are removed from `READONLY_BASH`; `find` stays but is denied when it carries `-delete`, `-exec`, `-execdir`, `-ok`, `-okdir`, `-fprint`, `-fprintf` or `-fls`; `python3` is narrowed from any `.py` path to `scripts/` and `tests/`. The set's comment now states the admission rule: nothing enters unless it cannot write with any argument.
+- `tests/gate-robustness.bats` locks both classes, including the accepted residual risk that a genuine crash inside the gate fails open.
+
+### Fixed by live-session testing
+Running the gate in real nested sessions found three false positives that neither the contract tests nor the throwaway tier could see, because both feed the hook synthetic payloads rather than whatever a model actually types.
+
+- **Test runners were denied at phase 0.** Asking a session to run the suite produced a deny, and the model's only route forward was to ask the owner for `gate: off` — a routine action training the bypass habit, which is exactly how ADR-0023 predicted a guard gets switched off for good. `pytest`, `python -m pytest|unittest`, `go test`, `cargo test`, `npm|yarn|pnpm test`, `npx vitest|jest|mocha|playwright|ava`, `tox` and `nose2` are now read-only. The allowance is deliberately narrow: `npm run build`, `npx tsc`, `go build`, `cargo build` and `python3 -m http.server` stay denied.
+- **`2>&1` was shredded into two segments.** Splitting on every `&` turned `pytest ... 2>&1` into `pytest ... 2>` plus `1`, and the orphaned `2>` then read as a file redirection. Segment splitting now ignores an `&` that belongs to `>&`, `&>` or `N>&M`, and file-descriptor duplication is no longer counted as a write. A lone backgrounding `&` still starts a new segment.
+- **`2>/dev/null` counted as a write.** Discarding output cannot retain anything, and the idiom is too common to deny. `>/dev/null` and `2>/dev/null` now pass; every other `>` target is still a write.
+
+`uvx --with pytest pytest` was denied and correctly so — it downloads and executes arbitrary packages, which is not read-only. `tests/gate-robustness.bats` covers all three fixes plus their boundaries.
+
+### Fixed by review (Step 6)
+- **Lost update on the marker, reproduced.** `hooks/record-step.py` did `load(); mutate; save()` with no lock, and `mysystem_steps_lib.py` carried the false comment "single writer per session, so no locking". The model can emit several tool calls in one message, so two `PostToolUse` hooks run at once. Firing the two Step-6 review passes concurrently — which `CLAUDE.md` explicitly instructs — dropped one `steps` entry, left the phase at 5, and never unlocked `/ship`. `lib.locked()` now serialises the read-modify-write with an atomic `mkdir` (matching the flock→mkdir portability fix from v0.39.0), reclaims a lock abandoned by a killed process after 30s, and proceeds without the lock on timeout because recording must never block work. 10/10 trials now reach phase 6; three regression tests pin it.
+- `CLAUDE.md` told the agent to run `mysystem-steps status`, which is not on `PATH`. Corrected to the full path.
+- Removed `allowed_skills()` — dead code, never called.
+- Corrected stale test counts in this entry; they described an earlier state of the suite.
+
+### Changed by review (Step 6) — `Bash` gating dropped
+Adversarial fresh-context review found five independent write paths through the read-only allowlist that gated `Bash`: `sort -o`, `uniq in out`, `tree -o`, `git diff --output=`, `git config` (including `--global` and `core.hooksPath`, which redirects every future git hook), and `bats`, which is arbitrary shell with the `*.md` carve-out supplying the script. `os.path.basename(argv[0])` also accepted a file merely named like an admitted binary. The set's own comment claimed "nothing enters unless it cannot write with ANY argument" and was false in the commit that wrote it.
+
+The allowlist is deleted rather than patched. Default-deny inverts the default, but an allowlist still has to know every write path of every admitted command — the same losing game ADR-0023 named, only smaller. **The consequence, stated rather than hidden: the write gate is enforcing for `Write`/`Edit`/`MultiEdit`/`NotebookEdit` and advisory against `Bash`.** `CLAUDE.md` now says so as a rule the agent follows.
+
+`Bash` is still gated on publishing — `git commit|push|tag|am|apply|rebase|merge|reset`, `gh pr create|merge|…`, `gh release …`, and `gh api` with a mutating method — and that check scans past global options, because `git -C . commit`, `git -c user.name=x commit`, `git --no-pager push` and `gh api -X POST …/pulls` all sailed through a version that read `tokens[1]` only. `gh pr list` is correctly not publishing.
+
+### Fixed by review (Step 6) — the suite was green for the wrong reason
+- **`tests/helpers/gate.bash` read the last line of `gate-log.jsonl`.** A crashing gate writes no line, so the helper reported the PREVIOUS call's verdict and the test passed. Every multi-assertion loop shared the flaw, and it was masking the next item. Stdout is now the source of truth, a missing log line is a failure, and a log/stdout disagreement is a failure.
+- **A non-dict `tool_input` turned a deny into an allow.** `gate.py` computed the deny, then crashed dereferencing `tool_input` for the log line, and the fail-open handler emitted an allow. Exactly the bug class `gate-robustness.bats` was written to close.
+- **`docs/../hooks/gate.py` passed as a docs write**, making every file in the repo — the gate included — writable at phase 0. Paths are normalised before the carve-out matches, and `tests/fixtures/` is no longer a carve-out because it can hold executable code.
+- **A typed `/autoplan` jumped straight to phase 3** with steps 1 and 2 never run, unlocking writes. A typed skill arrives via `UserPromptSubmit` and never passes `PreToolUse`, so the ordering predicate is applied in `record_skill` as well.
+- **A `Skill` payload with no `prompt_id` defeated the turn boundary**, because `phase_prompt_id` was stamped `None` and the check is truthiness-based.
+- **Discussing the escape hatch armed it.** "remind me what gate: off actually does" set the bypass and `rm -rf src` was then allowed. Both patterns are anchored to the start of the prompt now.
+- **`is_trivial_edit` allowed two lines and bounded only the net length change**, with a 160-char short-circuit that skipped the content check — `if not user.is_admin: raise PermissionError()` → `if True: pass` counted as a typo. Now single-line, both sides ≤ 40 chars, and a 0.6 similarity floor.
+- One test did not test its own name (`a bypass mentioned by the agent…` ran a payload with no bypass text at all) and is rewritten; boundary cases for the trivial-edit and typed-skill rules are now pinned.
+
+### Changed by review round 3 — stripped to the core
+Three review rounds each found Criticals in the code written to fix the previous round. Every break had one shape: a predicate over an open-ended space, believed complete by its author. The worst: `PUBLISH_UNLOCK_PHASE = 6` → `= 0` was allowed at phase 0 through the trivial-edit carve-out, because carve-outs were evaluated **before** the phase check — the gate could switch off its own threshold before Step 1 ran.
+
+So the predicates are deleted rather than sharpened a fourth time. **The gate now enforces exactly three things, the three no reviewer broke:** step order, the turn boundary, and denial of `Write`/`Edit`/`MultiEdit`/`NotebookEdit` before phase 3.
+
+- **Publishing gating removed.** `sh -c 'git commit -m x'`, `env git push`, `(git push)`, `git -c alias.x=push x`, `git revert`, and `gh api -f …` (gh defaults to POST when a field is present) all walked through it. `Bash` is ungated.
+- **Trivial-edit carve-out removed.** A 0.6 similarity ratio over one 40-char line admits any logic flip (`if user.is_admin:` → `if not user.is_admin:`, `shell=False` → `shell=True`, `0o600` → `0o777`). `gate: off` covers a real typo.
+- **Docs carve-out narrowed** to `docs/` plus named files, resolved with `realpath` and confined to the invoking repo. A symlink at `docs/notes.md` had overwritten `hooks/gate.py`, and a blanket `*.md` had made `~/.claude/skills/**/SKILL.md` writable — those are instructions the agent executes, not docs.
+- **`steps` recorded only after the ordering check.** A typed `/review` in any earlier turn used to satisfy the Step-6 two-pass requirement, unlocking publishing with one pass.
+- **Payload fields coerced before use.** `tool_name` as a list raised `TypeError` while building the log entry, after the deny was computed, and the crash-open handler turned it into an allow — the third appearance of that shape.
+- **Stale-lock reclaim serialised** with an `O_EXCL` marker: the staleness check and the removal were not atomic, so contenders removed each other's live locks. 120 violations in 400 trials with 4 contenders → 0/400. The normal path was 0/400 throughout.
+
+### Known limits
+- Default-deny on `Bash` before phase 3 will produce false positives; build and test commands are blocked until `/autoplan` completes. `BASH_UNLOCK_PHASE` is a single named constant so the fix is one value. Review `gate-log.jsonl` on 2026-08-18.
+- Only sequence and presence are enforced, never quality. A hook fires on calls the model already made, so which Step-1 skill fits, whether a step was done well, and writes made by a spawned subprocess all remain outside it.
+- The harm metric is still missing. Success is measured by invocation rate, which has no harm term — ADR-0023's objection, unsolved.
+- A follow-up request mid-workflow inherits the unlocked phase; only `/ship` or `/gate-reset` starts a new cycle.
+- Kill condition pre-registered for 2026-09-11: revert if the Step-1 rate is not above the 57% floor, or if the gates read as friction.
+
 ## [0.59.1] - 2026-08-09
 
 **The install lock could not tell "another installer is working" apart from "this lock is corrupt", so a losing installer reported a corrupt lock and turned the concurrent-installer contract test red on CI.**
