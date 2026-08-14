@@ -5,9 +5,12 @@
 - **Author**: seungwon-v6x
 - **Supersedes / amends**: ADR-0010 (exa-only free stack)
 - **Tags**: skills, mcp, research-tooling, vendoring, provider-routing
-- **Amended**: 2026-07-27 (v0.53.0) — see "Amendment" below. The decision here is **reaffirmed**,
-  not reversed. Note before reading on: the Context section's "exa's free tier is 1,000 req/mo"
-  is **wrong** and is corrected in that amendment.
+- **Amended**: 2026-07-27 (v0.53.0) and 2026-08-14 (v1.0.1) — see the two "Amendment" sections below. The
+  decision here is **reaffirmed** by both, not reversed. Two notes before reading on: the Context
+  section's "exa's free tier is 1,000 req/mo" is **wrong** and is corrected in the first
+  amendment, and decision #3's MCP-present rail ("tool must be in the active tool list") is
+  **superseded** by the second — tool search defers every MCP tool, so that test always fails
+  and its skip branch is the only one the rail could ever reach.
 
 <!-- mysystem:managed-start (intentionally empty — reserved for future tooling) -->
 <!-- mysystem:managed-end -->
@@ -129,6 +132,76 @@ in kind — exa bills **credits**, not requests, per the primary sources cited i
 provider table no longer states allowances at all; it points at the vendor page, per the new rail.
 The Context sentence is left as written (ADRs are not rewritten in place); it is corrected here and
 flagged in the header block.
+
+## Amendment (2026-08-14, v1.0.1) — the MCP-present rail's test changed; the decision is reaffirmed again
+
+The MCP-present rail stated in decision #3 above — "tool must be in the active tool list;
+tool-not-found → skip, no retry" — was written when every registered MCP tool was listed
+upfront. Claude Code now defers them: with tool search on (the default), **an MCP tool is
+absent from the active tool list until `ToolSearch` loads it by its full identifier** — the
+exceptions being a server set `alwaysLoad: true` or a tool its server marks
+`"anthropic/alwaysLoad"`, neither of which applies to any provider in this table. The
+rail's test could no longer pass, so its skip branch became the only reachable one.
+The skill also named every MCP row by its bare server-side tool name, which is not a callable
+identifier under tool search: `select:web_search_exa` returns `No matching deferred tools
+found`. So the file instructed the agent to conclude a healthy provider was unregistered, and
+gave it no name that could have proven otherwise.
+
+Measured 2026-08-14 across 45 real `/deep-research` invocations in 30 days: `ToolSearch` loaded
+`WebSearch`/`WebFetch` 27 times, exa once, firecrawl once; 41 of the 45 runs made zero exa and
+zero firecrawl calls. No transcript contains the "note it once" the rail requires, because the
+agent never got as far as evaluating the provider. context7, the one escalation provider used
+at any rate, is also the one whose identifiers the file spelled out — which is what points at
+identifier resolvability rather than selection policy. An earlier draft of this amendment
+claimed mobbin as a second supporting case; that was wrong, and the contradiction was caught in
+review. The pre-change file did *not* spell out mobbin's ids — it told the agent to read them
+off the active tool list, which this same amendment lists below as one of the false tests it
+removes. Mobbin's OAuth flow surfaces its ids out of band, so it is evidence in neither
+direction. One case is thinner than two; the mechanical argument below is what carries the
+conclusion.
+
+**This corrects reason 2 of the 2026-07-27 amendment above, not its conclusion.** That reason
+read "the escalation rows are a ~3% long tail rather than dead" from counts taken across all
+sessions. Inside `/deep-research` specifically the denominator is different and the rows were
+effectively dead — for a mechanical reason nobody looked for, since the "should we force
+escalation?" framing pointed at policy. Rejecting mandatory escalation rails was still right,
+and is reaffirmed a second time: the fix is reachability, not a higher escalation rate.
+
+What shipped: the rail's test moves from the listing to the load — `ToolSearch("select:<full
+id>")` resolves means the tool is **registered and callable**, which is not the same as
+authenticated or in credit; `No matching deferred tools found` means note once, skip, no retry.
+The guard is unchanged; only its predicate moved, and the rail now also states what to do where
+tool search is off, since the old predicate was correct there and had been deleted outright.
+
+**Each tool cell carries both names**: the server-side name, then `→`, then the identifier
+callable under tool search. A first draft put only the full ids in the table. That broke the
+portability contract this skill opens with — Codex has no `ToolSearch`, so the table named zero
+capabilities it could call — and it encoded a derivation rule (`mcp__<id>__<tool_name>` off the
+`id` column) that produces a dead identifier for context7, whose prefix is
+`mcp__plugin_context7_context7__`. The rule is now "read the callable id off the row", with the
+table as the authority. `tests/deep-research-tool-ids.bats` pins the exact identifier roster
+rather than a name pattern, because a well-formed wrong id fails exactly as silently as a bare
+one.
+
+Four instances of the same false test were removed: the `## Provider adapter` sentence that
+governs the whole file ("usable only when that exact capability is exposed in the current
+session" — the last one found, by the second review round, sitting three lines above the fix and
+outranking it), the main rail, the context7 table note (which told the owner to reconnect a
+healthy MCP via `/mcp`), and the Mobbin section (which told the agent to read an identifier out
+of a list it was never in). A fifth, subtler case was found in review and fixed: treating a
+resolving `ToolSearch` as proof of authorization would have routed an unauthenticated Mobbin
+into the error-discrimination rail's STOP and halted the run, where it had previously degraded
+to note-once-and-continue. That last fix narrows a rail listed under "always hold" with a named
+exception, which is a behavior change beyond the plan's letter; it is recorded here rather than
+left implicit.
+
+Judgment-guided selection and free-by-default are untouched.
+
+Also corrected in passing: the context7 param note **and its provider-table cell** named
+`get-library-docs`, which no longer resolves — the plugin moved to remote HTTP
+(`https://mcp.context7.com/mcp`) from npx stdio and now exposes
+`mcp__plugin_context7_context7__query-docs`. The skill's transport description was stale in the
+same paragraph.
 
 ## References
 

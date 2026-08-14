@@ -45,6 +45,12 @@ suite. CI runs Ubuntu and macOS jobs on every push and pull request.
   main/master and private-key commits.
 - **Documentation:** current generated files and deny-patterns for disproven
   shared-cap/CLAUDE-only claims.
+- **Skill content:** the vendored `/deep-research` provider table names an exact
+  roster of callable `mcp__server__tool` identifiers, pairs each with its
+  server-side name so both runtimes have something to call, and keeps bare names
+  out of prose. Guards a failure that is silent by construction: under tool
+  search a bare or misspelled identifier is simply never reached, and nothing
+  errors. Liveness against running MCP servers is checked by hand, not in CI.
 
 Fixture tests set `HOME`, clear `CODEX_HOME`, and call the isolated parity
 installer directly. They never run gstack setup or use the developer's live
