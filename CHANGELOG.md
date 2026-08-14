@@ -12,6 +12,40 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [1.0.1] - 2026-08-14
+
+**`/deep-research` could not reach exa or firecrawl, and the reason was that the skill file told the agent to give up on them. Claude Code defers MCP tools; the file's safety rail tested for a condition that deferral makes permanently false, and named every provider by an identifier that is not callable.**
+
+Measured across 45 real `/deep-research` invocations in 30 days: `ToolSearch` loaded `WebSearch`/`WebFetch` 27 times, exa once, firecrawl once. **41 of the 45 runs made zero exa and zero firecrawl calls.** No transcript contains the "note it once" the rail requires, because the agent never got as far as evaluating a provider — it read a table cell that could not be called and a rail that said absence from the tool list means the MCP is unregistered.
+
+Both halves were wrong under tool search. `select:` matches exact names, so `select:web_search_exa` returns `No matching deferred tools found`; the callable name is `mcp__exa__web_search_exa`. And no MCP tool is in the active tool list until something loads it, so "is it in the list?" always answers no. The failure mode was silence: nothing errored, and the two providers simply went unused for a month.
+
+The one escalation provider that did get used, context7, is the one whose identifiers the file spelled out. (An earlier draft of this entry and of the ADR claimed mobbin as a second case; that was wrong and is corrected — the pre-change file did not spell out mobbin's ids either, and its OAuth flow surfaces them out of band.)
+
+This does not change routing policy. v0.53.0 considered and rejected mandatory escalation, and that stands: the fix is reachability, not a higher escalation rate. The free-by-default rule and its anti-escalation guard are byte-identical to v1.0.0.
+
+### Added
+- `tests/deep-research-tool-ids.bats` — pins the exact roster of MCP identifiers the skill may name, asserts each provider-table tool **cell** pairs its server-side name with its callable id, and keeps bare names out of prose. First skill-content test in the repo; `TESTING.md` gains a matching layer entry. This is the paired harness enforcement `rules/operating-principles.md` asks for, so the new prompt-level rules are not logged as hook-enforcement candidates — a test already covers them.
+- `docs/adr/0011` amendment: what changed in the rail, why the table now carries both names, and a correction to reason 2 of the 2026-07-27 amendment, whose "~3% long tail" reading came from counts across all sessions rather than inside `/deep-research`.
+
+### Changed
+- `skills/deep-research/SKILL.md`: a "Resolving a provider's tool identifier" subsection; **each tool cell now carries both names** (`web_search_exa` → `mcp__exa__web_search_exa`) so Claude Code has something to load and Codex, which has no `ToolSearch`, still has something to call; the rule is "read the callable id off the row", because deriving it from the `id` column produces a dead identifier for context7, whose prefix is `mcp__plugin_context7_context7__`.
+- The MCP-present rail's test moves from the listing to the load. A resolving `ToolSearch` now means **registered and callable**, explicitly not authenticated or in credit — those fail at call time. The rail also states what to do where tool search is off, which the first draft had deleted outright.
+- Mobbin auth and plan errors are note-once-and-continue, not the error-discrimination rail's STOP. Treating a resolving `ToolSearch` as proof of authorization would have halted a research run over an optional enrichment provider. This narrows a rail listed under "always hold" with a named exception, recorded in the ADR rather than left implicit.
+
+### Fixed
+- Four separate copies of the same false predicate, not one. The last was the `## Provider adapter` sentence that governs the whole file and outranked the fix three lines below it; it survived the first review round and was caught by the second.
+- `get-library-docs` no longer resolves — the context7 plugin moved from npx stdio to remote HTTP (`https://mcp.context7.com/mcp`) and exposes `mcp__plugin_context7_context7__query-docs`. The skill's transport description was stale in the same paragraph. `resolve-library-id` requires `query` as well as `libraryName`.
+- A bare `create_design_system_from_design_md` in the awesome-design-md section, and a `web_search_advanced_exa` whose name the first draft deleted while keeping the "is it enabled?" check — leaving a check with nothing to pass to `select:`.
+- A claim that `select:` truncates at `max_results` (default 5). Measured: `max_results: 1` with three names selected returns all three. `select:` returns everything it matches; only keyword queries are ranked and capped.
+
+### Review record
+Two Step-6 rounds, 3 Critical and 17 Important findings, all fixed. Round 1 (four parallel fresh-context agents) caught the two Criticals a diff-only reading structurally cannot: a markdown heading had swallowed the skill's free-by-default declaration into a subsection the text told Codex to ignore, and the authorization over-claim above. Round 2 (`/requesting-code-review`) caught the fourth copy of the predicate and three Important issues in the test itself.
+
+The test was rebuilt mid-review. Its first version asserted identifier *shape*; an adversarial pass ran 42 mutations and 28 passed, including a typo'd server key, apify's double hyphen collapsed, and the whole context7 row rewritten to `mcp__context7__` — which is what the document's own derivation rule produced. Shape was never the property that mattered. A later pass found the pairing assertion was row-level while the property is cell-level, so it guarded `builtin`, `apify` and `scrapling` and missed exa, firecrawl and context7 — the three providers this release exists to restore.
+
+Known limit, stated rather than left to be found: `BARE_NAMES` is a closed list, so a brand-new provider written bare in prose is invisible. The roster test does catch a new provider added correctly.
+
 ## [1.0.0] - 2026-08-12
 
 **Five attempts to make workflow steps run were all prose, and prose measured 46-62% and stopped. The workflow is now enforced by a default-deny phase gate in `PreToolUse`, so the sequence is a check that returns pass/fail rather than a sentence the model can reinterpret.**
