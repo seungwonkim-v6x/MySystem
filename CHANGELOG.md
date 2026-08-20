@@ -12,6 +12,204 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 > scheme. Solo repo, no external consumers — preserving SemVer signal
 > (still-iterating, no API stability promise) was worth the rewrite.
 
+## [2.12.1] - 2026-08-21
+
+**Removed the unapproved Supermemory MCP from Claude global configuration.**
+
+- Removed its server entry and disabled-server references.
+- It was never connected or queried by Pi.
+- No process was running; no other MCP configuration changed.
+
+## [2.13.0] - 2026-08-21
+
+**Connected the three isolated Aside browser profiles as the final high-risk Pi MCP surface.**
+
+- Added `aside` (u0), `aside-u1` (u1), and `aside-u2` (u2) as separate lazy, proxy-only, approval-gated servers.
+- Validated only `listBrowserTabs()` read-only metadata: one tool per profile.
+- Added `.pi/references/aside-profiles.md` as on-demand routing guidance.
+- No page navigation, clicks, typing, form submission, cookie access, or external mutation was performed.
+
+## [2.12.0] - 2026-08-21
+
+**Connected the project-scoped Supabase MCP as the eleventh active Pi MCP.**
+
+- Added the project endpoint with OAuth and its explicit project reference.
+- Kept it lazy, proxy-only, output-guarded, and approval-gated.
+- Verified metadata-only connection: 20 tools available.
+- No SQL, table inspection, data read/write, migration, or mutation was executed.
+
+## [2.11.0] - 2026-08-21
+
+**Connected Supabase Personal as the tenth active Pi MCP after a second explicit approval.**
+
+- Added the personal Supabase remote MCP with OAuth.
+- Kept it lazy, proxy-only, output-guarded, and approval-gated.
+- Verified metadata-only connection: 29 tools available.
+- No SQL, table inspection, data read/write, migration, or mutation was executed.
+
+## [2.10.0] - 2026-08-21
+
+**Connected XcodeBuildMCP as the ninth active Pi MCP.**
+
+- Added pinned `xcodebuildmcp@2.3.2` with Sentry telemetry disabled.
+- Kept XcodeBuildMCP lazy, proxy-only, output-guarded, and approval-gated.
+- Verified metadata-only connection: 32 tools available.
+- No build, test, install, simulator launch, or project mutation was executed.
+
+## [2.9.0] - 2026-08-21
+
+**Connected Apify as the eighth active Pi MCP with a connection-time secret-file bridge.**
+
+- Added the existing pinned Apify stdio command to `.pi/mcp.json`.
+- The command sources the existing mode-600 secret file only inside the child process; no token was copied into Pi config.
+- Kept Apify lazy, proxy-only, output-guarded, and approval-gated.
+- Verified metadata-only connection: Apify connected with 11 tools.
+- No Actor, search, scrape, fetch, or mutation operation was executed.
+
+## [2.8.1] - 2026-08-21
+
+**Removed Stitch from all discovered MCP configurations.**
+
+- Removed Stitch from Claude global config and Pi configuration.
+- The Stitch OAuth attempt was not retained; no design data was accessed.
+- No Stitch process was running after cleanup.
+
+## [2.8.0] - 2026-08-21
+
+**Connected Stitch as the eighth Pi MCP using a connection-time API-key bridge.**
+
+- Added Stitch's remote MCP with the existing pinned endpoint.
+- The `X-Goog-Api-Key` is read from Claude config only at connection time and is never copied into Pi files.
+- OAuth was not used because Stitch does not support dynamic client registration in this configuration.
+- Verified metadata-only connection: Stitch connected with 15 tools.
+- No design was created, edited, exported, or read during validation.
+
+## [2.7.1] - 2026-08-21
+
+**Removed the unidentified Corpus MCP from every discovered configuration.**
+
+- Removed Corpus from Claude global MCP config and Pi configuration.
+- No Corpus content was queried or written.
+- Existing processes were not forcibly killed; new sessions cannot discover it.
+
+## [2.7.0] - 2026-08-21
+
+**Connected Mobbin as the seventh Pi MCP after explicit OAuth approval.**
+
+- Added Mobbin's remote MCP as lazy, proxy-only, output-guarded, and approval-gated.
+- Verified metadata-only connection: Mobbin connected with 6 tools.
+- No Mobbin search, screen, flow, section, or account data was accessed.
+
+## [2.6.0] - 2026-08-21
+
+**Connected Slack as the sixth Pi MCP after explicit workspace approval.**
+
+- Added Slack OAuth with the pre-registered localhost callback and no credential copy from Claude.
+- Kept Slack lazy, proxy-only, output-guarded, and approval-gated for every call.
+- Verified metadata-only connection: Slack connected with 20 tools.
+- No message, channel, search, send, or mutation operation was executed during validation.
+
+## [2.5.1] - 2026-08-21
+
+**Removed Pencil from every discovered MCP configuration.**
+
+- Removed the Pencil server from Claude global config, project `.mcp.json`, Codex config, Gemini settings, Claude permissions, and Pi's MCP surface.
+- Existing Pencil processes were not forcibly killed; new Pi sessions cannot discover or connect to Pencil.
+
+## [2.5.0] - 2026-08-21
+
+**Connected Firecrawl as the fifth Pi MCP.**
+
+- Added pinned `firecrawl-mcp@3.17.0`.
+- The API key is read at connection time from Claude's config via `jq`; no plaintext credential is copied into Pi files.
+- Kept Firecrawl lazy, proxy-only, output-guarded, and approval-gated.
+- Verified metadata-only connection: Firecrawl connected with 24 tools.
+- No search, scrape, fetch, or mutation call was issued during validation.
+
+## [2.4.0] - 2026-08-21
+
+**Connected Scrapling as the fourth Pi MCP.**
+
+- Added the local `/Users/seungwonkim/.local/bin/scrapling mcp` server.
+- Kept Scrapling lazy, proxy-only, output-guarded, and approval-gated.
+- Verified a metadata-only connection: Scrapling connected with 10 tools.
+- No URL fetch or external page access was performed during validation.
+
+## [2.3.0] - 2026-08-21
+
+**Connected Exa as the third Pi MCP through a dynamic credential bridge.**
+
+- Added pinned `exa-mcp-server@3.2.1` to `.pi/mcp.json`.
+- The API key is read at connection time by `jq` from Claude's existing config and passed only to the child process; it is not copied into Pi config, logs, or chat.
+- Kept Exa lazy, proxy-only, and metadata-verified without issuing a search or fetch.
+- Verified Exa connected with 3 tools available.
+
+## [2.2.0] - 2026-08-21
+
+**Connected Notion as the second Pi MCP, after explicit OAuth approval.**
+
+- Added only `notion` to `.pi/mcp.json`; no other Claude MCP was imported.
+- Kept Notion lazy, proxy-only, output-guarded, and approval-gated for every call.
+- Verified a read-only connection and metadata listing: Notion connected with 31 tools available.
+- No Notion page was read, created, edited, or deleted during validation.
+
+## [2.1.0] - 2026-08-21
+
+**Connected PostHog as the first Pi MCP, one server at a time.**
+
+- Installed `pi-mcp-adapter@2.26.1` with a pinned version and no package skill loading.
+- Added `.pi/mcp.json` for PostHog only; existing Claude MCP servers are not imported.
+- Completed PostHog OAuth in Pi's secure credential flow.
+- Kept MCP tools proxy-only, lazy, output-guarded, and approval-gated for every call.
+- Verified a read-only connection and metadata listing: PostHog connected with 197 tools available.
+
+## [2.0.0] - 2026-08-21
+
+**Pi is now the canonical runtime.** The former Claude Code/Codex workflow is retired from the active path rather than projected into Pi.
+
+### Changed
+- Added `AGENTS.override.md` and project-local `.pi/` resources: compact system rules, model/compaction settings, optional prompt templates, and a Pi-native safety extension.
+- Set Pi defaults to `openai-codex/gpt-5.6-luna` with `high` reasoning, native auto-compaction, bounded retries, cache-miss visibility, and install telemetry disabled.
+- Rewrote the top-level operating docs around direct Pi work with no mandatory workflow, phase gate, parity process, or automatic skill updater.
+
+### Retired from the active path
+- Claude/Codex workflow gates, generated projection discipline, gstack SessionStart updates, and parity doctor/install behavior.
+- Legacy files remain in the checkout for rollback and history; Pi does not load or execute them.
+
+### Safety
+- Pi blocks protected-path writes and catastrophic shell patterns, and asks for confirmation before high-impact git, GitHub, network, and privilege operations.
+- Credentials, cookies, auth stores, runtime sessions, and legacy caches are not deleted or copied by this migration.
+
+### Compatibility
+- This is a breaking workflow change: the supported runtime is Pi 0.84.2+.
+- The old Claude/Codex behavior is recoverable from Git history, but it is no longer a supported default.
+
+## [1.1.0] - 2026-08-19
+
+**exa is now the default search+read tier in `/deep-research`, and the free built-in tier is the fallback.** ADR-0011 decision #3 is reversed on this one point for the first time; the two earlier amendments had reaffirmed it.
+
+v1.0.1 fixed reachability and that fix worked, but it was not sufficient. Measured across 10 post-v1.0.1 runs against 43 pre-fix runs, with subagent transcripts included this time: runs that called exa went from 12% to 30%. exa still accounted for **22 of 773 search+fetch calls (2.8%)**, and in **7 of the 10 runs the agent never emitted the string "exa" in text or thinking and never ran `ToolSearch` for it** — it went straight to `ToolSearch("select:WebSearch,WebFetch")`. There was no deliberation to observe. The free-by-default rule was the binding constraint once reachability was fixed, exactly as its own text instructed.
+
+Five suppressing sentences sat in the section the agent reads to choose. The load-bearing one was attached to exa's row alone and excluded "any technical or conceptual topic" on the grounds that it "describes nearly every research task" — which ruled out the query class most research falls in. All five are gone, and `tests/deep-research-tool-ids.bats` now pins them as absent so a rewrite cannot quietly reinstate one.
+
+**The measurements did not ask for this; the owner did.** The independent benchmark found for this change (AIMultiple, 100 queries over 6 categories, LLM judge with 10% manual validation) ranks exa third of eight at 14.39, behind Brave at 14.89 and Firecrawl at 14.58, with overlapping confidence intervals. There is no evidence exa is the better general engine. The decision is a stated preference and is recorded as one in the ADR, not laundered into a finding.
+
+What the measurements did decide is where built-in keeps the lead, and there are exactly three such cases. **News recency and general factual verification** are exa's measured weak classes, the same ones the v0.53.0 amendment established when it refused to make exa the freshness provider. **Domain-pinned search** is mechanical: `mcp__exa__web_search_exa` takes only `query` + `numResults` and has no domain filter, while `WebSearch(query, allowed_domains: [...])` has one, and the vendor-facts rail depends on that parameter. **exa being unreachable** is the third, and it carries its own rail: exa dropped twice during this work, so a run that leaves the default must name that in the report's Methodology line rather than swap silently. That rail fires on **any** unplanned departure, not on a list of error kinds — a first draft enumerated three failure modes and a rate limit from a reachable, in-credit exa fell through all of them into a rail with no disclosure requirement, which would have produced exactly the silent swap being forbidden.
+
+Subagents get the contract in writing. A dispatched research agent starts on fresh context, does not inherit the skill file, and sees every MCP tool deferred, so a sentence saying it "follows the same provider selection rules" enforced nothing — and subagents are where most of a broad run's searches happen. The dispatch section now carries the verbatim provider paragraph to paste into each agent's prompt, and agents report any fallback back to the parent so the run-level Methodology line stays honest.
+
+Two removals worth naming. "Neural/semantic depth" was never a knob anyone could pick: the MCP server hardcodes `type: config?.defaultSearchType || "auto"`, this registration sets no `defaultSearchType`, and exa's current `type` enum has no `neural` and no `keyword` value at all. The routing rules are rewritten in terms of query class and content kind, which an agent can actually judge. And this is **not** the mandatory escalation rail v0.53.0 rejected: the default moves, no rails are added, and the fallback stays a judgment made from three stated conditions.
+
+The cost is accepted and written down rather than discovered later. At observed volume (773 calls over 10 runs, ~2 runs/day, so ~4,600 calls/month) exa's published $7/1k searches and $1/1k pages price out **between $4.60 and $32.50/month** against a $10/month free credit — the range is that wide because the search-to-fetch split drives it and the measurement did not record one. It crosses the free credit at roughly a 15% search share. No point estimate is given: a single "$16/month" figure would have to assume a ~41/59 split nobody measured.
+
+None of these figures live in `skills/deep-research/SKILL.md`. It is a prompt read at runtime, so a price or an availability measurement written into it rots silently — which is the same bug as the `1000/mo` exa quota this repo already fixed once, and the file's own vendor-facts rail ("a pointer, not a quota") binds the file that states it. Prices, the connect rate, and the volume estimate live in the ADR; the skill points at exa.ai/pricing.
+
+Not fixed here, and filed as separate scope: the `model: sonnet` frontmatter on this skill had no effect in any of the 10 measured runs (all ran on `claude-opus-5`), which looks like a real defect in the v0.51.0 per-skill model pin.
+
+`bats tests/` is green, with 7 new default-provider assertions in `tests/deep-research-tool-ids.bats`, every one verified to fail under a mutation that breaks the property it claims.
+
+Getting there took a correction worth recording, because the first attempt shipped the exact failure mode this repo keeps relearning. Four assertions went in claiming to guard the default; a review pass then broke three of them without turning the suite red. The tests read the frontmatter, the provider table, and the judgment block — none of which the agent executes — so rewriting the Workflow section's Step 3 and Step 4 back to `WebSearch`/`WebFetch` reverted the executable default completely and stayed green. A second assertion was anchored on a heading that occurs twice in the file, so deleting the whole fallback case it guarded also stayed green. A third pinned five exact byte-strings, so a lowercase `free-by-default` or a reworded "save exa for tasks that need it" walked straight past it. The suppressor test is now a negative scan over the judgment block for the class rather than the strings, the fallback assertion anchors on body text unique to its bullet, and two new tests read the Workflow section and the subagent dispatch template — the two places that actually drive behavior.
+
 ## [1.0.1] - 2026-08-14
 
 **`/deep-research` could not reach exa or firecrawl, and the reason was that the skill file told the agent to give up on them. Claude Code defers MCP tools; the file's safety rail tested for a condition that deferral makes permanently false, and named every provider by an identifier that is not callable.**

@@ -1,195 +1,40 @@
-# Testing
+# Testing the Pi Environment
 
-MySystem has deterministic CI contracts and a separate bounded live release
-gate. Setup, CI, and SessionStart never launch a model, browser, or authenticated
-MCP operation.
+The active runtime is Pi. Legacy Bats suites cover the retired Claude/Codex surface and are not the release gate for Pi.
 
-## Framework
-
-[bats-core](https://github.com/bats-core/bats-core), `jq`, and the runtime's
-standard Bash/Python tools.
+## Smoke checks
 
 ```bash
-brew install bats-core jq       # macOS
-sudo apt-get install bats jq    # Ubuntu
+node --experimental-strip-types --check .pi/extensions/pi-safety.ts
+node --experimental-strip-types tests/pi-environment.mjs
+node -e "JSON.parse(require('fs').readFileSync('.pi/settings.json')); console.log('Pi settings: PASS')"
 ```
 
-## Run
+For a live provider smoke test:
 
 ```bash
-bats tests/                       # complete deterministic suite
-bats tests/codex-parity.bats      # projection/installer/doctor contracts
-bats tests/hooks.bats             # hook payload and exit contracts
-./setup.sh --check                # live filesystem structural check
+pi --no-session --approve -p 'Reply only: ready'
 ```
 
-The parity contract group takes about 15 seconds on the reference macOS host;
-the full suite is intentionally broader than the former sub-five-second hook
-suite. CI runs Ubuntu and macOS jobs on every push and pull request.
+## Safety checks
 
-## Deterministic layers
+The extension should block or confirm:
 
-- **Projection:** marked source closure, declaration/manifest agreement,
-  deterministic hashes, LF/final-newline policy, stale detection, separate
-  global/project byte budgets, exact hook-contract closure, and project-rule
-  isolation.
-- **Installer:** fresh/repeat runs, paths with spaces, absent/correct/wrong/
-  broken links, empty placeholders, approved migration/backup/recovery,
-  content-identity recovery, unknown-content preservation, unsafe state/lock
-  leaves, unsafe homes, and complete preflight before link mutation.
-- **Doctor:** stable fields and exit codes, core skill ownership, hook semantic
-  requiredness, malformed-contract JSON summaries, optional profiles,
-  supported/missing MCP/plugin inventory, and configured-versus-live distinction.
-- **Hooks:** real subprocess payloads, default dry-run behavior, enforced blocks,
-  malformed-input behavior, and unconditional hard refusals for force-push to
-  main/master and private-key commits.
-- **Documentation:** current generated files and deny-patterns for disproven
-  shared-cap/CLAUDE-only claims.
-- **Skill content:** the vendored `/deep-research` provider table names an exact
-  roster of callable `mcp__server__tool` identifiers, pairs each with its
-  server-side name so both runtimes have something to call, and keeps bare names
-  out of prose. Guards a failure that is silent by construction: under tool
-  search a bare or misspelled identifier is simply never reached, and nothing
-  errors. Liveness against running MCP servers is checked by hand, not in CI.
+- writes to `.git/`, `.env*`, private-key files, and runtime auth files;
+- recursive deletion of system/home paths;
+- `dd`/`mkfs` device operations and fork bombs;
+- downloaded content piped into a shell;
+- `git push --force` to `main`/`master` and `git commit --no-verify`;
+- ordinary `git commit`, `git push`, reset, merge, rebase, and GitHub publication through an interactive confirmation.
 
-Fixture tests set `HOME`, clear `CODEX_HOME`, and call the isolated parity
-installer directly. They never run gstack setup or use the developer's live
-runtime directories.
+Non-interactive Pi modes block confirmation-required commands because no human dialog is available.
 
-## Manual behavioral release gate
+## Context-budget checks
 
-> Note (ADR-0016): scenarios 1-6 below encode the gated 9-step workflow and
-> are the live parity release gate again — ADR-0016 (v0.50.0) restored the
-> gates after their brief removal in v0.49.0 (ADR-0015). During v0.49.0 only,
-> parity meant working-agreement conformance instead.
+Pi's startup header shows loaded context files, skills, prompts, and extensions. `/session` shows token/cache usage. Keep the active project resources small; do not add permanent procedural prose when an on-demand prompt or skill is sufficient.
 
-A release cannot claim Claude/Codex parity until both ordinary Codex and
-Orca-hosted Codex pass these bounded scenarios in an unrelated temporary repo:
+Automatic compaction remains enabled with a response reserve. Use `/compact` or a fresh session when changing domains; full session history remains available through Pi's session tree.
 
-1. A feature request against an existing codebase routes to `/scope-check` and
-   writes no implementation before it. A request for something that does not
-   exist as a product routes to `/office-hours` instead (ADR-0023). Routing a
-   feature request to `/office-hours` is now a FAILURE, not a pass — that
-   mis-wire is what ADR-0023 removed.
-2. A debug report routes to `/investigate` and presents 3-5 ranked falsifiable
-   hypotheses before instrumentation.
-3. One explicit approval advances exactly one workflow step. A skip occurs only
-   when the user explicitly requests it.
-4. Step 5 presents the configured menu and always invokes
-   `/verification-before-completion`, including Skip.
-5. Material UI work runs the `material-ui` preflight; browser verification runs
-   the `browser` preflight and non-mutating live capability check.
-6. `/ship` is terminal — it never auto-advances to another step, PR or not.
-7. A MySystem session receives repo self-management rules; an unrelated repo
-   does not.
+## Legacy verification
 
-Record observed step/skill/tool/state events and forbidden actions. Do not
-assert exact model wording.
-
-## Harmless hook dispatch canary
-
-After reviewing/trusting hooks in each runtime, use an isolated temp repository:
-
-- run a harmless read-only shell command and confirm all Bash safety hooks
-  dispatch without blocking;
-- create/edit a non-secret temporary Markdown file and confirm the edit safety
-  hook plus convenience renderer dispatch;
-- submit a known blocked command only through the existing hook fixture payload,
-  not against a real system path;
-- for Orca, start a new Codex session before the canary so its host-owned merged
-  registration is fresh.
-
-Structural tuple presence is necessary but does not replace this dispatch proof.
-
-## Performance baselines
-
-Measure locally without telemetry:
-
-```bash
-time ./setup.sh --check
-time ./setup.sh --parity-only   # warm repeat
-time ./setup.sh doctor
-time bats --filter "fresh install" tests/codex-parity.bats
-```
-
-The target is a warm parity install under five seconds and a read-only core
-check under one second on the reference machine. External gstack/network time is
-reported separately and is not part of the parity target.
-
-Observed on 2026-07-10 with Codex CLI 0.144.1 after review hardening:
-steady-state read-only check `0.92s`, warm parity install `2.27s`, core doctor
-`1.13s`, and the isolated fresh-install fixture including its idempotent repeat
-`5.33s`. The full parity Bats group is tracked separately from these four local
-time-to-hello-world baselines.
-
-## Live release evidence — 2026-07-10
-
-Ordinary Codex and Orca Codex were both exercised from an unrelated temporary
-Git repository against Codex CLI 0.144.1 and the Orca 1.4.128 compatibility
-baseline:
-
-- feature requests selected `/office-hours` and stopped for its first decision
-  (recorded under the pre-ADR-0023 routing; scenario 1 above now requires
-  `/scope-check` for an existing codebase, so this evidence no longer
-  demonstrates a passing gate and must be re-run before the next parity claim);
-- debugging requests selected `/investigate` and presented four ranked,
-  falsifiable hypotheses before testing them;
-- explicit Step 1 approval selected only `/deep-research`, never Step 3;
-- the UI-free Step 5 menu omitted design review and always retained
-  `/verification-before-completion`, including on Skip;
-- a PR-producing `/ship` stopped and waited instead of auto-advancing;
-- material UI and browser questions named the exact `doctor --require` profile
-  plus `/frontend-design` or `/aside-qa` respectively;
-- unrelated repositories rejected MySystem-only repo rules, while the MySystem
-  checkout loaded the logical-change commit rule and PostToolUse git ban.
-
-The ordinary and Orca hook canaries each dispatched all three Bash safety hooks
-and the Edit safety hook through real Codex shell/apply-patch tool calls. Aside
-MCP was structurally registered in ordinary Codex; Orca used its declared CLI
-fallback after host refresh. Both browser profiles passed, and a non-mutating
-live `listBrowserTabs()` call succeeded through Aside CLI.
-Figma remains structurally configured but live authentication is intentionally
-reported as unverifiable until an explicit Figma workflow authenticates it.
-
-## Hard-refuse contract (ADR-0015; survives ADR-0016)
-
-The hard-refuse tier in `hooks/block-dangerous-git.sh` (force-push to
-main/master, `git commit --no-verify`/`-n`, `git reset --hard` on
-main/master) exits 2 unconditionally —
-`MYSYSTEM_HOOKS_ENFORCE` does not gate it — and fails CLOSED (exit 2, naming
-the environment cause) when the payload cannot be parsed. The soft tier keeps
-the dry-run default. Rules match only at command-start positions after
-commit-message/heredoc/quote-character normalization, so tests, docs, and
-commit messages that mention a blocked phrase never trip it while quoted
-arguments, newlines, `VAR=x` prefixes, and `bash -c` wrappers cannot dodge it;
-`tests/hooks.bats` carries both the false-positive and the adversarial-bypass
-suites that pin this. The private-key hard refuse lives in
-`hooks/secret-scanner.py` and keeps its fail-open behavior on malformed
-payloads (pinned by its own bats case).
-
-**Accepted over-block edges** (safe direction, documented not fixed):
-escaped quotes inside `-m "…\"--no-verify\"…"` and an `echo ";git push
---force origin main"` body can still block, because quote-character dropping
-cannot see shell escape semantics. Hooks are defense-in-depth, not a shell
-parser — the arms race stops where the failure direction is over-blocking.
-
-**Human-only bypass:** a hard refuse has no env-var escape. If a hard rule
-must be bypassed (rare, deliberate), the human operator edits the hook or the
-tests locally and reverts after. This remedy is intentionally absent from the
-hook's stderr — agents are told to fix what the hook reports, never to modify
-safety hooks.
-
-## Conventions
-
-- One behavior per `@test`; names state behavior, not implementation.
-- Exercise hooks and installers through their process boundary.
-- Never include a literal secret-shaped value; assemble fake tokens at runtime.
-- Create Git repos and runtime homes only under `$BATS_TEST_TMPDIR`.
-- Clear inherited `CODEX_HOME` in fixture tests before discovery.
-- Every warning/failure `docs` field must resolve to a `SETUP.md` heading.
-- Tests that copy the working-tree `codex/` must call `sanitize_codex_copy`
-  (`tests/helpers/orca-sanitize.bash`) on the copy. Orca reinjects its telemetry
-  hooks into the live `codex/hooks.json` and leaves a `.bak`; copied verbatim that
-  pollution fails the hook-registration contract inside the fixture. The helper
-  removes only entries whose command carries `.orca/agent-hooks`, so a genuine
-  change to the registration still fails the contract tests.
+If the retired Claude/Codex surface is intentionally audited, use the old Bats suite and parity doctor explicitly. Do not run those checks from a normal Pi session or treat their result as Pi readiness.

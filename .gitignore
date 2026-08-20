@@ -1,84 +1,29 @@
-# MySystem — personal Claude Code config
-#
-# Strategy: ignore everything, whitelist tracked items explicitly.
-# External skills (gstack and anything it installs) are NOT whitelisted,
-# so they are ignored by default — no maintenance when gstack evolves.
-# When adding a user-owned skill, add two lines here (see "User-owned
-# skills" section below).
-
+# MySystem — Pi-first source repository
+# Runtime sessions, credentials, package installs, and caches stay outside Git.
 *
 
-# Root files — tracked
+# Active Pi source
 !.gitignore
-!.gitattributes
-!CLAUDE.md
-!AGENTS.md
-!CHANGELOG.md
-!CONTEXT.md
 !README.md
 !SETUP.md
 !TESTING.md
+!CONTEXT.md
 !TODOS.md
+!CHANGELOG.md
 !VERSION
-!settings.json
+!AGENTS.override.md
 !setup.sh
 !install.sh
 
-# Structural directories (whitelisted to let git descend into them)
-!skills/
-!hooks/
-!hooks/**
-hooks/__pycache__/
-hooks/**/__pycache__/
-hooks/**/*.pyc
-!templates/
-!templates/**
-!references/
-!references/INDEX.md
+!.pi/
+!.pi/**
+.pi/npm/
+.pi/git/
+.pi/sessions/
+
 !docs/
 !docs/**
-!.out-of-scope/
-!.out-of-scope/**
-!tests/
-!tests/**
 !.github/
 !.github/**
-
-# User-owned skills — tracked. Add a new entry here when you create one.
-# Format: two lines per skill (directory + recursive contents).
-# Philosophy: prefer adopting external skills via setup.sh (sparse cherry-pick
-# or full external repo) over writing custom ones. Only add here when no
-# public alternative exists.
-!skills/verify-test/
-!skills/verify-test/**
-# deep-research — vendored from ECC (was a sparse cherry-pick), now owned + customized. ADR-0011.
-!skills/deep-research/
-!skills/deep-research/**
-# aside-qa — user-owned browser-verification layer over the aside MCP (no public alternative).
-!skills/aside-qa/
-!skills/aside-qa/**
-# scope-check — Step 1 for an ordinary change. gstack's /office-hours scopes itself to
-# new ideas only, so no public alternative covers this slot. ADR-0023.
-!skills/scope-check/
-!skills/scope-check/**
-# Rules — tracked native `.claude/rules/*.md` path-scoped + always-loaded
-# rule files (v0.41.0+, ADR-0009).
-!rules/
-!rules/**
-
-# Scripts — tracked rollback/ops helpers (v0.38.0+).
-!scripts/
-!scripts/**
-scripts/__pycache__/
-
-# Generated Codex-native workflow projection and its narrow contract.
-!codex/
-!codex/**
-# Host-written sibling backups. Orca drops <file>.bak beside codex/hooks.json
-# every time it reinjects its hooks; the whitelist above would otherwise track it.
-codex/*.bak
-
-# OS / editor noise
-.DS_Store
-*.swp
-.vscode/
+!tests/
+!tests/**
