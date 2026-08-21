@@ -1,0 +1,143 @@
+{
+  "settings": {
+    "hostConfigDiscovery": "off",
+    "toolPrefix": "server",
+    "directTools": false,
+    "approveTools": true,
+    "autoAuth": false,
+    "scriptMode": false,
+    "exposeResources": false,
+    "outputGuard": true,
+    "mcpFooterStatus": "compact",
+    "notifyOnStartupConnect": false,
+    "requestTimeoutMs": 30000
+  },
+  "mcpServers": {
+    "posthog": {
+      "url": "https://mcp.posthog.com/mcp",
+      "auth": "oauth",
+      "protocolVersion": "auto",
+      "lifecycle": "lazy",
+      "requestTimeoutMs": 30000
+    },
+    "notion": {
+      "url": "https://mcp.notion.com/mcp",
+      "auth": "oauth",
+      "protocolVersion": "auto",
+      "lifecycle": "lazy",
+      "requestTimeoutMs": 30000
+    },
+    "exa": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "exa-mcp-server@3.2.1"
+      ],
+      "env": {
+        "EXA_API_KEY": "!jq -er '.mcpServers.exa.env.EXA_API_KEY | strings | select(length > 0)' \"$HOME/.claude.json\""
+      },
+      "lifecycle": "lazy",
+      "requestTimeoutMs": 30000,
+      "directTools": false
+    },
+    "scrapling": {
+      "command": "/Users/seungwonkim/.local/bin/scrapling",
+      "args": [
+        "mcp"
+      ],
+      "lifecycle": "lazy",
+      "requestTimeoutMs": 30000,
+      "directTools": false
+    },
+    "firecrawl": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "firecrawl-mcp@3.17.0"
+      ],
+      "env": {
+        "FIRECRAWL_API_KEY": "!jq -er '.mcpServers.firecrawl.env.FIRECRAWL_API_KEY | strings | select(length > 0)' \"$HOME/.claude.json\""
+      },
+      "lifecycle": "lazy",
+      "requestTimeoutMs": 30000,
+      "directTools": false
+    },
+    "slack": {
+      "url": "https://mcp.slack.com/mcp",
+      "auth": "oauth",
+      "protocolVersion": "auto",
+      "oauth": {
+        "clientId": "1601185624273.8899143856786",
+        "redirectUri": "http://localhost:3118/callback"
+      },
+      "lifecycle": "lazy",
+      "requestTimeoutMs": 30000,
+      "directTools": false
+    },
+    "mobbin": {
+      "url": "https://api.mobbin.com/mcp",
+      "auth": "oauth",
+      "protocolVersion": "auto",
+      "lifecycle": "lazy",
+      "requestTimeoutMs": 30000,
+      "directTools": false
+    },
+    "apify": {
+      "command": "/bin/sh",
+      "args": [
+        "-c",
+        ". $HOME/.config/secrets/apify.env && exec npx -y @apify/actors-mcp-server"
+      ],
+      "lifecycle": "lazy",
+      "requestTimeoutMs": 30000,
+      "directTools": false
+    },
+    "xcodebuild": {
+      "command": "npx",
+      "args": ["-y", "xcodebuildmcp@2.3.2", "mcp"],
+      "env": {
+        "XCODEBUILDMCP_SENTRY_DISABLED": "1"
+      },
+      "lifecycle": "lazy",
+      "requestTimeoutMs": 30000,
+      "directTools": false
+    },
+    "supabase-personal": {
+      "url": "https://mcp.supabase.com/mcp",
+      "auth": "oauth",
+      "protocolVersion": "auto",
+      "lifecycle": "lazy",
+      "requestTimeoutMs": 30000,
+      "directTools": false
+    },
+    "supabase-project": {
+      "url": "https://mcp.supabase.com/mcp?project_ref=dgephoqvmskjejnqwzbz",
+      "auth": "oauth",
+      "protocolVersion": "auto",
+      "lifecycle": "lazy",
+      "requestTimeoutMs": 30000,
+      "directTools": false
+    },
+    "aside": {
+      "command": "/Users/seungwonkim/.local/bin/aside",
+      "args": ["mcp", "--account", "u0"],
+      "lifecycle": "lazy",
+      "requestTimeoutMs": 30000,
+      "directTools": false
+    },
+    "aside-u1": {
+      "command": "/Users/seungwonkim/.local/bin/aside",
+      "args": ["mcp", "--account", "u1"],
+      "lifecycle": "lazy",
+      "requestTimeoutMs": 30000,
+      "directTools": false
+    },
+    "aside-u2": {
+      "command": "/Users/seungwonkim/.local/bin/aside",
+      "args": ["mcp", "--account", "u2"],
+      "lifecycle": "lazy",
+      "requestTimeoutMs": 30000,
+      "directTools": false
+    }
+  }
+}
